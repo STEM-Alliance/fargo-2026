@@ -5,6 +5,9 @@ import static frc.robot.subsystems.drivetrain.DrivetrainConfiguration.*;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
 
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.RobotConfig;
+
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -22,6 +25,7 @@ import frc.robot.subsystems.drivetrain.gyro.Gyro;
 import frc.robot.subsystems.drivetrain.gyro.io.GyroIO;
 import frc.robot.subsystems.drivetrain.swervemodule.SwerveModule;
 import frc.robot.subsystems.drivetrain.swervemodule.io.SwerveModuleIO;
+import frc.robot.utils.FieldUtils;
 
 public final class DrivetrainSubsystem implements Subsystem {
     private final Gyro m_gyro;
@@ -65,6 +69,27 @@ public final class DrivetrainSubsystem implements Subsystem {
         } else {
             m_simulation = null;
         }
+    
+        RobotConfig robotConfig;
+
+        try {
+            robotConfig = RobotConfig.fromGUISettings();
+        } catch (Exception e) {
+            // TODO: Add better exception handling
+            robotConfig = null;
+        }
+
+        AutoBuilder.configure(
+            this::getEstimatedPose,
+            this::resetEstimatedPose,
+            this::getChassisSpeeds,
+            (speeds, feedforwards) -> drive(speeds, false, false, feedforwards.accelerationsMPSSq()),
+            kPathplannerController,
+            robotConfig,
+            () -> {return !FieldUtils.isBlueAlliance();},
+            this
+
+        );
     }
 
     @Override
@@ -86,7 +111,7 @@ public final class DrivetrainSubsystem implements Subsystem {
         Logger.recordOutput("DrivetrainSubsystem/SimulationPose", getSimulationPose());
     }
 
-    public final void drive(ChassisSpeeds chassisSpeeds, boolean fieldRelative, boolean blueRelative) {
+    public final void drive(ChassisSpeeds chassisSpeeds, boolean fieldRelative, boolean blueRelative, double... gain) {
         Rotation2d estimatedRotation = getEstimatedPose().getRotation();
 
         if (fieldRelative) {
@@ -102,6 +127,12 @@ public final class DrivetrainSubsystem implements Subsystem {
         Logger.recordOutput("DrivetrainSubsystem/DesiredStates", desiredStates);
 
         for (int i = 0; i < m_swerveModules.length; i++) {
+            if (gain.length > 0) {
+                m_swerveModules[i].setDriveFFAccel(gain[i]);
+            } else {
+                m_swerveModules[i].setDriveFFAccel(0.0);
+            }
+
             m_swerveModules[i].setDesiredState(desiredStates[i]);
         }
     }
@@ -124,6 +155,14 @@ public final class DrivetrainSubsystem implements Subsystem {
 
     public final void setSwerveModulesAzimuthMotorVoltage(Voltage voltage) {
         for (var swerveModule : m_swerveModules) swerveModule.setAzimuthMotorVoltage(voltage);
+    }
+
+    public final void resetEstimatedPose(Pose2d resetPose) {
+        m_poseEstimator.resetPosition(
+            m_gyro.getAngleAsRotation(),
+            getSwerveModulePositions(),
+            resetPose
+        );
     }
 
     public final SwerveModule[] getSwerveModules() {

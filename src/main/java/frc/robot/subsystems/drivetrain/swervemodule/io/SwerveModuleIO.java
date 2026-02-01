@@ -72,4 +72,6 @@ public abstract interface SwerveModuleIO {
      * @param voltage The voltage to apply to the azimuth motor.
     */
     public default void setAzimuthMotorVoltage(Voltage voltage) {}
+
+    public default void setDriveFFAccel(double gain) {}
 }

@@ -1,6 +1,7 @@
 package frc.robot.subsystems.drivetrain;
 
 import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
@@ -16,6 +17,9 @@ import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.signals.GainSchedBehaviorValue;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -36,6 +40,11 @@ public final class DrivetrainConfiguration {
     // desaturate the calculated module states; it can only be exceeded by directly setting a voltage.
     public static final LinearVelocity kMaxLinearSpeed = MetersPerSecond.of(4.0);
     public static final AngularVelocity kMaxAngularSpeed = RotationsPerSecond.of(0.5);
+
+    public static final PPHolonomicDriveController kPathplannerController = new PPHolonomicDriveController(
+        new PIDConstants(8.0, 0.0, 0.0, 0.0),
+        new PIDConstants(4.0, 0.0, 0.0, 0.0)
+    );
 
     public static final SwerveModuleConfig[] kModuleConfigurations = new SwerveModuleConfig[] {
         new SwerveModuleConfig(1, 2, 3, new Translation2d(0.276, 0.276)), // Front Left
@@ -58,20 +67,22 @@ public final class DrivetrainConfiguration {
 
     public static final TalonFXConfiguration kAzimuthMotorConfiguration = new TalonFXConfiguration()
         .withSlot0(new Slot0Configs()
-            .withKP(41.49 / 2.0).withKI(0.000).withKD(1.141)
+            .withKP(41.49).withKI(0.000).withKD(1.141)
             .withKS(0.000).withKV(0.000).withKA(0.000) // Exclude feedforward.
+            .withGainSchedBehavior(GainSchedBehaviorValue.ZeroOutput)
         ).withMotionMagic(new MotionMagicConfigs()
             .withMotionMagicCruiseVelocity(RotationsPerSecond.of(25.0))
-            .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(125.0))
+            .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(75.0))//(125.0))
         ).withCurrentLimits(new CurrentLimitsConfigs()
             .withStatorCurrentLimit(Amps.of(40.0))
             .withSupplyCurrentLimit(Amps.of(40.0))
         ).withClosedLoopGeneral(new ClosedLoopGeneralConfigs()
             .withContinuousWrap(true)
+            .withGainSchedErrorThreshold(Degrees.of(0.25))
         );
 
     // clean up below
-    public static final Pose2d kSimulationStartingPose = new Pose2d(7.0, 2.75, Rotation2d.fromDegrees(120.0));
+    public static final Pose2d kSimulationStartingPose = new Pose2d(7.0, 2.75, Rotation2d.fromDegrees(150.0));
     // maybe use static initializer like in camera sim io
 
     @SuppressWarnings("unchecked")

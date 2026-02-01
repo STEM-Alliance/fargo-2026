@@ -4,25 +4,20 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.MetersPerSecond;
 import static frc.robot.subsystems.drivetrain.DrivetrainConfiguration.*;
 
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
-import org.ironmaple.simulation.gamepieces.GamePieceProjectile;
 import org.ironmaple.simulation.seasonspecific.rebuilt2026.Arena2026Rebuilt;
-import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnFly;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.photonvision.simulation.SimCameraProperties;
 
-import edu.wpi.first.math.geometry.Rotation2d;
+import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.util.PathPlannerLogging;
+
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -30,8 +25,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 import frc.robot.commands.AutoAimCommand;
@@ -45,14 +38,13 @@ import frc.robot.subsystems.drivetrain.swervemodule.io.SwerveModuleIOSim;
 import frc.robot.subsystems.vision.VisionSubsystem;
 import frc.robot.subsystems.vision.io.VisionIOReal;
 import frc.robot.subsystems.vision.io.VisionIOSim;
-import frc.robot.utils.FieldUtils;
-import frc.robot.utils.ShooterUtils;
 
 public final class RobotContainer {
     private final CommandXboxController m_driverController = new CommandXboxController(0);
     private final CommandXboxController m_operatorController = new CommandXboxController(1);
     private final CommandXboxController m_programmerController = new CommandXboxController(5);
 
+    private final Field2d m_field = new Field2d();
     private final LoggedDashboardChooser<Command> m_autoChooser = new LoggedDashboardChooser<>("Auto");
     private final Alert m_autoChooserAlert = new Alert("No autonomous selected.", AlertType.kWarning);
 
@@ -115,68 +107,58 @@ public final class RobotContainer {
 
         CommandScheduler.getInstance().registerSubsystem(m_drivetrain, m_vision);
 
+        configurePathPlanner();
         configureBindings();
         configureAutoChooser();
+
+        SmartDashboard.putData("Field2D", m_field);
+        SmartDashboard.putData("CommandScheduler", CommandScheduler.getInstance());
+
         configureAlerts();
     }
 
+    /** Sets up subsystem and controller command bindings. */
     private final void configureBindings() {
-        // m_driverController.x().onTrue(Commands.runOnce(() -> {m_drivetrain.zeroYaw();}));
-        // m_driverController.rightTrigger().whileTrue(new AutoAimCommand(m_driverController, m_drivetrain));
+        m_drivetrain.setDefaultCommand(new ControllerDriveCommand(m_driverController, m_drivetrain));
 
-        // m_programmerController.a().whileTrue(TuningCommands.getWheelRadiusCommand(m_drivetrain));
-        // m_programmerController.b().whileTrue(TuningCommands.getCharacterizationRoutine(m_drivetrain));
-        // m_programmerController.rightTrigger().whileTrue(new ControllerDriveCommand(m_programmerController, m_drivetrain));
+        m_driverController.x().onTrue(Commands.runOnce(() -> {m_drivetrain.zeroYaw();})); // Temporary.
+        m_driverController.rightTrigger().whileTrue(new AutoAimCommand(m_driverController, m_drivetrain));
 
-        // m_drivetrain.setDefaultCommand(new ControllerDriveCommand(m_driverController, m_drivetrain));
-        // m_driverController.a().whileTrue(Commands.repeatingSequence(new InstantCommand(() -> {
-        //     // var hubPose = FieldUtils.getAllianceHub();
-        //     // var robotPose = m_drivetrain.getEstimatedPose();
-        //     // var hubRelative = hubPose.minus(robotPose.getTranslation());
-        //     // var speedTemp = m_drivetrain.getChassisSpeeds();
-        //     // speedTemp = ChassisSpeeds.fromRobotRelativeSpeeds(speedTemp, hubRelative.getAngle());
-        //     // var shooterAngle = ShooterUtils.getLaunchAngle(Meters.of(hubRelative.getNorm()), MetersPerSecond.of(8.0 + speedTemp.vxMetersPerSecond));
-        //     var hubPose = FieldUtils.getAllianceHub();
-        //     var robotPose = m_drivetrain.getEstimatedPose();
-        //     var hubRelative = hubPose.minus(robotPose.getTranslation());
-        //     var speedTemp = m_drivetrain.getChassisSpeeds();
-
-        //     // Project robot velocity onto vector toward the hub
-        //     double hubDistance = hubRelative.getNorm();
-        //     double robotVelAlongHub = 0.0;
-        //     if (hubDistance > 1e-6) {
-        //         var hubUnit = hubRelative.div(hubDistance); // unit vector along hub
-        //         var robotVel = new Translation2d(speedTemp.vxMetersPerSecond, speedTemp.vyMetersPerSecond);
-        //         robotVelAlongHub = robotVel.dot(hubUnit);
-        //     }
-
-        //     // Use projected velocity instead of just speedTemp.vxMetersPerSecond
-        //     var shooterAngle = ShooterUtils.getLaunchAngle(
-        //         Meters.of(hubDistance),
-        //         MetersPerSecond.of(8.0 + robotVelAlongHub)
-        //     );
-
-        //     SimulatedArena.getInstance().addGamePieceProjectile(new RebuiltFuelOnFly(
-        //         m_drivetrain.getSimulationPose().getTranslation(),
-        //         new Translation2d(),
-        //         m_drivetrain.getChassisSpeeds(),
-        //         m_drivetrain.getSimulationPose().getRotation(),
-        //         Meters.of(0.762),
-        //         MetersPerSecond.of(8.0),
-        //         shooterAngle
-        //     ));
-        // }), new WaitCommand(0.15)));
+        m_programmerController.a().whileTrue(TuningCommands.getWheelRadiusCommand(m_drivetrain));
+        m_programmerController.b().whileTrue(TuningCommands.getCharacterizationRoutine(m_drivetrain));
+        m_programmerController.rightTrigger().whileTrue(new ControllerDriveCommand(m_programmerController, m_drivetrain));
     }
 
+    /** Registers PathPlanner's {@link NamedCommands} and sets up field telemetry */
+    private final void configurePathPlanner() {
+        CommandScheduler.getInstance().schedule(
+            Commands.run(
+                () -> m_field.setRobotPose(m_drivetrain.getEstimatedPose())
+            ).ignoringDisable(true)
+        );
+
+        PathPlannerLogging.setLogTargetPoseCallback(
+            pose -> m_field.getObject("target pose").setPose(pose)
+        );
+
+        PathPlannerLogging.setLogActivePathCallback(
+            poses -> m_field.getObject("path").setPoses(poses)
+        );
+    }
+
+    /** Creates the AutoChooser's selectable autonomous modes. */
     private final void configureAutoChooser() {
-        m_autoChooser.addDefaultOption("None", new InstantCommand());
+        m_autoChooser.addDefaultOption("None", Commands.none());
+
+        m_autoChooser.addOption("Test", new PathPlannerAuto("Test"));
     }
 
+    /** Sets defaults for alerts and sets up their triggers. */
     private final void configureAlerts() {
         m_autoChooserAlert.set(true);
-        m_autoChooser.getSendableChooser().onChange(key -> {
-            m_autoChooserAlert.set(key.equals("None"));
-        });
+        m_autoChooser.getSendableChooser().onChange(
+            key ->  m_autoChooserAlert.set(key.equals("None"))
+        );
     }
 
     public final Command getAutonomousCommand() {

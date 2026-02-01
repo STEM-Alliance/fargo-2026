@@ -8,4 +8,12 @@ public final class RobotConstants {
         REAL,
         SIMULATED
     }
+
+    public static boolean isReal() {
+        return BEHAVIOR == RobotBehavior.REAL;
+    }
+
+    public static boolean isSimulated() {
+        return BEHAVIOR == RobotBehavior.SIMULATED;
+    }
 }

@@ -18,7 +18,7 @@ public class VisionIOSim extends VisionIOReal {
     private static final VisionSystemSim m_visionSimulation;
 
     static {
-        if (RobotConstants.BEHAVIOR == RobotBehavior.SIMULATED) {
+        if (RobotConstants.isSimulated()) {
             m_visionSimulation = new VisionSystemSim("PhotonVision");
             m_visionSimulation.addAprilTags(FieldUtils.getAprilTagLayout());
         } else {

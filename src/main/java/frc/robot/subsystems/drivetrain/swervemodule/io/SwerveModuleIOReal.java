@@ -45,6 +45,8 @@ public class SwerveModuleIOReal implements SwerveModuleIO {
     private final StatusSignal<Angle> m_azimuthEncoderPosition;
     private final StatusSignal<AngularVelocity> m_azimuthEncoderVelocity;
 
+    private Voltage driveFFAccel = Volts.of(0.0);
+
     public SwerveModuleIOReal(SwerveModuleConfig configuration) {
         m_driveMotor = new TalonFX(configuration.driveMotorID());
         m_azimuthMotor = new TalonFX(configuration.azimuthMotorID());
@@ -142,10 +144,15 @@ public class SwerveModuleIOReal implements SwerveModuleIO {
     }
 
     @Override
+    public void setDriveFFAccel(double gain) {
+        driveFFAccel = Volts.of(gain * kDriveMotorConfiguration.Slot0.kA);
+    }
+
+    @Override
     public void setWheelVelocity(LinearVelocity velocity) {
         m_driveMotor.setControl(m_driveMotorSetpoint.withVelocity(
             RotationsPerSecond.of(velocity.in(MetersPerSecond) / kDriveMotorToWheelFactor)
-        ));
+        ).withFeedForward(driveFFAccel));
     }
 
     @Override

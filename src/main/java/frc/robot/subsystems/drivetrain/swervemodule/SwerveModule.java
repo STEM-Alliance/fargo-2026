@@ -49,6 +49,10 @@ public final class SwerveModule {
         m_swerveModuleIO.setWheelAzimuth(Radians.of(desiredState.angle.getRadians()));
     }
 
+    public final void setDriveFFAccel(double gain) {
+        m_swerveModuleIO.setDriveFFAccel(gain);
+    }
+
     public final void setWheelVelocity(LinearVelocity velocity) {
         m_swerveModuleIO.setWheelVelocity(velocity);
     }

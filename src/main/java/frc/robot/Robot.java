@@ -12,7 +12,6 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 import com.ctre.phoenix6.SignalLogger;
 
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -51,8 +50,6 @@ public final class Robot extends LoggedRobot {
         Logger.start();
         SignalLogger.enableAutoLogging(false);
 
-        SmartDashboard.putData("CommandScheduler", CommandScheduler.getInstance());
-
         m_robotContainer = new RobotContainer();
     }
 
@@ -79,7 +76,7 @@ public final class Robot extends LoggedRobot {
             CommandScheduler.getInstance().schedule(m_autonomousCommand);
         }
 
-        if (RobotConstants.BEHAVIOR == RobotBehavior.SIMULATED) {
+        if (RobotConstants.isSimulated()) {
             SimulatedArena.getInstance().resetFieldForAuto();
         }
     }

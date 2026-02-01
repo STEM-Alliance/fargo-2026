@@ -23,7 +23,7 @@ public final class AutoAimCommand extends Command {
 
     private final ChassisSpeeds m_desiredSpeeds = new ChassisSpeeds();
     private final ProfiledPIDController m_omegaController = new ProfiledPIDController(
-        5.0, 0.0, 0.0, new TrapezoidProfile.Constraints(2.0 * Math.PI, 2.0 * Math.PI / 0.5)
+        5.0, 0.0, 0.0, new TrapezoidProfile.Constraints(2.0 * Math.PI, 2.0 * Math.PI / 2.0)
     );
 
     public AutoAimCommand(
@@ -68,9 +68,9 @@ public final class AutoAimCommand extends Command {
         Translation2d leadVector = ShooterUtils.getLeadedTranslation(
             m_drivetrain.getEstimatedPose(),
             FieldUtils.getAllianceHub(),
-            MetersPerSecond.of(8.0),
+            MetersPerSecond.of(12.0),
             m_drivetrain.getChassisSpeeds(),
-            0
+            5
         );
 
         // In the WPILib coordinate system, +X is forward and +Y is left (relative to
@@ -78,7 +78,7 @@ public final class AutoAimCommand extends Command {
         // This assumes that the drive function is also using blue origin coordinates.
         m_desiredSpeeds.vxMetersPerSecond = -leftY * kMaxLinearSpeed.in(MetersPerSecond);
         m_desiredSpeeds.vyMetersPerSecond = -leftX * kMaxLinearSpeed.in(MetersPerSecond);
-        m_desiredSpeeds.omegaRadiansPerSecond = -m_omegaController.calculate(
+        m_desiredSpeeds.omegaRadiansPerSecond = m_omegaController.calculate(
             m_drivetrain.getEstimatedPose().getRotation().getRadians(),
             leadVector.getAngle().getRadians()
         );
