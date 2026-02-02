@@ -2,6 +2,7 @@ package frc.robot.utils;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -129,6 +130,20 @@ public final class FieldUtils {
         return !inBlueAllianceZone(pose) && !inRedAllianceZone(pose);
     }
 
+    public static boolean shotIntersectsHub(Pose2d pose, double tolerance) {
+        Translation2d hub = getAllianceHub();
+        Translation2d shotTarget = m_passingTargets[isBlueAlliance() ? 4 : 5];
+        Translation2d shotPath = shotTarget.minus(pose.getTranslation());
+
+        double t = hub.minus(pose.getTranslation()).dot(shotPath) / shotPath.getSquaredNorm();
+        t = Math.max(Math.min(t, 1.0), 0.0);
+
+        Translation2d nearest = pose.getTranslation().plus(shotPath.times(t)).minus(hub);
+
+        return (Math.abs(nearest.getX()) < tolerance) && (Math.abs(nearest.getY()) < tolerance);
+    }
+
+    // switch this to using a raycast method with an "expansion" on the square of the hubs.
     public static boolean inlineWithHubs(Pose2d pose, double tolerance) {
         return (pose.getY() >= m_aprilTagLayout.getTagPose(5).get().getY() - tolerance) &&
                (pose.getY() <= m_aprilTagLayout.getTagPose(2).get().getY() + tolerance);

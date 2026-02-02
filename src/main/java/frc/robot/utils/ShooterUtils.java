@@ -23,7 +23,7 @@ public final class ShooterUtils {
         {   -0.001521081562816,    0.000000000000000,    0.000000000000000,    0.000000000000000,    0.000000000000000,    0.000000000000000}
     };
 
-    public static final Angle getPolynomialAngle(Distance distance, LinearVelocity velocity) {
+    public static Angle getPolynomialAngle(Distance distance, LinearVelocity velocity) {
         return Degrees.of(PolynomialUtils.evaluateBivariate(
             m_angleCoefficients,
             distance.in(Meters),
@@ -31,7 +31,7 @@ public final class ShooterUtils {
         ));
     }
 
-    public static final Pair<Angle, Angle> getQuadraticAngles(
+    public static Pair<Angle, Angle> getQuadraticAngles(
         Distance horizontalDistance,
         Distance verticalDistance,
         LinearVelocity velocity
@@ -50,7 +50,7 @@ public final class ShooterUtils {
         );
     }
 
-    public static final Translation2d getLeadedTranslation(
+    public static Translation2d getLeadedTranslation(
         Pose2d robotPose,
         Translation2d targetTranslation,
         LinearVelocity projectileVelocity,
@@ -85,7 +85,7 @@ public final class ShooterUtils {
         return leadVector;
     }
 
-    public static final Translation2d getLeadedTranslation(
+    public static Translation2d getLeadedTranslation(
         Pose2d robotPose,
         Translation2d targetTranslation,
         LinearVelocity projectileVelocity,
@@ -98,5 +98,30 @@ public final class ShooterUtils {
             robotSpeeds,
             5
         );
+    }
+
+    public static Translation2d getShooterTarget(
+        Pose2d robotPose,
+        ChassisSpeeds robotSpeeds,
+        LinearVelocity projectileVelocity
+    ) {
+        boolean scoring = FieldUtils.inFriendlyAllianceZone(robotPose);
+
+        if (scoring) {
+            return getLeadedTranslation(
+                robotPose,
+                FieldUtils.getAllianceHub(),
+                projectileVelocity,
+                robotSpeeds
+            );
+        }
+
+        Translation2d target = FieldUtils.getPassingTarget(
+            robotPose,
+            !FieldUtils.shotIntersectsHub(robotPose, 0.85) &&
+             FieldUtils.inNeutralZone(robotPose)
+        );
+
+        return target;
     }
 }
