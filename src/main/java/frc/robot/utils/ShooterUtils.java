@@ -68,15 +68,18 @@ public final class ShooterUtils {
         Translation2d leadVector = targetRelative;
 
         for (int i = 0; i < iterations; i++) {
-            double nextLeadTime = leadVector.getNorm() / (v * Math.cos(
-                getQuadraticAngles(
-                    Meters.of(leadVector.getNorm()),
-                    Meters.of(1.58),
-                    projectileVelocity
-                ).getSecond().in(Radians)
-            ));
+            double launchAngle = getQuadraticAngles(
+                Meters.of(leadVector.getNorm()),
+                Meters.of(1.58),
+                projectileVelocity
+            ).getSecond().in(Radians);
 
-            leadVector = targetRelative.minus(robotSpeedsVector.times(nextLeadTime));
+            if ((0.0 < launchAngle) && (launchAngle < (Math.PI / 2.0))) {
+                double nextLeadTime = leadVector.getNorm() / (v * Math.cos(launchAngle));
+                leadVector = targetRelative.minus(robotSpeedsVector.times(nextLeadTime));
+            } else {
+                return targetRelative;
+            }
         }
 
         return leadVector;
