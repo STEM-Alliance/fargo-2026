@@ -105,6 +105,9 @@ public final class ShooterUtils {
         ChassisSpeeds robotSpeeds,
         LinearVelocity projectileVelocity
     ) {
+        // If we are in our alliance zone, we want to score. In all
+        // other cases, we want to pass to our alliance zone (or to
+        // our alliance's half of the field if pass isn't possible.
         boolean scoring = FieldUtils.inFriendlyAllianceZone(robotPose);
 
         if (scoring) {

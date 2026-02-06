@@ -2,6 +2,7 @@ package frc.robot.commands;
 
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.Volts;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -19,7 +20,7 @@ public final class TuningCommands {
         // do 0.05 pos error and 4pi vel error 6v max input
         var driveMotorRoutine = new SysIdRoutine(
             new SysIdRoutine.Config(
-                null, null, null,
+                null, Volts.of(4.0), null,
                 (state) -> Logger.recordOutput("SysIDState1", state.toString())
             ),
             new SysIdRoutine.Mechanism(drivetrain::setSwerveModulesDriveMotorVoltage, null, drivetrain)
@@ -27,7 +28,7 @@ public final class TuningCommands {
 
         var azimuthMotorRoutine = new SysIdRoutine(
             new SysIdRoutine.Config(
-                null, null, null,
+                null, Volts.of(4.0), null,
                 (state) -> Logger.recordOutput("SysIDState2", state.toString())
             ),
             new SysIdRoutine.Mechanism(drivetrain::setSwerveModulesAzimuthMotorVoltage, null, drivetrain)
@@ -35,25 +36,29 @@ public final class TuningCommands {
 
         var routineCommand = Commands.sequence(
             Commands.runOnce(() -> drivetrain.setSwerveModulesWheelAzimuth(Radians.of(0.0))),
-            Commands.waitSeconds(0.5),
-            driveMotorRoutine.quasistatic(Direction.kForward).withDeadline(Commands.waitSeconds(3.0)),
-            Commands.waitSeconds(0.5),
-            driveMotorRoutine.quasistatic(Direction.kReverse).withDeadline(Commands.waitSeconds(3.0)),
-            Commands.waitSeconds(0.5),
-            driveMotorRoutine.dynamic(Direction.kForward).withDeadline(Commands.waitSeconds(1.5)),
-            Commands.waitSeconds(0.5),
-            driveMotorRoutine.dynamic(Direction.kReverse).withDeadline(Commands.waitSeconds(1.5)),
-            Commands.waitSeconds(0.5),
+            Commands.waitSeconds(1.5),
+            driveMotorRoutine.quasistatic(Direction.kForward).withDeadline(Commands.waitSeconds(4.0)),
+            Commands.runOnce(() -> drivetrain.drive(new ChassisSpeeds(), false, false)),
+            Commands.waitSeconds(1.5),
+            driveMotorRoutine.quasistatic(Direction.kReverse).withDeadline(Commands.waitSeconds(4.0)),
+            Commands.runOnce(() -> drivetrain.drive(new ChassisSpeeds(), false, false)),
+            Commands.waitSeconds(1.5),
+            driveMotorRoutine.dynamic(Direction.kForward).withDeadline(Commands.waitSeconds(1.0)),
+            Commands.runOnce(() -> drivetrain.drive(new ChassisSpeeds(), false, false)),
+            Commands.waitSeconds(1.5),
+            driveMotorRoutine.dynamic(Direction.kReverse).withDeadline(Commands.waitSeconds(1.0)),
+            Commands.runOnce(() -> drivetrain.drive(new ChassisSpeeds(), false, false)),
+            Commands.waitSeconds(1.5),
             Commands.runOnce(() -> drivetrain.setSwerveModulesWheelAzimuth(Radians.of(0.0))),
-            Commands.waitSeconds(0.75),
-            azimuthMotorRoutine.quasistatic(Direction.kForward).withDeadline(Commands.waitSeconds(2.0)),
-            Commands.waitSeconds(1.25),
-            azimuthMotorRoutine.quasistatic(Direction.kReverse).withDeadline(Commands.waitSeconds(2.0)),
-            Commands.waitSeconds(1.25),
-            azimuthMotorRoutine.dynamic(Direction.kForward).withDeadline(Commands.waitSeconds(0.75)),
-            Commands.waitSeconds(1.25),
-            azimuthMotorRoutine.dynamic(Direction.kReverse).withDeadline(Commands.waitSeconds(0.75)),
-            Commands.waitSeconds(1.25)
+            Commands.waitSeconds(1.5),
+            azimuthMotorRoutine.quasistatic(Direction.kForward).withDeadline(Commands.waitSeconds(1.0)),
+            Commands.waitSeconds(1.5),
+            azimuthMotorRoutine.quasistatic(Direction.kReverse).withDeadline(Commands.waitSeconds(1.0)),
+            Commands.waitSeconds(1.5),
+            azimuthMotorRoutine.dynamic(Direction.kForward).withDeadline(Commands.waitSeconds(0.5)),
+            Commands.waitSeconds(1.5),
+            azimuthMotorRoutine.dynamic(Direction.kReverse).withDeadline(Commands.waitSeconds(0.5)),
+            Commands.waitSeconds(1.5)
         );
 
         routineCommand.addRequirements(drivetrain);

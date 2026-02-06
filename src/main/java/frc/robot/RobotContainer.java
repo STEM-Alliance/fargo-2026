@@ -129,13 +129,14 @@ public final class RobotContainer {
     /** Sets up subsystem and controller command bindings. */
     private final void configureBindings() {
         m_drivetrain.setDefaultCommand(new ControllerDriveCommand(m_driverController, m_drivetrain));
+        m_driverController.rightTrigger().whileTrue(TuningCommands.getCharacterizationRoutine(m_drivetrain));
 
         m_driverController.x().onTrue(Commands.runOnce(() -> {m_drivetrain.zeroYaw();})); // Temporary.
-        m_driverController.rightTrigger().whileTrue(new AutoAimCommand(m_driverController, m_drivetrain));
+        // m_driverController.rightTrigger().whileTrue(new AutoAimCommand(m_driverController, m_drivetrain));
 
-        m_programmerController.a().whileTrue(TuningCommands.getWheelRadiusCommand(m_drivetrain));
-        m_programmerController.b().whileTrue(TuningCommands.getCharacterizationRoutine(m_drivetrain));
-        m_programmerController.rightTrigger().whileTrue(new ControllerDriveCommand(m_programmerController, m_drivetrain));
+        // m_programmerController.a().whileTrue(TuningCommands.getWheelRadiusCommand(m_drivetrain));
+        // m_programmerController.b().whileTrue(TuningCommands.getCharacterizationRoutine(m_drivetrain));
+        // m_programmerController.rightTrigger().whileTrue(new ControllerDriveCommand(m_programmerController, m_drivetrain));
 //  SimulatedArena.getInstance().addGamePieceProjectile(new RebuiltFuelOnFly(
 //                 m_drivetrain.getSimulationPose().getTranslation(),
 //                 new Translation2d(),
