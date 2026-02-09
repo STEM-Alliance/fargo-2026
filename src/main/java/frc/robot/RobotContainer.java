@@ -13,6 +13,7 @@ import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.ironmaple.simulation.seasonspecific.rebuilt2026.Arena2026Rebuilt;
 import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnFly;
+import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.photonvision.simulation.SimCameraProperties;
 
@@ -21,11 +22,13 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.util.PathPlannerLogging;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -35,7 +38,6 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
-import frc.robot.commands.AutoAimCommand;
 import frc.robot.commands.ControllerDriveCommand;
 import frc.robot.commands.TuningCommands;
 import frc.robot.subsystems.drivetrain.DrivetrainSubsystem;
@@ -129,7 +131,7 @@ public final class RobotContainer {
     /** Sets up subsystem and controller command bindings. */
     private final void configureBindings() {
         m_drivetrain.setDefaultCommand(new ControllerDriveCommand(m_driverController, m_drivetrain));
-        m_driverController.rightTrigger().whileTrue(TuningCommands.getCharacterizationRoutine(m_drivetrain));
+        m_driverController.leftTrigger().whileTrue(TuningCommands.getCharacterizationRoutine(m_drivetrain));
 
         m_driverController.x().onTrue(Commands.runOnce(() -> {m_drivetrain.zeroYaw();})); // Temporary.
         // m_driverController.rightTrigger().whileTrue(new AutoAimCommand(m_driverController, m_drivetrain));
@@ -137,58 +139,80 @@ public final class RobotContainer {
         // m_programmerController.a().whileTrue(TuningCommands.getWheelRadiusCommand(m_drivetrain));
         // m_programmerController.b().whileTrue(TuningCommands.getCharacterizationRoutine(m_drivetrain));
         // m_programmerController.rightTrigger().whileTrue(new ControllerDriveCommand(m_programmerController, m_drivetrain));
-//  SimulatedArena.getInstance().addGamePieceProjectile(new RebuiltFuelOnFly(
-//                 m_drivetrain.getSimulationPose().getTranslation(),
-//                 new Translation2d(),
-//                 ChassisSpeeds.fromRobotRelativeSpeeds(m_drivetrain.getChassisSpeeds(), m_drivetrain.getSimulationPose().getRotation()),
-//                 m_drivetrain.getSimulationPose().getRotation(),
-//                 Meters.of(0.762),
-//                 MetersPerSecond.of(8.0),
-//                 ShooterUtils.getQuadraticAngles(
-//                     Meters.of(
-//                         ShooterUtils.getLeadedTranslation(
-//                             m_drivetrain.getEstimatedPose(),
-//                             FieldUtils.getAllianceHub(),
-//                             MetersPerSecond.of(8.0),
-//                             m_drivetrain.getChassisSpeeds()
-//                         ).getNorm()
-//                     ),
-//                     Meters.of(1.58),
-//                     MetersPerSecond.of(8.0)
-//                     ).getSecond()
         if (RobotConstants.isSimulated()) {
-            m_driverController.leftTrigger().whileTrue(Commands.repeatingSequence(
+            m_driverController.rightTrigger().whileTrue(Commands.repeatingSequence(
                 Commands.runOnce(() -> {
-                    System.out.println("Shot");
-                    Pose2d pose = m_drivetrain.getEstimatedPose();
-                    boolean passing = !FieldUtils.inFriendlyAllianceZone(pose);
-                    Translation2d target = ShooterUtils.getShooterTarget(pose, null, null);
+                    var target = ShooterUtils.getTangentToHub(
+                            m_drivetrain.getEstimatedPose(),
+                            m_drivetrain.getChassisSpeeds(),
+                            Units.inchesToMeters(47) / 2.0 + Units.inchesToMeters(12 + 6),
+                            FieldUtils.getAprilTagLayout().getFieldWidth() / 2.0
+                    ).plus(m_drivetrain.getEstimatedPose().getTranslation());
 
-                    SimulatedArena.getInstance().addGamePieceProjectile(new RebuiltFuelOnFly(
-                        m_drivetrain.getSimulationPose().getTranslation(),
-                        Translation2d.kZero,
-                        ChassisSpeeds.fromRobotRelativeSpeeds(m_drivetrain.getChassisSpeeds(), m_drivetrain.getSimulationPose().getRotation()),
-                        passing ? target.minus(pose.getTranslation()).getAngle() : ShooterUtils.getLeadedTranslation(pose, target, MetersPerSecond.of(8), m_drivetrain.getChassisSpeeds()).getAngle(),
-                        Meters.of(0.762),
+                    if (FieldUtils.inFriendlyAllianceZone(m_drivetrain.getEstimatedPose())) target = FieldUtils.getAllianceHub();
+
+                    Logger.recordOutput("DirectTarget", new Pose2d(target.minus(m_drivetrain.getEstimatedPose().getTranslation()), Rotation2d.kZero));
+
+                    target = ShooterUtils.getLeadedTranslation(
+                        m_drivetrain.getEstimatedPose(),
+                        target,
                         MetersPerSecond.of(8.0),
-                        passing ? Degrees.of(22.5) :
-                        ShooterUtils.getQuadraticAngles(
-                            Meters.of(
-                                ShooterUtils.getLeadedTranslation(
-                                    pose,
-                                    target,
-                                    MetersPerSecond.of(8.0),
-                                    m_drivetrain.getChassisSpeeds()
-                                ).getNorm()
-                            ),
-                            Meters.of(1.58),
-                            MetersPerSecond.of(8.0)
-                        ).getSecond()
-                    ));
+                        m_drivetrain.getChassisSpeeds()
+                    );
+
+                    if (!FieldUtils.inFriendlyAllianceZone(m_drivetrain.getEstimatedPose())) target = target.minus(m_drivetrain.getEstimatedPose().getTranslation());
+
+                    Logger.recordOutput("LeadedTarget", new Pose2d(target, Rotation2d.kZero));
+
+                    SimulatedArena.getInstance().addGamePieceProjectile(
+                        new RebuiltFuelOnFly(
+                            m_drivetrain.getSimulationPose().getTranslation(),
+                            Translation2d.kZero,
+                            m_drivetrain.getFieldChassisSpeeds(true),
+                            target.getAngle(),
+                            Meters.of(0.762),
+                            MetersPerSecond.of(8.0),
+                            FieldUtils.inFriendlyAllianceZone(m_drivetrain.getEstimatedPose()) ? ShooterUtils.getQuadraticAngles(Meters.of(target.getNorm()), Meters.of(1.52), MetersPerSecond.of(8.0)).getSecond(): Degrees.of(22.5)
+                        )
+                    );
                 }),
 
-                Commands.waitSeconds(1.0 / 3.0)
+                Commands.waitSeconds(0.25)
             ));
+            // m_driverController.rightTrigger().whileTrue(Commands.run(
+            //     () -> {
+            //         boolean shooting = FieldUtils.inFriendlyAllianceZone(m_drivetrain.getEstimatedPose());
+            //         Translation2d target = ShooterUtils.getShooterTarget(
+            //             m_drivetrain.getEstimatedPose(),
+            //             m_drivetrain.getFieldChassisSpeeds(false),
+            //             MetersPerSecond.of(8.0) // ShooterUtils should use its own velocity.
+            //         );
+
+            //         target = ShooterUtils.getLeadedTranslation(
+            //             m_drivetrain.getEstimatedPose(),
+            //             FieldUtils.getAllianceHub(),
+            //             MetersPerSecond.of(8.0),
+            //             m_drivetrain.getChassisSpeeds()
+            //         );
+            //         Logger.recordOutput("Target", new Pose2d(target.plus(m_drivetrain.getEstimatedPose().getTranslation()), Rotation2d.kZero));
+
+            //         SimulatedArena.getInstance().addGamePieceProjectile(
+            //             new RebuiltFuelOnFly(
+            //                 m_drivetrain.getSimulationPose().getTranslation(),
+            //                 Translation2d.kZero,
+            //                 m_drivetrain.getFieldChassisSpeeds(true),
+            //                 target.getAngle(),
+            //                 Meters.of(0.762),
+            //                 MetersPerSecond.of(8.0),
+            //                 shooting ? ShooterUtils.getQuadraticAngles(
+            //                     Meters.of(target.getNorm()),
+            //                     Meters.of(1.58),
+            //                     MetersPerSecond.of(8.0)
+            //                 ).getSecond() : Degrees.of(22.5)
+            //             )
+            //         );
+            //     }
+            // ).andThen(Commands.wait));
         }
     }
 

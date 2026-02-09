@@ -185,6 +185,11 @@ public final class DrivetrainSubsystem implements Subsystem {
         return m_kinematics.toChassisSpeeds(getSwerveModuleStates());
     }
 
+    public final ChassisSpeeds getFieldChassisSpeeds(boolean useSimulationPose) {
+        Pose2d fieldPose = useSimulationPose ? getSimulationPose() : getEstimatedPose();
+        return ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), fieldPose.getRotation());
+    }
+
     public final SwerveModulePosition[] getSwerveModulePositions() {
         return new SwerveModulePosition[] {
             m_swerveModules[0].getPosition(),

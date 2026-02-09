@@ -9,6 +9,7 @@ import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -73,6 +74,7 @@ public final class ShooterUtils {
                 Meters.of(1.58),
                 projectileVelocity
             ).getSecond().in(Radians);
+            //double launchAngle = Units.degreesToRadians(22.5);
 
             if ((0.0 < launchAngle) && (launchAngle < (Math.PI / 2.0))) {
                 double nextLeadTime = leadVector.getNorm() / (v * Math.cos(launchAngle));
@@ -83,6 +85,123 @@ public final class ShooterUtils {
         }
 
         return leadVector;
+    }
+
+public static Translation2d getTangentToHub(
+    Pose2d robotPose,
+    ChassisSpeeds robotSpeeds,
+    double hubSideLenghts,
+    double fieldCenterY
+) {
+    Translation2d relativeHub =
+        robotPose.getTranslation().minus(FieldUtils.getAllianceHub());//.minus(robotPose.getTranslation());
+
+    if (!FieldUtils.inlineWithHubs(robotPose, Units.inchesToMeters(47))) {
+        return new Translation2d(0.0, fieldCenterY);
+    }
+
+    // double rx = relativeHub.getX();
+    // double ry = relativeHub.getY();
+
+    // // Pick the correct hub corner for tangency
+    // double cornerX = (rx > 0 ? -hubSideLengths : hubSideLengths);
+    // double cornerY = (ry > 0 ? hubSideLengths : -hubSideLengths);
+
+    // double theta = Math.atan2(
+    //     ry - cornerY,
+    //     rx - cornerX
+    // );
+
+double rx = relativeHub.getX(); // length-wise
+double ry = relativeHub.getY(); // width-wise
+
+double cornerX = (Math.abs(ry) > hubSideLenghts) ? -hubSideLenghts : hubSideLenghts;
+double cornerY = ry > 0 ? hubSideLenghts : -hubSideLenghts;
+
+
+// if (ry < 0) {
+//     // negative Y side
+//     if (Math.abs(ry) > hubSideLenghts) {
+//         // back corner
+//         cornerX = -hubSideLenghts;
+//     } else {
+//         // front corner
+//         cornerX = hubSideLenghts;
+//     }
+//     cornerY = -hubSideLenghts;
+// } else {
+//     // positive Y side (mirrored)
+//     if (Math.abs(ry) > hubSideLenghts) {
+//         // back corner
+//         cornerX = -hubSideLenghts;
+//     } else {
+//         // front corner
+//         cornerX = hubSideLenghts;
+//     }
+//     cornerY = hubSideLenghts;
+// }
+
+//     if ((-hubSideLenghts < ry) && (ry < hubSideLenghts)) {
+//     cornerX *= 2.0;
+//     cornerY *= 2.0;
+//     }
+
+    double theta = Math.atan2(
+        ry - cornerY,
+        rx - cornerX
+    );
+
+    return new Translation2d(
+        0.0,
+        robotPose.getTranslation().getY()
+            - robotPose.getTranslation().getX() * Math.tan(theta)
+    );
+}
+
+
+        // if (!FieldUtils.inlineWithHubs(robotPose, Units.inchesToMeters(47))) {
+        //     return new Translation2d(0.0, fieldCenterX);
+        // } else {
+        //     if (robotPose.getTranslation().getY() > fieldCenterX) {
+        //         return new Translation2d(
+        //             0.0, fieldCenterX + robotPose.getTranslation().getY() - robotPose.getTranslation().getX() * Math.tan(thetaMin)
+        //         );
+        //     } else {
+        //         return new Translation2d(
+        //             0.0, robotPose.getTranslation().getY() - robotPose.getTranslation().getX() * Math.tan(thetaMax) - fieldCenterX
+        //         );
+        //     }
+        // }
+    // }
+
+    public static double wrapRelative(double reference, double a) {
+        return a + 2.0 * Math.PI + Math.round((reference - a) / (2.0 * Math.PI));
+    }
+
+    public static Translation2d getTangentialPass(
+        Pose2d robotPose,
+        LinearVelocity projectileVelocity,
+        ChassisSpeeds robotSpeeds,
+        Translation2d hubCenter,
+        double hubSideLengths,
+        double fieldCenterX,
+        int i
+    ) {
+        Translation2d p = robotPose.getTranslation().minus(hubCenter);
+
+        double theta1 = Math.atan2(hubSideLengths - p.getY(), hubSideLengths - p.getX());
+        double theta2 = Math.atan2(-hubSideLengths - p.getY(), hubSideLengths - p.getX());
+        double theta3 = Math.atan2(hubSideLengths - p.getY(), -hubSideLengths - p.getX());
+        double theta4 = Math.atan2(-hubSideLengths - p.getY(), -hubSideLengths - p.getX());
+
+        double thetaMin = Math.min(Math.min(theta1, theta2), Math.min(theta3, theta4));
+        double thetaMax = Math.max(Math.max(theta1, theta2), Math.max(theta3, theta4));
+
+        if (robotPose.getY() < fieldCenterX) {
+            return new Translation2d(0.0, robotPose.getTranslation().getX() * Math.cos(thetaMin) + fieldCenterX);
+        } else {
+            return new Translation2d(0.0, fieldCenterX - robotPose.getTranslation().getX() * Math.cos(thetaMax));
+        }
     }
 
     public static Translation2d getLeadedTranslation(

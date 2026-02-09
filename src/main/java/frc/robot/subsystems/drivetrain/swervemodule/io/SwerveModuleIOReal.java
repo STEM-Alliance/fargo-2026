@@ -52,7 +52,7 @@ public class SwerveModuleIOReal implements SwerveModuleIO {
         m_azimuthMotor = new TalonFX(configuration.azimuthMotorID());
         m_azimuthEncoder = new CANcoder(configuration.azimuthEncoderID());
 
-        //m_driveMotor.getConfigurator().apply(kDriveMotorConfiguration);
+        m_driveMotor.getConfigurator().apply(kDriveMotorConfiguration);
         m_azimuthMotor.getConfigurator().apply(kAzimuthMotorConfiguration.withFeedback(
             new FeedbackConfigs().withRemoteCANcoder(m_azimuthEncoder)
         ));
