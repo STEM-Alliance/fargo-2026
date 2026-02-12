@@ -26,35 +26,35 @@ deploy {
             artifacts {
                 // First part is artifact name, 2nd is artifact type
                 // getTargetTypeClass is a shortcut to get the class type using a string
-
                 frcJava(getArtifactTypeClass('FRCJavaArtifact')) {
-                    // JVM arguments for AdvantageKit
+                    // AdvantageKit JVM arguments
                     jvmArgs.add("-XX:+UnlockExperimentalVMOptions")
                     jvmArgs.add("-XX:GCTimeRatio=5")
                     jvmArgs.add("-XX:+UseSerialGC")
                     jvmArgs.add("-XX:MaxGCPauseMillis=50")
 
-                    // JVM arguments for AdvantageKit (RIO 2)
+                    // AdvantageKit JVM arguments (RIO 2)
                     final MAX_JAVA_HEAP_SIZE_MB = 100;
                     jvmArgs.add("-Xmx" + MAX_JAVA_HEAP_SIZE_MB + "M")
                     jvmArgs.add("-Xms" + MAX_JAVA_HEAP_SIZE_MB + "M")
                     jvmArgs.add("-XX:+AlwaysPreTouch")
 
-                    // JVM arguments for VisualVM (OFF-FIELD ONLY)
-                    jvmArgs.add("-Dcom.sun.management.jmxremote=true")
-                    jvmArgs.add("-Dcom.sun.management.jmxremote.port=1198")
-                    jvmArgs.add("-Dcom.sun.management.jmxremote.local.only=false")
-                    jvmArgs.add("-Dcom.sun.management.jmxremote.ssl=false")
-                    jvmArgs.add("-Dcom.sun.management.jmxremote.authenticate=false")
-                    jvmArgs.add("-Djava.rmi.server.hostname=10.70.48.2")
+                    // VisualVM JVM arguments (OFF-FIELD ONLY)
+                    // jvmArgs.add("-Dcom.sun.management.jmxremote=true")
+                    // jvmArgs.add("-Dcom.sun.management.jmxremote.port=1198")
+                    // jvmArgs.add("-Dcom.sun.management.jmxremote.local.only=false")
+                    // jvmArgs.add("-Dcom.sun.management.jmxremote.ssl=false")
+                    // jvmArgs.add("-Dcom.sun.management.jmxremote.authenticate=false")
+                    // jvmArgs.add("-Djava.rmi.server.hostname=10.70.48.2")
                 }
 
                 // Static files artifact
                 frcStaticFileDeploy(getArtifactTypeClass('FileTreeArtifact')) {
                     files = project.fileTree('src/main/deploy')
                     directory = '/home/lvuser/deploy'
-                    deleteOldFiles = false // Change to true to delete files on roboRIO that no
-                                           // longer exist in deploy directory of this project
+                    // Change to true to delete files on roboRIO that no
+                    // longer exist in deploy directory of this project
+                    deleteOldFiles = false
                 }
             }
         }
@@ -136,7 +136,7 @@ tasks.withType(JavaCompile) {
 }
 
 // Create version file
-def generatedSrcDir = "$buildDir/generated/src/main/java"
+def generatedSrcDir = "$buildDir/generated/sources/buildConstants/java"
 gversion {
     srcDir       = generatedSrcDir
     classPackage = "frc.robot"
@@ -145,33 +145,5 @@ gversion {
     timeZone     = "America/Chicago"
     indent       = "    "
 }
-
 sourceSets.main.java.srcDir(generatedSrcDir)
-tasks.named("compileJava") {
-    dependsOn(tasks.named("createVersionFile"))
-}
-
-// Create commit with working changes on event branches
-tasks.register("eventDeploy", Exec) {
-    onlyIf {
-        def out = new ByteArrayOutputStream()
-        exec {
-            commandLine "git", "branch", "--show-current"
-            standardOutput = out
-        }
-        out.toString().trim().startsWith("event")
-    }
-
-    doFirst {
-        exec {
-            commandLine "git", "add", "-A"
-        }
-    }
-
-    commandLine "git", "commit", "-m", "Deploy on ${new Date()}"
-    ignoreExitValue = true
-}
-
-tasks.named("eventDeploy") {
-    dependsOn(tasks.named("deploy"))
-}
+project.compileJava.dependsOn(createVersionFile)

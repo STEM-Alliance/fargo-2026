@@ -88,7 +88,7 @@ public final class TuningCommands {
                     }
 
                     // temp
-                    Logger.recordOutput("WheelDiameterMeters", ((currentSpeeds.omegaRadiansPerSecond * 12.6 * Math.hypot(0.276, 0.276)) / (driveMotorVelocities / 4.0)));
+                    Logger.recordOutput("WheelDiameterMeters", ((currentSpeeds.omegaRadiansPerSecond * 6.12 * Math.hypot(0.276, 0.276)) / (driveMotorVelocities / 4.0)));
                 },
                 drivetrain
             )
