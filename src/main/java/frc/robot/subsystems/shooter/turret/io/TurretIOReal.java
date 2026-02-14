@@ -90,7 +90,7 @@ public class TurretIOReal implements TurretIO {
         if (m_foyer.isEncoderConnected()) {
             loggableInputs.isTurretEncoderConnected = true;
             loggableInputs.turretEncoderPosition = Degrees.of(
-                m_foyer.getEncoderStatus().enc1AbsDeg
+                m_foyer.getEncoderStatus().enc1AbsDeg()
             );
         } else {
             loggableInputs.isTurretEncoderConnected = false;
