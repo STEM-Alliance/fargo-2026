@@ -1,18 +1,10 @@
 package frc.robot.subsystems.shooter.turret.io;
 
-import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Radians;
-import static edu.wpi.first.units.Units.RadiansPerSecond;
-import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
-import static edu.wpi.first.units.Units.Volts;
+import static edu.wpi.first.units.Units.*;
 
 import org.littletonrobotics.junction.AutoLog;
 
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularAcceleration;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.units.measure.*;
 
 /**
  * The generic turret IO interface (with AdvantageKit support).
@@ -23,22 +15,16 @@ import edu.wpi.first.units.measure.Voltage;
 public abstract interface TurretIO {
     @AutoLog
     public static abstract class TurretInputs {
-        public boolean isAzimuthMotorConnected = false;
-        public Angle azimuthMotorPosition = Radians.of(0.0);
-        public AngularVelocity azimuthMotorVelociy = RadiansPerSecond.of(0.0);
-        public AngularAcceleration azimuthMotorAcceleration = RadiansPerSecondPerSecond.of(0.0);
-        public Voltage azimuthMotorAppliedVoltage = Volts.of(0.0);
-        public Current azimuthMotorStatorCurrent = Amps.of(0.0);
+        public boolean isTurretMotorConnected = false;
+        public Angle turretMotorPosition = Radians.of(0.0);
+        public Voltage turretMotorAppliedVoltage = Volts.of(0.0);
+        public Current turretMotorStatorCurrent = Amps.of(0.0);
 
-        public boolean isAzimuthEncoderConnected = false;
-        public Angle azimuthEncoderPosition = Radians.of(0.0);
-        public AngularVelocity azimuthEncoderVelocity = RadiansPerSecond.of(0.0);
-        public Voltage azimuthEncoderSupplyVoltage = Volts.of(0.0);
+        public boolean isTurretEncoderConnected = false;
+        public Angle turretEncoderPosition = Radians.of(0.0);
 
         public boolean isHoodMotorConnected = false;
         public Angle hoodMotorPosition = Radians.of(0.0);
-        public AngularVelocity hoodMotorVelocity = RadiansPerSecond.of(0.0);
-        public AngularAcceleration hoodMotorAcceleration = RadiansPerSecondPerSecond.of(0.0);
         public Voltage hoodMotorAppliedVoltage = Volts.of(0.0);
         public Current hoodMotorStatorCurrent = Amps.of(0.0);
 
@@ -54,18 +40,11 @@ public abstract interface TurretIO {
     public default void updateInputs(TurretInputs loggableInputs) {}
 
     /**
-     * Sets the azimuth motor's onboard position setpoint from a given turret angle.
+     * Sets the turret motor's onboard position setpoint from a given turret angle.
      * 
      * @param azimuth The desired angle of the turret relative to the encoder's zero.
     */
     public default void setTurretAzimuth(Angle azimuth) {}
-
-    /**
-     * Resets the azimuth motor's encoder position to the supplied position.
-     * 
-     * @param position The position to reset the motor's encoder to, relative to itself.
-    */
-    public default void setAzimuthMotorPosition(Angle position) {}
 
     /**
      * Sets the hood motor's onboard position setpoint from a given launch angle.
@@ -75,12 +54,11 @@ public abstract interface TurretIO {
     public default void setHoodAngle(Angle angle) {}
 
     /**
-     * Directly sets the applied voltage to the hood motor.
-     * <p> This will cancel any onboard closed-loop control.
+     * Resets the turret motor's encoder position to the supplied position.
      * 
-     * @param voltage The voltage to apply to the hood motor.
+     * @param position The position to reset the motor's encoder to, relative to itself.
     */
-    public default void setHoodMotorVoltage(Voltage voltage) {}
+    public default void setTurretMotorPosition(Angle position) {}
 
     /**
      * Resets the hood motor's encoder position to the supplied position.
@@ -88,4 +66,12 @@ public abstract interface TurretIO {
      * @param position The position to reset the motor's encoder to, relative to itself.
     */
     public default void setHoodMotorPosition(Angle position) {}
+
+    /**
+     * Directly sets the applied voltage to the hood motor.
+     * <p> This will cancel any onboard closed-loop control.
+     * 
+     * @param voltage The voltage to apply to the hood motor.
+    */
+    public default void setHoodMotorVoltage(Voltage voltage) {}
 }

@@ -6,6 +6,7 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.drivetrain.DrivetrainConfiguration.*;
+import static frc.robot.subsystems.shooter.ShooterConfiguration.kTurretConfiguration;
 
 import java.util.Objects;
 
@@ -49,6 +50,8 @@ import frc.robot.subsystems.drivetrain.gyro.io.GyroIOSim;
 import frc.robot.subsystems.drivetrain.swervemodule.io.SwerveModuleIO;
 import frc.robot.subsystems.drivetrain.swervemodule.io.SwerveModuleIOReal;
 import frc.robot.subsystems.drivetrain.swervemodule.io.SwerveModuleIOSim;
+import frc.robot.subsystems.shooter.turret.Turret;
+import frc.robot.subsystems.shooter.turret.io.TurretIOSim;
 import frc.robot.subsystems.vision.VisionSubsystem;
 import frc.robot.subsystems.vision.io.VisionIO;
 import frc.robot.subsystems.vision.io.VisionIOReal;
@@ -67,6 +70,8 @@ public final class RobotContainer {
 
     private final DrivetrainSubsystem m_drivetrain;
     private final VisionSubsystem m_vision;
+
+    private final Turret m_turret;
 
     public RobotContainer() {
         switch (RobotConstants.getBehavior()) {
@@ -149,6 +154,7 @@ public final class RobotContainer {
         configureBindings();
         configurePathPlanner();
         configureDashboard();
+        m_turret = new Turret(new TurretIOSim(kTurretConfiguration));
     }
 
     public final void periodic() {
@@ -159,6 +165,8 @@ public final class RobotContainer {
         );
 
         RobotVisualizer.updateComponents();
+        m_turret.periodic();
+        m_turret.setHoodAngle(Degrees.of(95.0));
     }
 
     private final void configureBindings() {
