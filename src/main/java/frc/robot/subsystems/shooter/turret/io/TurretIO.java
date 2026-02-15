@@ -17,6 +17,7 @@ public abstract interface TurretIO {
     public static abstract class TurretInputs {
         public boolean isTurretMotorConnected = false;
         public Angle turretMotorPosition = Radians.of(0.0);
+        public AngularVelocity turretMotorVelocity = RadiansPerSecond.of(0.0);
         public Voltage turretMotorAppliedVoltage = Volts.of(0.0);
         public Current turretMotorStatorCurrent = Amps.of(0.0);
 
@@ -25,6 +26,7 @@ public abstract interface TurretIO {
 
         public boolean isHoodMotorConnected = false;
         public Angle hoodMotorPosition = Radians.of(0.0);
+        public AngularVelocity hoodMotorVelocity = RadiansPerSecond.of(0.0);
         public Voltage hoodMotorAppliedVoltage = Volts.of(0.0);
         public Current hoodMotorStatorCurrent = Amps.of(0.0);
 

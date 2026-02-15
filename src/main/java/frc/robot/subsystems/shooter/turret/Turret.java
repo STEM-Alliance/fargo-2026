@@ -1,5 +1,8 @@
 package frc.robot.subsystems.shooter.turret;
 
+import static edu.wpi.first.units.Units.*;
+import static frc.robot.subsystems.shooter.ShooterConfiguration.*;
+
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.units.measure.*;
@@ -28,20 +31,25 @@ public final class Turret {
         return m_turretInputs;
     }
 
+    public final void zeroTurretMotor() {
+        Angle rotations = m_turretInputs.turretEncoderPosition;
+        double offset = rotations.in(Rotations) - kTurretEncoderZero;
+        Angle currentPosition = Rotations.of(offset * kTurretMotorRatio);
+
+        m_turretIO.setTurretMotorPosition(currentPosition);
+    }
+
+    public final void zeroHoodMotor() {
+        // The hood's zero position is relative to the horizon.
+        m_turretIO.setHoodMotorPosition(Degrees.of(90.0));
+    }
+
     public final void setTurretAzimuth(Angle azimuth) {
         m_turretIO.setTurretAzimuth(azimuth);
     }
 
     public final void setHoodAngle(Angle angle) {
         m_turretIO.setHoodAngle(angle);
-    }
-
-    public final void resetTurretMotorPosition(Angle position) {
-        m_turretIO.setTurretMotorPosition(position);
-    }
-
-    public final void resetHoodMotorPosition(Angle position) {
-        m_turretIO.setHoodMotorPosition(position);
     }
 
     public final void setHoodMotorVoltage(Voltage voltage) {

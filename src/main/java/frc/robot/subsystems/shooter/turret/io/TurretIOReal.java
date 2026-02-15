@@ -26,10 +26,12 @@ public class TurretIOReal implements TurretIO {
     private final MotionMagicVoltage m_hoodMotorSetpoint;
 
     private final StatusSignal<Angle> m_turretMotorPosition;
+    private final StatusSignal<AngularVelocity> m_turretMotorVelocity;
     private final StatusSignal<Voltage> m_turretMotorAppliedVoltage;
     private final StatusSignal<Current> m_turretMotorStatorCurrent;
 
     private final StatusSignal<Angle> m_hoodMotorPosition;
+    private final StatusSignal<AngularVelocity> m_hoodMotorVelocity;
     private final StatusSignal<Voltage> m_hoodMotorAppliedVoltage;
     private final StatusSignal<Current> m_hoodMotorStatorCurrent;
 
@@ -51,17 +53,22 @@ public class TurretIOReal implements TurretIO {
             .withEnableFOC(true);
 
         m_turretMotorPosition = m_turretMotor.getPosition(false);
+        m_turretMotorVelocity = m_turretMotor.getVelocity(false);
         m_turretMotorAppliedVoltage = m_turretMotor.getMotorVoltage(false);
         m_turretMotorStatorCurrent = m_turretMotor.getStatorCurrent(false);
 
         m_hoodMotorPosition = m_hoodMotor.getPosition(false);
+        m_hoodMotorVelocity = m_hoodMotor.getVelocity(false);
         m_hoodMotorAppliedVoltage = m_hoodMotor.getMotorVoltage(false);
         m_hoodMotorStatorCurrent = m_hoodMotor.getStatorCurrent(false);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
             50.0,
+            m_turretMotorVelocity,
             m_turretMotorAppliedVoltage,
             m_turretMotorStatorCurrent,
+
+            m_hoodMotorVelocity,
             m_hoodMotorAppliedVoltage,
             m_hoodMotorStatorCurrent
         );
@@ -77,13 +84,15 @@ public class TurretIOReal implements TurretIO {
 
     @Override
     public void updateInputs(TurretInputs loggableInputs) {
-        loggableInputs.isTurretEncoderConnected = BaseStatusSignal.refreshAll(
+        loggableInputs.isTurretMotorConnected = BaseStatusSignal.refreshAll(
             m_turretMotorPosition,
+            m_turretMotorVelocity,
             m_turretMotorAppliedVoltage,
             m_turretMotorStatorCurrent
         ) == StatusCode.OK;
 
         loggableInputs.turretMotorPosition = m_turretMotorPosition.getValue();
+        loggableInputs.turretMotorVelocity = m_turretMotorVelocity.getValue();
         loggableInputs.turretMotorAppliedVoltage = m_turretMotorAppliedVoltage.getValue();
         loggableInputs.turretMotorStatorCurrent = m_turretMotorStatorCurrent.getValue();
 
@@ -98,11 +107,13 @@ public class TurretIOReal implements TurretIO {
 
         loggableInputs.isHoodMotorConnected = BaseStatusSignal.refreshAll(
             m_hoodMotorPosition,
+            m_hoodMotorVelocity,
             m_hoodMotorAppliedVoltage,
             m_hoodMotorStatorCurrent
         ) == StatusCode.OK;
 
         loggableInputs.hoodMotorPosition = m_hoodMotorPosition.getValue();
+        loggableInputs.hoodMotorVelocity = m_hoodMotorVelocity.getValue();
         loggableInputs.hoodMotorAppliedVoltage = m_hoodMotorAppliedVoltage.getValue();
         loggableInputs.hoodMotorStatorCurrent = m_hoodMotorStatorCurrent.getValue();
 

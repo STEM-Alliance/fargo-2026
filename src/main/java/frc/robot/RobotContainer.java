@@ -154,7 +154,8 @@ public final class RobotContainer {
         configureBindings();
         configurePathPlanner();
         configureDashboard();
-        m_turret = new Turret(new TurretIOSim(kTurretConfiguration));
+        m_turret = null;//new Turret(new TurretIOSim(kTurretConfiguration));
+        SmartDashboard.putNumber("DesiredAzimuth", 0.0);
     }
 
     public final void periodic() {
@@ -165,8 +166,16 @@ public final class RobotContainer {
         );
 
         RobotVisualizer.updateComponents();
-        m_turret.periodic();
-        m_turret.setHoodAngle(Degrees.of(95.0));
+        // m_turret.periodic();
+        // m_turret.setTurretAzimuth(
+        //     Radians.of(
+        //         FieldUtils.getAllianceHub().minus(m_drivetrain.getEstimatedPose().getTranslation())
+        //         .getAngle().plus(m_drivetrain.getEstimatedPose().getRotation()).getRadians()
+        //     )
+        // );
+
+        //Logger.recordOutput("FacingDirection", new Translation2d(2.5, 0.0).rot);
+        //m_turret.setTurretAzimuth(Degrees.of(SmartDashboard.getNumber("DesiredAzimuth", 0.0)));
     }
 
     private final void configureBindings() {
@@ -174,6 +183,7 @@ public final class RobotContainer {
 
         m_driverController.leftTrigger().whileTrue(TuningCommands.getCharacterizationRoutine(m_drivetrain));
         m_driverController.x().onTrue(Commands.runOnce(() -> m_drivetrain.zeroYaw()));
+        //m_driverController.a().onTrue(Commands.runOnce(() -> m_turret.zeroTurretMotor()));
 
         if (!RobotConstants.isCompetition()) {
             m_programmerController.rightTrigger().whileTrue(new ControllerDriveCommand(m_programmerController, m_drivetrain));
