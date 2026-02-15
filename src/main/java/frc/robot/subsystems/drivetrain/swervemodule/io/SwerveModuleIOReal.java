@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 import static frc.robot.subsystems.drivetrain.DrivetrainConfiguration.kAzimuthMotorConfiguration;
+import static frc.robot.subsystems.drivetrain.DrivetrainConfiguration.kAzimuthMotorRatio;
 import static frc.robot.subsystems.drivetrain.DrivetrainConfiguration.kDriveMotorConfiguration;
 import static frc.robot.subsystems.drivetrain.DrivetrainConfiguration.kDriveMotorToWheelFactor;
 
@@ -54,11 +55,18 @@ public class SwerveModuleIOReal implements SwerveModuleIO {
 
         m_driveMotor.getConfigurator().apply(kDriveMotorConfiguration);
         m_azimuthMotor.getConfigurator().apply(kAzimuthMotorConfiguration.withFeedback(
-            new FeedbackConfigs().withRemoteCANcoder(m_azimuthEncoder)
+            new FeedbackConfigs()
+                .withFusedCANcoder(m_azimuthEncoder)
+                .withRotorToSensorRatio(kAzimuthMotorRatio)
         ));
 
-        m_driveMotorSetpoint = new MotionMagicVelocityVoltage(0.0).withUpdateFreqHz(250.0);
-        m_azimuthMotorSetpoint = new MotionMagicVoltage(0.0).withUpdateFreqHz(250.0);
+        m_driveMotorSetpoint = new MotionMagicVelocityVoltage(0.0)
+            .withUpdateFreqHz(100.0)
+            .withEnableFOC(true);
+
+        m_azimuthMotorSetpoint = new MotionMagicVoltage(0.0)
+            .withUpdateFreqHz(100.0)
+            .withEnableFOC(true);
 
         m_driveMotorPosition = m_driveMotor.getPosition(false);
         m_driveMotorVelocity = m_driveMotor.getVelocity(false);
@@ -79,24 +87,24 @@ public class SwerveModuleIOReal implements SwerveModuleIO {
         BaseStatusSignal.setUpdateFrequencyForAll(
             50.0,
             m_driveMotorPosition,
-            m_driveMotorVelocity,
             m_driveMotorAcceleration,
             m_driveMotorAppliedVoltage,
             m_driveMotorStatorCurrent,
 
-            m_azimuthMotorPosition,
             m_azimuthMotorVelocity,
             m_azimuthMotorAcceleration,
             m_azimuthMotorAppliedVoltage,
             m_azimuthMotorStatorCurrent,
 
+            m_azimuthEncoderVelocity,
             m_azimuthEncoderSupplyVoltage
         );
 
         BaseStatusSignal.setUpdateFrequencyForAll(
-            250.0,
-            m_azimuthEncoderPosition,
-            m_azimuthEncoderVelocity
+            100.0,
+            m_driveMotorVelocity,
+            m_azimuthMotorPosition,
+            m_azimuthEncoderPosition
         );
 
         ParentDevice.optimizeBusUtilizationForAll(m_driveMotor, m_azimuthMotor, m_azimuthEncoder);

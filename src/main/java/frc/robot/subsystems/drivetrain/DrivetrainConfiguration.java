@@ -33,8 +33,8 @@ import frc.robot.subsystems.drivetrain.swervemodule.SwerveModuleConfig;
 
 public final class DrivetrainConfiguration {
     public static final double kDriveMotorRatio = 6.12;
-    public static final double kAzimuthMotorRatio = 12.6;
-    public static final Distance kWheelDiameter = Inches.of(4 - (4.115 - 4));
+    public static final double kAzimuthMotorRatio = 12.8;
+    public static final Distance kWheelDiameter = Inches.of(4.0);
 
     // This speed is used to calculate both a translation velocity from controller inputs and to
     // desaturate the calculated module states; it can only be exceeded by directly setting a voltage.
@@ -47,16 +47,16 @@ public final class DrivetrainConfiguration {
     );
 
     public static final SwerveModuleConfig[] kModuleConfigurations = new SwerveModuleConfig[] {
-        new SwerveModuleConfig(1, 2, 3, new Translation2d(0.276, 0.276)), // Front Left
-        new SwerveModuleConfig(4, 5, 6, new Translation2d(0.276, -0.276)), // Front Right
-        new SwerveModuleConfig(7, 8, 9, new Translation2d(-0.276, 0.276)), // Back Left
-        new SwerveModuleConfig(10, 11, 12, new Translation2d(-0.276, -0.276)) // Back Right
+        new SwerveModuleConfig(1, 2, 3, new Translation2d(0.22225, 0.29845)), // Front Left
+        new SwerveModuleConfig(4, 5, 6, new Translation2d(0.22225, -0.29845)), // Front Right
+        new SwerveModuleConfig(7, 8, 9, new Translation2d(-0.22225, 0.29845)), // Back Left
+        new SwerveModuleConfig(10, 11, 12, new Translation2d(-0.22225, -0.29845)) // Back Right
     };
 
     public static final TalonFXConfiguration kDriveMotorConfiguration = new TalonFXConfiguration()
         .withSlot0(new Slot0Configs()
-            .withKP(0.100).withKI(0.000).withKD(0.000)
-            .withKS(0.110).withKV(0.114).withKA(0.001)
+            .withKP(0.100 * 0.5).withKI(0.000).withKD(0.000)
+            .withKS(0.000).withKV(0.114 * 0.5).withKA(0.001)
         ).withMotionMagic(new MotionMagicConfigs()
             .withMotionMagicCruiseVelocity(RotationsPerSecond.of(500.0))
             .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(800.0))
@@ -67,8 +67,8 @@ public final class DrivetrainConfiguration {
 
     public static final TalonFXConfiguration kAzimuthMotorConfiguration = new TalonFXConfiguration()
         .withSlot0(new Slot0Configs()
-            .withKP(41.49).withKI(0.000).withKD(1.141)
-            .withKS(0.303).withKV(0.000).withKA(0.000) // Exclude KV and KS.
+            .withKP(41.49 * 0.5).withKI(0.000).withKD(1.141)
+            .withKS(0.000).withKV(0.000).withKA(0.000) // Exclude KV and KS.
             .withGainSchedBehavior(GainSchedBehaviorValue.ZeroOutput)
         ).withMotionMagic(new MotionMagicConfigs()
             .withMotionMagicCruiseVelocity(RotationsPerSecond.of(20.0))
@@ -93,7 +93,7 @@ public final class DrivetrainConfiguration {
         Meters.of(kModuleConfigurations[0].moduleTranslation().getX() * 2.0), // Drivetrain x
         Meters.of(kModuleConfigurations[0].moduleTranslation().getY() * 2.0), // Drivetrain y
         COTS.ofPigeon2(),
-        COTS.ofMark4(DCMotor.getKrakenX60(1), DCMotor.getKrakenX60(1), COTS.WHEELS.DEFAULT_NEOPRENE_TREAD.cof, 3)
+        COTS.ofMark4(DCMotor.getKrakenX60(1), DCMotor.getKrakenX60(1), COTS.WHEELS.BLUE_NITRILE_TREAD.cof, 3)
     );
 
     public static final double kDriveMotorToWheelFactor = (Math.PI * kWheelDiameter.in(Meters)) / kDriveMotorRatio;
