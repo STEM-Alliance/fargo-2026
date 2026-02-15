@@ -194,14 +194,17 @@ public final class RobotContainer {
         if (RobotConstants.isSimulated()) {
             m_driverController.rightTrigger().whileTrue(Commands.repeatingSequence(
                 Commands.runOnce(() -> {
-                    var target = ShooterUtils.getTangentToHub(
-                            m_drivetrain.getEstimatedPose(),
-                            m_drivetrain.getChassisSpeeds(),
-                            Units.inchesToMeters(47) / 2.0 + Units.inchesToMeters(12 + 6),
-                            FieldUtils.getAprilTagLayout().getFieldWidth() / 2.0
-                    ).plus(m_drivetrain.getEstimatedPose().getTranslation());
+                    Translation2d target;
 
-                    if (FieldUtils.inFriendlyAllianceZone(m_drivetrain.getEstimatedPose())) target = FieldUtils.getAllianceHub();
+                    if (FieldUtils.inFriendlyAllianceZone(m_drivetrain.getEstimatedPose())) {
+                        target = FieldUtils.getAllianceHub();
+                    } else {
+                        target = ShooterUtils.getPassingTarget(
+                            m_drivetrain.getEstimatedPose(),
+                            Meters.of(0.75),
+                            Meters.of(1.25)
+                        );
+                    }
 
                     Logger.recordOutput("DirectTarget", new Pose2d(target.minus(m_drivetrain.getEstimatedPose().getTranslation()), Rotation2d.kZero));
 
@@ -211,8 +214,6 @@ public final class RobotContainer {
                         MetersPerSecond.of(8.0),
                         m_drivetrain.getChassisSpeeds()
                     );
-
-                    if (!FieldUtils.inFriendlyAllianceZone(m_drivetrain.getEstimatedPose())) target = target.minus(m_drivetrain.getEstimatedPose().getTranslation());
 
                     Logger.recordOutput("LeadedTarget", new Pose2d(target, Rotation2d.kZero));
 
@@ -229,7 +230,7 @@ public final class RobotContainer {
                     );
                 }),
 
-                Commands.waitSeconds(0.25)
+                Commands.waitSeconds(0.2)
             ));
         }
     }

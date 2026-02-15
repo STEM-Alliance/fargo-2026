@@ -1,10 +1,12 @@
 package frc.robot.utils;
 
+import static edu.wpi.first.units.Units.*;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
@@ -14,7 +16,11 @@ public final class FieldUtils {
     private static final AprilTagFieldLayout m_aprilTagLayout;
     private static final Translation2d m_blueAllianceHub;
     private static final Translation2d m_redAllianceHub;
-    private static final Translation2d[] m_passingTargets;
+
+    public static final Distance kHubWidth;
+    public static final Distance kFieldLength;
+    public static final Distance kFieldWidth;
+    public static final Distance kFieldWidthCenter;
 
     static {
         // Uncomment the following to use calibrated field layouts.
@@ -42,25 +48,10 @@ public final class FieldUtils {
             m_aprilTagLayout.getTagPose(4).get().getY()
         );
 
-        double fieldWidth = m_aprilTagLayout.getFieldWidth();
-
-        double blueMidline =
-            (m_aprilTagLayout.getTagPose(26).get().getX() +
-             m_aprilTagLayout.getTagPose(31).get().getX()) / 2.0;
-
-        double redMidline =
-            (m_aprilTagLayout.getTagPose(10).get().getX() +
-             m_aprilTagLayout.getTagPose(15).get().getX()) / 2.0;
-
-        m_passingTargets = new Translation2d[] {
-            // Quadrants are blue-relative with (0, 0) in the bottom left.
-            new Translation2d(redMidline, fieldWidth * 4.0 / 5.0), // Q1
-            new Translation2d(blueMidline, fieldWidth * 4.0 / 5.0), // Q2
-            new Translation2d(blueMidline, fieldWidth * 1.0 / 5.0), // Q3
-            new Translation2d(redMidline, fieldWidth * 1.0 / 5.0), // Q4
-            new Translation2d(blueMidline, fieldWidth / 2.0), // Blue Center
-            new Translation2d(redMidline, fieldWidth / 2.0) // Red Center
-        };
+        kHubWidth = Inches.of(47.0);
+        kFieldWidth = Meters.of(m_aprilTagLayout.getFieldWidth());
+        kFieldLength = Meters.of(m_aprilTagLayout.getFieldLength());
+        kFieldWidthCenter = kFieldWidth.div(2.0);
     }
 
     /**
@@ -101,18 +92,6 @@ public final class FieldUtils {
         return isBlueAlliance() ? m_blueAllianceHub : m_redAllianceHub;
     }
 
-    public static Translation2d getPassingTarget(Pose2d pose, boolean passInner) {
-        if (passInner) {
-            return m_passingTargets[isBlueAlliance() ? 4 : 5];
-        } else {
-            if (pose.getY() > m_aprilTagLayout.getFieldWidth() / 2.0) {
-                return m_passingTargets[isBlueAlliance() ? 1 : 0];
-            } else {
-                return m_passingTargets[isBlueAlliance() ? 2 : 3];
-            }
-        }
-    }
-
     public static boolean inBlueAllianceZone(Pose2d pose) {
         return pose.getX() <= m_aprilTagLayout.getTagPose(21).get().getX();
     }
@@ -124,23 +103,6 @@ public final class FieldUtils {
     public static boolean inFriendlyAllianceZone(Pose2d pose) {
         return (isBlueAlliance() && inBlueAllianceZone(pose)) ||
                (!isBlueAlliance() && inRedAllianceZone(pose));
-    }
-
-    public static boolean inNeutralZone(Pose2d pose) {
-        return !inBlueAllianceZone(pose) && !inRedAllianceZone(pose);
-    }
-
-    public static boolean shotIntersectsHub(Pose2d pose, double tolerance) {
-        Translation2d hub = getAllianceHub();
-        Translation2d shotTarget = m_passingTargets[isBlueAlliance() ? 4 : 5];
-        Translation2d shotPath = shotTarget.minus(pose.getTranslation());
-
-        double t = hub.minus(pose.getTranslation()).dot(shotPath) / shotPath.getSquaredNorm();
-        t = Math.max(Math.min(t, 1.0), 0.0);
-
-        Translation2d nearest = pose.getTranslation().plus(shotPath.times(t)).minus(hub);
-
-        return (Math.abs(nearest.getX()) < tolerance) && (Math.abs(nearest.getY()) < tolerance);
     }
 
     // switch this to using a raycast method with an "expansion" on the square of the hubs.
