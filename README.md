@@ -15,6 +15,7 @@ This robot project requires:
 - [AdvantageKit](https://github.com/Mechanical-Advantage/AdvantageKit/releases/latest/download/AdvantageKit.json) (right-click and copy link address)
 - [CTRE-Phoenix 6](https://maven.ctr-electronics.com/release/com/ctre/phoenix6/latest/Phoenix6-frc2026-latest.json) (right-click and copy link address)
 - [PhotonLib](https://maven.photonvision.org/repository/internal/org/photonvision/photonlib-json/1.0/photonlib-json-1.0.json) (right-click and copy link address)
+- [PathPlanner](https://3015rangerrobotics.github.io/pathplannerlib/PathplannerLib.json) (right-click and copy link address)
 - [MapleSim](https://shenzhen-robotics-alliance.github.io/maple-sim/vendordep/maple-sim.json) (right-click and copy link address)
 
 which can be installed via either:
