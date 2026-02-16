@@ -7,9 +7,11 @@ import org.ironmaple.simulation.motorsims.SimulatedBattery;
 
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+
 import frc.robot.RobotConstants;
 import frc.robot.subsystems.shooter.turret.TurretConfig;
 
@@ -60,6 +62,11 @@ public final class TurretIOSim extends TurretIOReal {
         m_hoodMotorSimState.setRawRotorPosition(m_hoodMotorSimulation.getAngularPosition().times(kHoodMotorRatio));
 
         super.updateInputs(loggableInputs);
+
+        loggableInputs.isTurretEncoderConnected = true;
+        loggableInputs.turretEncoderPosition = Rotations.of(MathUtil.inputModulus(
+            m_turretMotorSimulation.getAngularPosition().in(Rotations), 0.0, 1.0
+        ));
 
         if (loggableInputs.hoodMotorPosition.in(Degrees) / kHoodMotorRatio >= 90.0) {
             loggableInputs.isHoodHomingSwitchPressed = true;
