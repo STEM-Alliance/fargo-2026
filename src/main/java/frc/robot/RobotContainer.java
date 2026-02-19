@@ -59,6 +59,7 @@ import frc.robot.subsystems.vision.io.VisionIOSim;
 import frc.robot.utils.FieldUtils;
 import frc.robot.utils.RobotVisualizer;
 import frc.robot.utils.ShooterUtils;
+import frc.robot.utils.ShotCalculator;
 
 public final class RobotContainer {
     private final CommandXboxController m_driverController = new CommandXboxController(0);
@@ -192,40 +193,32 @@ public final class RobotContainer {
         }
 
         if (RobotConstants.isSimulated()) {
+            ShotCalculator shotCalculator = new ShotCalculator();
             m_driverController.rightTrigger().whileTrue(Commands.repeatingSequence(
                 Commands.runOnce(() -> {
-                    Translation2d target;
-
                     if (FieldUtils.inFriendlyAllianceZone(m_drivetrain.getEstimatedPose())) {
-                        target = ShooterUtils.getLeadedTranslation(
+                        shotCalculator.updateForScoring(
                             m_drivetrain.getEstimatedPose(),
-                            FieldUtils.getAllianceHub(),
-                            MetersPerSecond.of(8.0),
                             m_drivetrain.getChassisSpeeds()
                         );
                     } else {
-                        target = ShooterUtils.getLeadedTranslation(
+                        shotCalculator.updateForPassing(
                             m_drivetrain.getEstimatedPose(),
-                            FieldUtils.getPassingTarget(
-                                m_drivetrain.getEstimatedPose(),
-                                Meters.of(0.75),
-                                Meters.of(1.25)
-                            ),
-                            MetersPerSecond.of(8.0),
-                            m_drivetrain.getChassisSpeeds(),
-                            Degrees.of(22.5)
+                            m_drivetrain.getChassisSpeeds()
                         );
                     }
+
+                    Logger.recordOutput("ShotTarget", shotCalculator.getTargetFieldTranslation());
 
                     SimulatedArena.getInstance().addGamePieceProjectile(
                         new RebuiltFuelOnFly(
                             m_drivetrain.getSimulationPose().getTranslation(),
                             Translation2d.kZero,
                             m_drivetrain.getFieldChassisSpeeds(true),
-                            target.getAngle(),
+                            shotCalculator.getTargetRobotTranslation().getAngle(),
                             Meters.of(0.762),
                             MetersPerSecond.of(8.0),
-                            FieldUtils.inFriendlyAllianceZone(m_drivetrain.getEstimatedPose()) ? ShooterUtils.getQuadraticAngles(Meters.of(target.getNorm()), Meters.of(1.52), MetersPerSecond.of(8.0)).getSecond(): Degrees.of(22.5)
+                            shotCalculator.getLaunchAngle()
                         )
                     );
                 }),
