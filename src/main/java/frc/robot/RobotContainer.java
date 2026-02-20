@@ -181,9 +181,11 @@ public final class RobotContainer {
         // );
 
         //Logger.recordOutput("FacingDirection", new Translation2d(2.5, 0.0).rot);
-        shotCalculator.updateForPassing(m_drivetrain.getEstimatedPose(), m_drivetrain.getChassisSpeeds());
-        System.out.println(shotCalculator.getTargetRobotTranslation().getAngle().getDegrees());
-        m_turret.setTurretAzimuth(Degrees.of(shotCalculator.getTargetRobotTranslation().getAngle().plus(Rotation2d.kPi).getDegrees()));
+        shotCalculator.updateForScoring(m_drivetrain.getEstimatedPose(), m_drivetrain.getChassisSpeeds());
+        m_turret.setTurretAzimuth(Degrees.of(
+            shotCalculator.getTargetRobotTranslation().getAngle()
+            .plus(m_drivetrain.getEstimatedPose().getRotation()).getDegrees()
+        ));
     }
 
     private final void configureBindings() {
