@@ -51,7 +51,8 @@ import frc.robot.subsystems.drivetrain.swervemodule.io.SwerveModuleIO;
 import frc.robot.subsystems.drivetrain.swervemodule.io.SwerveModuleIOReal;
 import frc.robot.subsystems.drivetrain.swervemodule.io.SwerveModuleIOSim;
 import frc.robot.subsystems.shooter.turret.Turret;
-import frc.robot.subsystems.shooter.turret.io.TurretIOSim;
+import frc.robot.subsystems.shooter.turret.io.TurretIOReal;
+//import frc.robot.subsystems.shooter.turret.io.TurretIOSim;
 import frc.robot.subsystems.vision.VisionSubsystem;
 import frc.robot.subsystems.vision.io.VisionIO;
 import frc.robot.subsystems.vision.io.VisionIOReal;
@@ -71,8 +72,11 @@ public final class RobotContainer {
 
     private final DrivetrainSubsystem m_drivetrain;
     private final VisionSubsystem m_vision;
-
+    // intake
+    // shooter
+    // climber
     private final Turret m_turret;
+    private final ShotCalculator shotCalculator;
 
     public RobotContainer() {
         switch (RobotConstants.getBehavior()) {
@@ -89,12 +93,12 @@ public final class RobotContainer {
                     m_drivetrain.getPoseEstimator(),
                     new VisionIOReal("FrontCAM", new Transform3d(
                         new Translation3d(0.0254, 0.0, 0.279),
-                        new Rotation3d(0.0, 0.0, 0.0)
+                        new Rotation3d(0.0, Units.degreesToRadians(20.0), 0.0)
                     )),
 
                     new VisionIOReal("BackCAM", new Transform3d(
                         new Translation3d(-0.0254, 0.0, 0.279),
-                        new Rotation3d(0.0, 0.0, Math.PI)
+                        new Rotation3d(0.0, Units.degreesToRadians(20.0), Math.PI)
                     ))
                 );
             }
@@ -155,8 +159,9 @@ public final class RobotContainer {
         configureBindings();
         configurePathPlanner();
         configureDashboard();
-        m_turret = null;//new Turret(new TurretIOSim(kTurretConfiguration));
-        SmartDashboard.putNumber("DesiredAzimuth", 0.0);
+        m_turret = new Turret(new TurretIOReal(kTurretConfiguration));
+        SmartDashboard.putNumber("TurretAzimuth", 0.0);
+        shotCalculator = new ShotCalculator();
     }
 
     public final void periodic() {
@@ -167,7 +172,7 @@ public final class RobotContainer {
         );
 
         RobotVisualizer.updateComponents();
-        // m_turret.periodic();
+        m_turret.periodic();
         // m_turret.setTurretAzimuth(
         //     Radians.of(
         //         FieldUtils.getAllianceHub().minus(m_drivetrain.getEstimatedPose().getTranslation())
@@ -176,7 +181,9 @@ public final class RobotContainer {
         // );
 
         //Logger.recordOutput("FacingDirection", new Translation2d(2.5, 0.0).rot);
-        //m_turret.setTurretAzimuth(Degrees.of(SmartDashboard.getNumber("DesiredAzimuth", 0.0)));
+        shotCalculator.updateForPassing(m_drivetrain.getEstimatedPose(), m_drivetrain.getChassisSpeeds());
+        System.out.println(shotCalculator.getTargetRobotTranslation().getAngle().getDegrees());
+        m_turret.setTurretAzimuth(Degrees.of(shotCalculator.getTargetRobotTranslation().getAngle().plus(Rotation2d.kPi).getDegrees()));
     }
 
     private final void configureBindings() {

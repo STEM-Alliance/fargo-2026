@@ -47,10 +47,10 @@ public final class DrivetrainConfiguration {
     );
 
     public static final SwerveModuleConfig[] kModuleConfigurations = new SwerveModuleConfig[] {
-        new SwerveModuleConfig(1, 2, 3, new Translation2d(0.22225, 0.29845)), // Front Left
-        new SwerveModuleConfig(4, 5, 6, new Translation2d(0.22225, -0.29845)), // Front Right
-        new SwerveModuleConfig(7, 8, 9, new Translation2d(-0.22225, 0.29845)), // Back Left
-        new SwerveModuleConfig(10, 11, 12, new Translation2d(-0.22225, -0.29845)) // Back Right
+        new SwerveModuleConfig(1, 2, 3, new Translation2d(0.276, 0.276)), // Front Left
+        new SwerveModuleConfig(4, 5, 6, new Translation2d(0.276, -0.276)), // Front Right
+        new SwerveModuleConfig(7, 8, 9, new Translation2d(-0.276, 0.276)), // Back Left
+        new SwerveModuleConfig(10, 11, 12, new Translation2d(-0.276, -0.276)) // Back Right
     };
 
     public static final TalonFXConfiguration kDriveMotorConfiguration = new TalonFXConfiguration()

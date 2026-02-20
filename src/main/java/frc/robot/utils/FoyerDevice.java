@@ -142,7 +142,7 @@ public class FoyerDevice {
             return false;
         } else {
             long currentTime = (long)(Timer.getTimestamp() * 1000.0);
-            return (currentTime - m_data.timestamp) < 100;
+            return (currentTime - m_data.timestamp) < 100L;
         }
     }
 }
