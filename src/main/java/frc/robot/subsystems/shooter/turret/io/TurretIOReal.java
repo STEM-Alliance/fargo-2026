@@ -22,7 +22,7 @@ import frc.robot.utils.FoyerDevice;
 public class TurretIOReal implements TurretIO {
     protected final TalonFXS m_turretMotor;
     // protected final TalonFX m_hoodMotor;
-    // protected final FoyerDevice m_foyer;
+    protected final FoyerDevice m_foyer;
     // protected final DigitalInput m_hoodHomingSwitch;
 
     private final MotionMagicVoltage m_turretMotorSetpoint;
@@ -41,7 +41,7 @@ public class TurretIOReal implements TurretIO {
     public TurretIOReal(TurretConfig configuration) {
         m_turretMotor = new TalonFXS(configuration.turretMotorID());
         //m_hoodMotor = new TalonFX(configuration.hoodMotorID());
-        //m_foyer = new FoyerDevice(configuration.turretEncoderID());
+        m_foyer = new FoyerDevice(configuration.turretEncoderID());
         //m_hoodHomingSwitch = new DigitalInput(configuration.hoodHomingSwitchID());
 
         m_turretMotor.getConfigurator().apply(kTurretMotorConfiguration);
@@ -100,14 +100,14 @@ public class TurretIOReal implements TurretIO {
         loggableInputs.turretMotorAppliedVoltage = m_turretMotorAppliedVoltage.getValue();
         loggableInputs.turretMotorStatorCurrent = m_turretMotorStatorCurrent.getValue();
 
-        // if (m_foyer.isEncoderConnected()) {
-        //     loggableInputs.isTurretEncoderConnected = true;
-        //     loggableInputs.turretEncoderPosition = Degrees.of(
-        //         m_foyer.getEncoderStatus().enc1AbsDeg()
-        //     );
-        // } else {
-        //     loggableInputs.isTurretEncoderConnected = false;
-        // }
+        if (m_foyer.isEncoderConnected()) {
+            loggableInputs.isTurretEncoderConnected = true;
+            loggableInputs.turretEncoderPosition = Degrees.of(
+                m_foyer.getEncoderStatus().enc1AbsDeg()
+            );
+        } else {
+            loggableInputs.isTurretEncoderConnected = false;
+        }
 
         // loggableInputs.isHoodMotorConnected = BaseStatusSignal.refreshAll(
         //     m_hoodMotorPosition,

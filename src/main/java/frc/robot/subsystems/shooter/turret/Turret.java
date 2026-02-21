@@ -33,8 +33,8 @@ public final class Turret {
 
     public final void zeroTurretMotor() {
         Angle rotations = m_turretInputs.turretEncoderPosition;
-        double offset = rotations.in(Rotations) - kTurretEncoderZero;
-        Angle currentPosition = Rotations.of(offset * kTurretMotorRatio);
+        double offset = kTurretEncoderZero - rotations.in(Rotations);
+        Angle currentPosition = Rotations.of(offset * kTurretMotorRatio / 3.5);
 
         m_turretIO.setTurretMotorPosition(currentPosition);
     }
@@ -45,6 +45,16 @@ public final class Turret {
     }
 
     public final void setTurretAzimuth(Angle azimuth) {
+        double azimuthDegrees = azimuth.in(Degrees);
+
+        if (Math.abs(azimuthDegrees) > 190.0) {
+            if (azimuthDegrees > 0) {
+                azimuth = Degrees.of(azimuthDegrees - 360.0);
+            } else {
+                azimuth = Degrees.of(360 - azimuthDegrees);
+            }
+        }
+
         m_turretIO.setTurretAzimuth(azimuth);
     }
 

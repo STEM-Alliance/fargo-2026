@@ -93,12 +93,12 @@ public final class RobotContainer {
                     m_drivetrain.getPoseEstimator(),
                     new VisionIOReal("FrontCAM", new Transform3d(
                         new Translation3d(0.0254, 0.0, 0.279),
-                        new Rotation3d(0.0, Units.degreesToRadians(20.0), 0.0)
+                        new Rotation3d(0.0, Units.degreesToRadians(20.0), Math.PI)
                     )),
 
                     new VisionIOReal("BackCAM", new Transform3d(
                         new Translation3d(-0.0254, 0.0, 0.279),
-                        new Rotation3d(0.0, Units.degreesToRadians(20.0), Math.PI)
+                        new Rotation3d(0.0, Units.degreesToRadians(20.0), 0.0)
                     ))
                 );
             }
@@ -162,6 +162,7 @@ public final class RobotContainer {
         m_turret = new Turret(new TurretIOReal(kTurretConfiguration));
         SmartDashboard.putNumber("TurretAzimuth", 0.0);
         shotCalculator = new ShotCalculator();
+        m_turret.zeroTurretMotor();
     }
 
     public final void periodic() {
@@ -182,10 +183,18 @@ public final class RobotContainer {
 
         //Logger.recordOutput("FacingDirection", new Translation2d(2.5, 0.0).rot);
         shotCalculator.updateForScoring(m_drivetrain.getEstimatedPose(), m_drivetrain.getChassisSpeeds());
-        m_turret.setTurretAzimuth(Degrees.of(
-            shotCalculator.getTargetRobotTranslation().getAngle()
+        System.out.println(
+            //m_drivetrain.getEstimatedPose().getTranslation().minus(FieldUtils.getAllianceHub()).getAngle()
+            FieldUtils.getAllianceHub().minus(m_drivetrain.getEstimatedPose().getTranslation()).getAngle().unaryMinus()
             .plus(m_drivetrain.getEstimatedPose().getRotation()).getDegrees()
-        ));
+        );
+
+        m_turret.setTurretAzimuth(
+            Degrees.of(
+            FieldUtils.getAllianceHub().minus(m_drivetrain.getEstimatedPose().getTranslation()).getAngle().unaryMinus()
+            .plus(m_drivetrain.getEstimatedPose().getRotation()).getDegrees()
+            )
+        );
     }
 
     private final void configureBindings() {
@@ -194,6 +203,7 @@ public final class RobotContainer {
         m_driverController.leftTrigger().whileTrue(TuningCommands.getCharacterizationRoutine(m_drivetrain));
         m_driverController.x().onTrue(Commands.runOnce(() -> m_drivetrain.zeroYaw()));
         //m_driverController.a().onTrue(Commands.runOnce(() -> m_turret.zeroTurretMotor()));
+        m_driverController.a().onTrue(Commands.runOnce(() -> m_turret.zeroTurretMotor()).ignoringDisable(true));
 
         if (!RobotConstants.isCompetition()) {
             m_programmerController.rightTrigger().whileTrue(new ControllerDriveCommand(m_programmerController, m_drivetrain));

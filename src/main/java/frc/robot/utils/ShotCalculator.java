@@ -9,7 +9,7 @@ import edu.wpi.first.units.measure.*;
 
 public final class ShotCalculator {
     // Turret offset is relative to the robot's front, WPILib coordinates.
-    private static final Translation2d kTurretOffset = new Translation2d(0.0, 0.0);
+    private static final Translation2d kTurretOffset = new Translation2d(0.0, -0.25);
     private static final Distance kTurretHeight = Meters.of(0.762);
     private static final Distance kFuelDiameter = Meters.of(0.150);
     private static final Distance kHubHeightDifference = Meters.of(1.58);

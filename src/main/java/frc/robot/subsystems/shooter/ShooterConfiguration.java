@@ -11,10 +11,14 @@ import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.Slot1Configs;
+import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXSConfiguration;
+import com.ctre.phoenix6.signals.GainSchedBehaviorValue;
 import com.ctre.phoenix6.signals.MotorArrangementValue;
 
+import edu.wpi.first.math.util.Units;
 import frc.robot.subsystems.shooter.turret.TurretConfig;
 
 public final class ShooterConfiguration {
@@ -22,26 +26,34 @@ public final class ShooterConfiguration {
     public static final double kHoodMotorRatio = 36.0;
 
     // TODO: Record zero
-    public static final double kTurretEncoderZero = 0.25;
+    public static final double kTurretEncoderZero = Units.radiansToRotations(5.811);
 
     // TODO: Record zero
     public static final TurretConfig kTurretConfiguration = new TurretConfig(
-        21, 2, 22, 1
+        21, 6, 22, 1
     );
 
     // TODO: Tune, CTRE software limits + setpoint unwrapping.
     public static final TalonFXSConfiguration kTurretMotorConfiguration = new TalonFXSConfiguration()
         .withSlot0(new Slot0Configs()
-            .withKP(2.5).withKI(0.000).withKD(0.000)
+            .withKP(10.0).withKI(0.000).withKD(0.000) // P=25
             .withKS(0.000).withKV(0.000).withKA(0.000)
+            .withGainSchedBehavior(GainSchedBehaviorValue.ZeroOutput)
         ).withMotionMagic(new MotionMagicConfigs()
-            .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(50.0))
-            .withMotionMagicCruiseVelocity(RotationsPerSecond.of(50.0))
+            .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(300.0)) // 500 each
+            .withMotionMagicCruiseVelocity(RotationsPerSecond.of(300.0))
         ).withCurrentLimits(new CurrentLimitsConfigs()
             .withStatorCurrentLimit(Amps.of(40.0))
             .withSupplyCurrentLimit(Amps.of(40.0))
         ).withCommutation(new CommutationConfigs()
             .withMotorArrangement(MotorArrangementValue.Minion_JST)
+        ).withClosedLoopGeneral(new ClosedLoopGeneralConfigs()
+            .withGainSchedErrorThreshold(Rotations.of(25.0))
+        ).withSoftwareLimitSwitch(new SoftwareLimitSwitchConfigs()
+            .withForwardSoftLimitThreshold(Rotations.of(190.0 * kTurretMotorRatio))
+            .withReverseSoftLimitThreshold(Rotations.of(-190.0 * kTurretMotorRatio))
+            .withForwardSoftLimitEnable(true)
+            .withReverseSoftLimitEnable(true)
         );
 
     // TODO: Tune, CTRE & setpoint software limits.
@@ -56,4 +68,7 @@ public final class ShooterConfiguration {
             .withStatorCurrentLimit(Amps.of(20.0))
             .withSupplyCurrentLimit(Amps.of(20.0))
         );
+
+    public static final TalonFXConfiguration kLeftFlywheelMotorConfiguration = new TalonFXConfiguration();
+    public static final TalonFXConfiguration kRightFlywheelMotorConfiguration = new TalonFXConfiguration();
 }
