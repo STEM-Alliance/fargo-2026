@@ -1,142 +1,124 @@
-// package frc.robot.subsystems.shooter.flywheel.io;
+package frc.robot.subsystems.shooter.flywheel.io;
 
-// import com.ctre.phoenix6.StatusSignal;
-// import com.ctre.phoenix6.controls.Follower;
-// import com.ctre.phoenix6.hardware.TalonFX;
-// import com.ctre.phoenix6.signals.MotorAlignmentValue;
+import static edu.wpi.first.units.Units.*;
+import static frc.robot.subsystems.shooter.ShooterConfiguration.*;
 
-// import edu.wpi.first.units.measure.Angle;
-// import edu.wpi.first.units.measure.AngularVelocity;
-// import edu.wpi.first.units.measure.Current;
-// import edu.wpi.first.units.measure.Voltage;
+import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.StatusCode;
+import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
+import com.ctre.phoenix6.hardware.ParentDevice;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
 
-// import frc.robot.subsystems.shooter.flywheel.FlywheelConfig;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Voltage;
 
-// public class FlywheelIOReal {
-//     private final TalonFX m_leftFlywheelMotor;
-//     private final Follower m_rightFlywheelMotor;
+import frc.robot.subsystems.shooter.flywheel.FlywheelConfig;
 
-//     private final StatusSignal<Angle> m_leftFlywheelMotorPosition;
-//     private final StatusSignal<AngularVelocity> m_leftFlywheelMotorVelocity;
-//     private final StatusSignal<Voltage> m_leftFlywheelMotorAppliedVoltage;
-//     private final StatusSignal<Current> m_leftFlywheelMotorStatorCurrent;
+public class FlywheelIOReal implements FlywheelIO {
+    private final TalonFX m_leftMotor;
+    private final TalonFX m_rightMotor;
 
-//     private final StatusSignal<Angle> m_rightFlywheelMotorPosition;
-//     private final StatusSignal<AngularVelocity> m_rightFlywheelMotorPosiiton;
-//     private final StatusSignal<Voltage> m_rightFlywheelMotorAppliedVoltage;
-//     private final StatusSignal<Current> m_rightFlywheelMotorStatorCurrent;
+    private final MotionMagicVelocityVoltage m_leftMotorSetpoint;
+    private final Follower m_rightMotorSetpoint;
 
-//     public FlywheelIOReal(FlywheelConfig configuration) {
-//         m_leftFlywheelMotor = new TalonFX(configuration.leftFlywheelMotorID());
-//         m_rightFlywheelMotor = new Follower(
-//             configuration.leftFlywheelMotorID(),
-//             MotorAlignmentValue.Opposed
-//         );
-//     }
-// }
+    private final StatusSignal<Angle> m_leftMotorPosition;
+    private final StatusSignal<AngularVelocity> m_leftMotorVelocity;
+    private final StatusSignal<Voltage> m_leftMotorAppliedVoltage;
+    private final StatusSignal<Current> m_leftMotorStatorCurrent;
 
-// //     private final TalonFXS m_intakeMotor;
-// //     private final TalonFXS m_agitatorMotor;
+    private final StatusSignal<Angle> m_rightMotorPosition;
+    private final StatusSignal<AngularVelocity> m_rightMotorVelocity;
+    private final StatusSignal<Voltage> m_rightMotorAppliedVoltage;
+    private final StatusSignal<Current> m_rightMotorStatorCurrent;
 
-// //     private final StatusSignal<Angle> m_intakeMotorPosition;
-// //     private final StatusSignal<AngularVelocity> m_intakeMotorVelocity;
-// //     private final StatusSignal<Voltage> m_intakeMotorAppliedVoltage;
-// //     private final StatusSignal<Current> m_intakeMotorStatorCurrent;
+    public FlywheelIOReal(FlywheelConfig configuration) {
+        m_leftMotor = new TalonFX(configuration.leftMotorID());
+        m_rightMotor = new TalonFX(configuration.rightMotorID());
 
-// //     private final StatusSignal<Angle> m_agitatorMotorPosition;
-// //     private final StatusSignal<AngularVelocity> m_agitatorMotorVelocity;
-// //     private final StatusSignal<Voltage> m_agitatorMotorAppliedVoltage;
-// //     private final StatusSignal<Current> m_agitatorMotorStatorCurrent;
+        m_leftMotor.getConfigurator().apply(kFlywheelMotorsConfiguration);
+        m_rightMotor.getConfigurator().apply(kFlywheelMotorsConfiguration);
 
-// //     public IntakeIOReal(IntakeConfig configuration) {
-// //         m_compressor = new Compressor(PneumaticsModuleType.REVPH);
+        m_leftMotorSetpoint = new MotionMagicVelocityVoltage(0.0)
+            .withUpdateFreqHz(100.0)
+            .withEnableFOC(true);
 
-// //         m_leftSolenoid = new DoubleSolenoid(
-// //             PneumaticsModuleType.REVPH,
-// //             configuration.leftSolenoidForwardID(),
-// //             configuration.leftSolenoidReverseID()
-// //         );
+        m_rightMotorSetpoint = new Follower(
+            configuration.leftMotorID(),
+            MotorAlignmentValue.Opposed
+        ).withUpdateFreqHz(100.0);
 
-// //         m_rightSolenoid = new DoubleSolenoid(
-// //             PneumaticsModuleType.REVPH,
-// //             configuration.rightSolenoidForwardID(),
-// //             configuration.rightSolenoidReverseID()
-// //         );
+        m_leftMotorPosition = m_leftMotor.getPosition(false);
+        m_leftMotorVelocity = m_leftMotor.getVelocity(false);
+        m_leftMotorAppliedVoltage = m_leftMotor.getMotorVoltage(false);
+        m_leftMotorStatorCurrent = m_leftMotor.getStatorCurrent(false);
 
-// //         m_intakeMotor = new TalonFXS(configuration.intakeMotorID());
-// //         m_agitatorMotor = new TalonFXS(configuration.agitatorMotorID());
+        m_rightMotorPosition = m_rightMotor.getPosition(false);
+        m_rightMotorVelocity = m_rightMotor.getVelocity(false);
+        m_rightMotorAppliedVoltage = m_rightMotor.getMotorVoltage(false);
+        m_rightMotorStatorCurrent = m_rightMotor.getStatorCurrent(false);
 
-// //         m_compressor.enableDigital();
-// //         m_intakeMotor.getConfigurator().apply(kIntakeMotorConfiguration);
-// //         m_agitatorMotor.getConfigurator().apply(kAgitatorMotorConfiguration);
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            50.0,
+            m_leftMotorPosition,
+            m_leftMotorStatorCurrent,
+            m_rightMotorPosition,
+            m_rightMotorStatorCurrent
+        );
 
-// //         m_intakeMotorPosition = m_intakeMotor.getPosition(false);
-// //         m_intakeMotorVelocity = m_intakeMotor.getVelocity(false);
-// //         m_intakeMotorAppliedVoltage = m_intakeMotor.getMotorVoltage(false);
-// //         m_intakeMotorStatorCurrent = m_intakeMotor.getStatorCurrent(false);
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            100.0,
+            m_leftMotorVelocity,
+            m_leftMotorAppliedVoltage,
+            m_rightMotorVelocity,
+            m_rightMotorStatorCurrent
+        );
 
-// //         m_agitatorMotorPosition = m_agitatorMotor.getPosition(false);
-// //         m_agitatorMotorVelocity = m_agitatorMotor.getVelocity(false);
-// //         m_agitatorMotorAppliedVoltage = m_agitatorMotor.getMotorVoltage(false);
-// //         m_agitatorMotorStatorCurrent = m_agitatorMotor.getStatorCurrent(false);
+        ParentDevice.optimizeBusUtilizationForAll(m_leftMotor, m_rightMotor);
 
-// //         BaseStatusSignal.setUpdateFrequencyForAll(
-// //             50.0,
-// //             m_intakeMotorPosition,
-// //             m_intakeMotorVelocity,
-// //             m_intakeMotorAppliedVoltage,
-// //             m_intakeMotorStatorCurrent,
-// //             m_agitatorMotorPosition,
-// //             m_agitatorMotorVelocity,
-// //             m_agitatorMotorAppliedVoltage,
-// //             m_agitatorMotorStatorCurrent
-// //         );
+        m_rightMotor.setControl(m_rightMotorSetpoint);
+    }
 
-// //         ParentDevice.optimizeBusUtilizationForAll(m_intakeMotor, m_agitatorMotor);
-// //     }
+    @Override
+    public final void updateInputs(Flywheelinputs loggableInputs) {
+        loggableInputs.isLeftMotorConnected = BaseStatusSignal.refreshAll(
+            m_leftMotorPosition,
+            m_leftMotorVelocity,
+            m_leftMotorAppliedVoltage,
+            m_leftMotorStatorCurrent
+        ) == StatusCode.OK;
 
-// //     @Override
-// //     public final void updateInputs(IntakeInputs loggableInputs) {
-// //         loggableInputs.isIntakeExtended = m_leftSolenoid.get() == Value.kForward;
+        loggableInputs.leftMotorPosition = m_leftMotorPosition.getValue();
+        loggableInputs.leftMotorVelocity = m_leftMotorVelocity.getValue();
+        loggableInputs.leftMotorAppliedVoltage = m_leftMotorAppliedVoltage.getValue();
+        loggableInputs.leftMotorStatorCurrent = m_leftMotorStatorCurrent.getValue();
 
-// //         loggableInputs.isIntakeMotorConnected = BaseStatusSignal.refreshAll(
-// //             m_intakeMotorPosition,
-// //             m_intakeMotorVelocity,
-// //             m_intakeMotorAppliedVoltage,
-// //             m_intakeMotorStatorCurrent
-// //         ) == StatusCode.OK;
+        loggableInputs.isRightMotorConnected = BaseStatusSignal.refreshAll(
+            m_rightMotorPosition,
+            m_rightMotorVelocity,
+            m_rightMotorAppliedVoltage,
+            m_rightMotorStatorCurrent
+        ) == StatusCode.OK;
 
-// //         loggableInputs.intakeMotorPosition = m_intakeMotorPosition.getValue();
-// //         loggableInputs.intakeMotorVelocity = m_intakeMotorVelocity.getValue();
-// //         loggableInputs.intakeMotorAppliedVoltage = m_intakeMotorAppliedVoltage.getValue();
-// //         loggableInputs.intakeMotorStatorCurrent = m_intakeMotorStatorCurrent.getValue();
+        loggableInputs.rightMotorPosition = m_rightMotorPosition.getValue();
+        loggableInputs.rightMotorVelocity = m_rightMotorVelocity.getValue();
+        loggableInputs.rightMotorAppliedVoltage = m_rightMotorAppliedVoltage.getValue();
+        loggableInputs.rightMotorStatorCurrent = m_rightMotorStatorCurrent.getValue();
+    }
 
-// //         loggableInputs.isAgitatorMotorConnected = BaseStatusSignal.refreshAll(
-// //             m_agitatorMotorPosition,
-// //             m_agitatorMotorVelocity,
-// //             m_agitatorMotorAppliedVoltage,
-// //             m_agitatorMotorStatorCurrent
-// //         ) == StatusCode.OK;
+    @Override
+    public final void setMotorVelocities(AngularVelocity velocity) {
+        // The follower will automatically update with the left motor.
+        m_leftMotor.setControl(m_leftMotorSetpoint.withVelocity(velocity));
+    }
 
-// //         loggableInputs.agitatorMotorPosition = m_agitatorMotorPosition.getValue();
-// //         loggableInputs.agitatorMotorVelocity = m_agitatorMotorVelocity.getValue();
-// //         loggableInputs.agitatorMotorAppliedVoltage = m_agitatorMotorAppliedVoltage.getValue();
-// //         loggableInputs.agitatorMotorStatorCurrent = m_agitatorMotorStatorCurrent.getValue();
-// //     }
-
-// //     @Override
-// //     public final void setIntakeExtended(boolean extended) {
-// //         m_leftSolenoid.set(extended ? Value.kForward : Value.kReverse);
-// //         m_rightSolenoid.set(extended ? Value.kForward : Value.kReverse);
-// //     }
-
-// //     @Override
-// //     public final void setIntakeMotorVoltage(Voltage voltage) {
-// //         m_intakeMotor.setVoltage(voltage.in(Volts));
-// //     }
-
-// //     @Override
-// //     public final void setAgitatorMotorVoltage(Voltage voltage) {
-// //         m_agitatorMotor.setVoltage(voltage.in(Volts));
-// //     }
-// // }
+    @Override
+    public final void setMotorVoltages(Voltage voltage) {
+        // The follower will automatically update with the left motor.
+        m_leftMotor.setVoltage(voltage.in(Volts));
+    }
+}

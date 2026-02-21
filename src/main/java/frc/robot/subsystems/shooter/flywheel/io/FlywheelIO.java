@@ -1,18 +1,10 @@
 package frc.robot.subsystems.shooter.flywheel.io;
 
-import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Radians;
-import static edu.wpi.first.units.Units.RadiansPerSecond;
-import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
-import static edu.wpi.first.units.Units.Volts;
+import static edu.wpi.first.units.Units.*;
 
 import org.littletonrobotics.junction.AutoLog;
 
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularAcceleration;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.units.measure.*;
 
 /**
  * The generic flywheel IO interface (with AdvantageKit support).
@@ -26,14 +18,12 @@ public abstract interface FlywheelIO {
         public boolean isLeftMotorConnected = false;
         public Angle leftMotorPosition = Radians.of(0.0);
         public AngularVelocity leftMotorVelocity = RadiansPerSecond.of(0.0);
-        public AngularAcceleration leftMotorAcceleration = RadiansPerSecondPerSecond.of(0.0);
         public Voltage leftMotorAppliedVoltage = Volts.of(0.0);
         public Current leftMotorStatorCurrent = Amps.of(0.0);
 
         public boolean isRightMotorConnected = false;
         public Angle rightMotorPosition = Radians.of(0.0);
         public AngularVelocity rightMotorVelocity = RadiansPerSecond.of(0.0);
-        public AngularAcceleration rightMotorAcceleration = RadiansPerSecondPerSecond.of(0.0);
         public Voltage rightMotorAppliedVoltage = Volts.of(0.0);
         public Current rightMotorStatorCurrent = Amps.of(0.0);
     }

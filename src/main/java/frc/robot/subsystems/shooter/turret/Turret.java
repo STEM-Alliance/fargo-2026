@@ -48,10 +48,10 @@ public final class Turret {
         double azimuthDegrees = azimuth.in(Degrees);
 
         if (Math.abs(azimuthDegrees) > 190.0) {
-            if (azimuthDegrees > 0) {
+            if (azimuthDegrees >= 0.0) {
                 azimuth = Degrees.of(azimuthDegrees - 360.0);
             } else {
-                azimuth = Degrees.of(360 - azimuthDegrees);
+                azimuth = Degrees.of(360.0 - azimuthDegrees);
             }
         }
 

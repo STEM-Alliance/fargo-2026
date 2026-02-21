@@ -69,6 +69,15 @@ public final class ShooterConfiguration {
             .withSupplyCurrentLimit(Amps.of(20.0))
         );
 
-    public static final TalonFXConfiguration kLeftFlywheelMotorConfiguration = new TalonFXConfiguration();
-    public static final TalonFXConfiguration kRightFlywheelMotorConfiguration = new TalonFXConfiguration();
+    public static final TalonFXConfiguration kFlywheelMotorsConfiguration = new TalonFXConfiguration()
+        .withSlot0(new Slot0Configs()
+            .withKP(1.000).withKI(0.000).withKD(0.000)
+            .withKS(0.000).withKV(0.000).withKA(0.000)
+        ).withMotionMagic(new MotionMagicConfigs()
+            .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(25.0))
+            .withMotionMagicCruiseVelocity(RotationsPerSecond.of(9999.0))
+        ).withCurrentLimits(new CurrentLimitsConfigs()
+            .withStatorCurrentLimit(Amps.of(40.0))
+            .withSupplyCurrentLimit(Amps.of(40.0))
+        );
 }

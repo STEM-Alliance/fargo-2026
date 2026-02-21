@@ -23,6 +23,7 @@ import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.util.PathPlannerLogging;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -50,6 +51,10 @@ import frc.robot.subsystems.drivetrain.gyro.io.GyroIOSim;
 import frc.robot.subsystems.drivetrain.swervemodule.io.SwerveModuleIO;
 import frc.robot.subsystems.drivetrain.swervemodule.io.SwerveModuleIOReal;
 import frc.robot.subsystems.drivetrain.swervemodule.io.SwerveModuleIOSim;
+import frc.robot.subsystems.shooter.flywheel.FlywheelConfig;
+import frc.robot.subsystems.shooter.flywheel.io.FlywheelIO;
+import frc.robot.subsystems.shooter.flywheel.io.FlywheelIOReal;
+import frc.robot.subsystems.shooter.flywheel.io.FlywheelinputsAutoLogged;
 import frc.robot.subsystems.shooter.turret.Turret;
 import frc.robot.subsystems.shooter.turret.io.TurretIOReal;
 //import frc.robot.subsystems.shooter.turret.io.TurretIOSim;
@@ -76,6 +81,7 @@ public final class RobotContainer {
     // shooter
     // climber
     private final Turret m_turret;
+    private final FlywheelIO m_flywheel;
     private final ShotCalculator shotCalculator;
 
     public RobotContainer() {
@@ -159,10 +165,11 @@ public final class RobotContainer {
         configureBindings();
         configurePathPlanner();
         configureDashboard();
-        m_turret = new Turret(new TurretIOReal(kTurretConfiguration));
-        SmartDashboard.putNumber("TurretAzimuth", 0.0);
+        m_turret = null;//new Turret(new TurretIOReal(kTurretConfiguration));
+        m_flywheel = new FlywheelIOReal(new FlywheelConfig(22, 23));
+        SmartDashboard.putNumber("FlywheelRotations", 0.0);
         shotCalculator = new ShotCalculator();
-        m_turret.zeroTurretMotor();
+        //m_turret.zeroTurretMotor();
     }
 
     public final void periodic() {
@@ -173,7 +180,15 @@ public final class RobotContainer {
         );
 
         RobotVisualizer.updateComponents();
-        m_turret.periodic();
+        m_flywheel.updateInputs(new FlywheelinputsAutoLogged());
+        m_flywheel.setMotorVoltages(Volts.of(
+            MathUtil.applyDeadband(
+                -m_programmerController.getLeftY(),
+                -0.25,
+                0.25
+            ) * 13.0
+        ));
+        //m_turret.periodic();
         // m_turret.setTurretAzimuth(
         //     Radians.of(
         //         FieldUtils.getAllianceHub().minus(m_drivetrain.getEstimatedPose().getTranslation())
@@ -182,19 +197,19 @@ public final class RobotContainer {
         // );
 
         //Logger.recordOutput("FacingDirection", new Translation2d(2.5, 0.0).rot);
-        shotCalculator.updateForScoring(m_drivetrain.getEstimatedPose(), m_drivetrain.getChassisSpeeds());
-        System.out.println(
-            //m_drivetrain.getEstimatedPose().getTranslation().minus(FieldUtils.getAllianceHub()).getAngle()
-            FieldUtils.getAllianceHub().minus(m_drivetrain.getEstimatedPose().getTranslation()).getAngle().unaryMinus()
-            .plus(m_drivetrain.getEstimatedPose().getRotation()).getDegrees()
-        );
+        // shotCalculator.updateForScoring(m_drivetrain.getEstimatedPose(), m_drivetrain.getChassisSpeeds());
+        // System.out.println(
+        //     //m_drivetrain.getEstimatedPose().getTranslation().minus(FieldUtils.getAllianceHub()).getAngle()
+        //     FieldUtils.getAllianceHub().minus(m_drivetrain.getEstimatedPose().getTranslation()).getAngle().unaryMinus()
+        //     .plus(m_drivetrain.getEstimatedPose().getRotation()).getDegrees()
+        // );
 
-        m_turret.setTurretAzimuth(
-            Degrees.of(
-            FieldUtils.getAllianceHub().minus(m_drivetrain.getEstimatedPose().getTranslation()).getAngle().unaryMinus()
-            .plus(m_drivetrain.getEstimatedPose().getRotation()).getDegrees()
-            )
-        );
+        // m_turret.setTurretAzimuth(
+        //     Degrees.of(
+        //     FieldUtils.getAllianceHub().minus(m_drivetrain.getEstimatedPose().getTranslation()).getAngle().unaryMinus()
+        //     .plus(m_drivetrain.getEstimatedPose().getRotation()).getDegrees()
+        //     )
+        // );
     }
 
     private final void configureBindings() {
