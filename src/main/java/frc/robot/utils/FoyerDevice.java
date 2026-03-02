@@ -30,6 +30,8 @@ public class FoyerDevice {
 
     public record TOFStatus(
         int apiStatus,
+        boolean limit1,
+        boolean limit2,
         int distanceMM,
         int ambientMcps,
         int signalMcps,
@@ -105,6 +107,8 @@ public class FoyerDevice {
         if (m_can.readPacketLatest(0x52, m_data)) {
             return new TOFStatus(
                 m_data.data[0] & 0xFF,
+                (m_data.data[1] & 1) != 0,
+                (m_data.data[1] & 2) != 0,
                 (m_data.data[2] & 0xFF) | ((m_data.data[3] & 0xFF) << 8),
                 (m_data.data[4] & 0xFF) | ((m_data.data[5] & 0xFF) << 8),
                 (m_data.data[6] & 0xFF) | ((m_data.data[7] & 0xFF) << 8),
@@ -130,6 +134,19 @@ public class FoyerDevice {
             );
         } else {
             return null;
+        }
+    }
+
+    /**
+     * Determines whether the TOF sensor is connected.
+     * @return {@code true} if the last frame is less than 100ms old.
+    */
+    public boolean isTOFSensorConnected() {
+        if (!m_can.readPacketLatest(0x52, m_data)) {
+            return false;
+        } else {
+            long currentTime = (long)(Timer.getTimestamp() * 1000.0);
+            return (currentTime - m_data.timestamp) < 100L;
         }
     }
 

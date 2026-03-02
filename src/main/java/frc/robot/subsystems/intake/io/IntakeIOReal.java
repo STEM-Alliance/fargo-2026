@@ -1,6 +1,7 @@
 package frc.robot.subsystems.intake.io;
 
-import static edu.wpi.first.units.Units.Volts;
+import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.wpilibj.DoubleSolenoid.Value.*;
 import static frc.robot.subsystems.intake.IntakeConfiguration.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -9,24 +10,20 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFXS;
 
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
-import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 
 import frc.robot.subsystems.intake.IntakeConfig;
 
 public class IntakeIOReal implements IntakeIO {
-    private final Compressor m_compressor;
-    private final DoubleSolenoid m_leftSolenoid;
-    private final DoubleSolenoid m_rightSolenoid;
+    protected final Compressor m_compressor;
+    protected final DoubleSolenoid m_leftSolenoid;
+    protected final DoubleSolenoid m_rightSolenoid;
 
-    private final TalonFXS m_intakeMotor;
-    private final TalonFXS m_agitatorMotor;
+    protected final TalonFXS m_intakeMotor;
+    protected final TalonFXS m_agitatorMotor;
 
     private final StatusSignal<Angle> m_intakeMotorPosition;
     private final StatusSignal<AngularVelocity> m_intakeMotorVelocity;
@@ -76,6 +73,7 @@ public class IntakeIOReal implements IntakeIO {
             m_intakeMotorVelocity,
             m_intakeMotorAppliedVoltage,
             m_intakeMotorStatorCurrent,
+
             m_agitatorMotorPosition,
             m_agitatorMotorVelocity,
             m_agitatorMotorAppliedVoltage,
@@ -86,8 +84,12 @@ public class IntakeIOReal implements IntakeIO {
     }
 
     @Override
-    public final void updateInputs(IntakeInputs loggableInputs) {
-        loggableInputs.isIntakeExtended = m_leftSolenoid.get() == Value.kForward;
+    public void updateInputs(IntakeInputs loggableInputs) {
+        loggableInputs.compressorPressure = m_compressor.getPressure();
+        loggableInputs.compressorVoltage = Volts.of(m_compressor.getAnalogVoltage());
+        loggableInputs.compressorCurrent = Amps.of(m_compressor.getCurrent());
+
+        loggableInputs.isIntakeExtended = m_leftSolenoid.get() == kForward;
 
         loggableInputs.isIntakeMotorConnected = BaseStatusSignal.refreshAll(
             m_intakeMotorPosition,
@@ -115,18 +117,18 @@ public class IntakeIOReal implements IntakeIO {
     }
 
     @Override
-    public final void setIntakeExtended(boolean extended) {
-        m_leftSolenoid.set(extended ? Value.kForward : Value.kReverse);
-        m_rightSolenoid.set(extended ? Value.kForward : Value.kReverse);
+    public void setIntakeExtended(boolean extended) {
+        m_leftSolenoid.set(extended ? kForward: kReverse);
+        m_rightSolenoid.set(extended ? kForward : kReverse);
     }
 
     @Override
-    public final void setIntakeMotorVoltage(Voltage voltage) {
+    public void setIntakeMotorVoltage(Voltage voltage) {
         m_intakeMotor.setVoltage(voltage.in(Volts));
     }
 
     @Override
-    public final void setAgitatorMotorVoltage(Voltage voltage) {
+    public void setAgitatorMotorVoltage(Voltage voltage) {
         m_agitatorMotor.setVoltage(voltage.in(Volts));
     }
 }

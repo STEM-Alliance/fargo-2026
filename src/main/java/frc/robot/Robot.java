@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.utils.HubShiftUtil;
 
 public final class Robot extends LoggedRobot {
     private final RobotContainer m_robotContainer;
@@ -84,10 +85,10 @@ public final class Robot extends LoggedRobot {
         // If our main thread is too slow, this can cause issues with other threads.
         // Assuming low enough CPU usage, this will ultimately reduce loop overruns.
         // Doesn't this comment block look so neatly aligned? It's rather exquisite!
-        CommandScheduler.getInstance().schedule(Commands.sequence(
-            Commands.waitSeconds(10.0),
-            Commands.runOnce(() -> Threads.setCurrentThreadPriority(true, 99))
-        ).ignoringDisable(true));
+        // CommandScheduler.getInstance().schedule(Commands.sequence(
+        //     Commands.waitSeconds(10.0),
+        //     Commands.runOnce(() -> Threads.setCurrentThreadPriority(true, 99))
+        // ).ignoringDisable(true));
 
         m_robotContainer = new RobotContainer();
     }

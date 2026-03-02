@@ -30,6 +30,7 @@ public abstract interface TurretIO {
         public Voltage hoodMotorAppliedVoltage = Volts.of(0.0);
         public Current hoodMotorStatorCurrent = Amps.of(0.0);
 
+        public boolean isHoodHomingSwitchConnected = false;
         public boolean isHoodHomingSwitchPressed = false;
     }
 

@@ -20,85 +20,82 @@ import frc.robot.subsystems.shooter.turret.TurretConfig;
 import frc.robot.utils.FoyerDevice;
 
 public class TurretIOReal implements TurretIO {
-    protected final TalonFXS m_turretMotor;
-    // protected final TalonFX m_hoodMotor;
+    // protected final TalonFXS m_turretMotor;
+    protected final TalonFXS m_hoodMotor;
     protected final FoyerDevice m_foyer;
-    // protected final DigitalInput m_hoodHomingSwitch;
 
     private final MotionMagicVoltage m_turretMotorSetpoint;
     private final MotionMagicVoltage m_hoodMotorSetpoint;
 
-    private final StatusSignal<Angle> m_turretMotorPosition;
-    private final StatusSignal<AngularVelocity> m_turretMotorVelocity;
-    private final StatusSignal<Voltage> m_turretMotorAppliedVoltage;
-    private final StatusSignal<Current> m_turretMotorStatorCurrent;
+    // private final StatusSignal<Angle> m_turretMotorPosition;
+    // private final StatusSignal<AngularVelocity> m_turretMotorVelocity;
+    // private final StatusSignal<Voltage> m_turretMotorAppliedVoltage;
+    // private final StatusSignal<Current> m_turretMotorStatorCurrent;
 
-    // private final StatusSignal<Angle> m_hoodMotorPosition;
-    // private final StatusSignal<AngularVelocity> m_hoodMotorVelocity;
-    // private final StatusSignal<Voltage> m_hoodMotorAppliedVoltage;
-    // private final StatusSignal<Current> m_hoodMotorStatorCurrent;
+    private final StatusSignal<Angle> m_hoodMotorPosition;
+    private final StatusSignal<AngularVelocity> m_hoodMotorVelocity;
+    private final StatusSignal<Voltage> m_hoodMotorAppliedVoltage;
+    private final StatusSignal<Current> m_hoodMotorStatorCurrent;
 
     public TurretIOReal(TurretConfig configuration) {
-        m_turretMotor = new TalonFXS(configuration.turretMotorID());
-        //m_hoodMotor = new TalonFX(configuration.hoodMotorID());
+        //m_turretMotor = new TalonFXS(configuration.turretMotorID());
+        m_hoodMotor = new TalonFXS(configuration.hoodMotorID());
         m_foyer = new FoyerDevice(configuration.turretEncoderID());
-        //m_hoodHomingSwitch = new DigitalInput(configuration.hoodHomingSwitchID());
 
-        m_turretMotor.getConfigurator().apply(kTurretMotorConfiguration);
-        //m_hoodMotor.getConfigurator().apply(kHoodMotorConfiguration);
+        //m_turretMotor.getConfigurator().apply(kTurretMotorConfiguration);
+        m_hoodMotor.getConfigurator().apply(kHoodMotorConfiguration);
 
         m_turretMotorSetpoint = new MotionMagicVoltage(0.0)
             .withUpdateFreqHz(100.0);
             //.withEnableFOC(true);
 
         m_hoodMotorSetpoint = new MotionMagicVoltage(0.0)
-            .withUpdateFreqHz(100.0)
-            .withEnableFOC(true);
+            .withUpdateFreqHz(100.0);
+            //.withEnableFOC(true);
 
-        m_turretMotorPosition = m_turretMotor.getPosition(false);
-        m_turretMotorVelocity = m_turretMotor.getVelocity(false);
-        m_turretMotorAppliedVoltage = m_turretMotor.getMotorVoltage(false);
-        m_turretMotorStatorCurrent = m_turretMotor.getStatorCurrent(false);
+        // m_turretMotorPosition = m_turretMotor.getPosition(false);
+        // m_turretMotorVelocity = m_turretMotor.getVelocity(false);
+        // m_turretMotorAppliedVoltage = m_turretMotor.getMotorVoltage(false);
+        // m_turretMotorStatorCurrent = m_turretMotor.getStatorCurrent(false);
 
-        // m_hoodMotorPosition = m_hoodMotor.getPosition(false);
-        // m_hoodMotorVelocity = m_hoodMotor.getVelocity(false);
-        // m_hoodMotorAppliedVoltage = m_hoodMotor.getMotorVoltage(false);
-        // m_hoodMotorStatorCurrent = m_hoodMotor.getStatorCurrent(false);
+        m_hoodMotorPosition = m_hoodMotor.getPosition(false);
+        m_hoodMotorVelocity = m_hoodMotor.getVelocity(false);
+        m_hoodMotorAppliedVoltage = m_hoodMotor.getMotorVoltage(false);
+        m_hoodMotorStatorCurrent = m_hoodMotor.getStatorCurrent(false);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
             50.0,
-            m_turretMotorVelocity,
-            m_turretMotorAppliedVoltage,
-            m_turretMotorStatorCurrent
+            // m_turretMotorVelocity,
+            // m_turretMotorAppliedVoltage,
+            // m_turretMotorStatorCurrent,
 
-            // m_hoodMotorVelocity,
-            // m_hoodMotorAppliedVoltage,
-            // m_hoodMotorStatorCurrent
+            m_hoodMotorVelocity,
+            m_hoodMotorAppliedVoltage,
+            m_hoodMotorStatorCurrent
         );
 
         BaseStatusSignal.setUpdateFrequencyForAll(
             100.0,
-            m_turretMotorPosition
-            // m_hoodMotorPosition
+            // m_turretMotorPosition,
+            m_hoodMotorPosition
         );
 
-        ParentDevice.optimizeBusUtilizationForAll(m_turretMotor);//m_hoodMotor);
-        setTurretMotorPosition(Degrees.of(0.0));
+        ParentDevice.optimizeBusUtilizationForAll(/*m_turretMotor, */m_hoodMotor);
     }
 
     @Override
     public void updateInputs(TurretInputs loggableInputs) {
-        loggableInputs.isTurretMotorConnected = BaseStatusSignal.refreshAll(
-            m_turretMotorPosition,
-            m_turretMotorVelocity,
-            m_turretMotorAppliedVoltage,
-            m_turretMotorStatorCurrent
-        ) == StatusCode.OK;
+        // loggableInputs.isTurretMotorConnected = BaseStatusSignal.refreshAll(
+        //     m_turretMotorPosition,
+        //     m_turretMotorVelocity,
+        //     m_turretMotorAppliedVoltage,
+        //     m_turretMotorStatorCurrent
+        // ) == StatusCode.OK;
 
-        loggableInputs.turretMotorPosition = m_turretMotorPosition.getValue();
-        loggableInputs.turretMotorVelocity = m_turretMotorVelocity.getValue();
-        loggableInputs.turretMotorAppliedVoltage = m_turretMotorAppliedVoltage.getValue();
-        loggableInputs.turretMotorStatorCurrent = m_turretMotorStatorCurrent.getValue();
+        // loggableInputs.turretMotorPosition = m_turretMotorPosition.getValue();
+        // loggableInputs.turretMotorVelocity = m_turretMotorVelocity.getValue();
+        // loggableInputs.turretMotorAppliedVoltage = m_turretMotorAppliedVoltage.getValue();
+        // loggableInputs.turretMotorStatorCurrent = m_turretMotorStatorCurrent.getValue();
 
         if (m_foyer.isEncoderConnected()) {
             loggableInputs.isTurretEncoderConnected = true;
@@ -109,47 +106,53 @@ public class TurretIOReal implements TurretIO {
             loggableInputs.isTurretEncoderConnected = false;
         }
 
-        // loggableInputs.isHoodMotorConnected = BaseStatusSignal.refreshAll(
-        //     m_hoodMotorPosition,
-        //     m_hoodMotorVelocity,
-        //     m_hoodMotorAppliedVoltage,
-        //     m_hoodMotorStatorCurrent
-        // ) == StatusCode.OK;
+        loggableInputs.isHoodMotorConnected = BaseStatusSignal.refreshAll(
+            m_hoodMotorPosition,
+            m_hoodMotorVelocity,
+            m_hoodMotorAppliedVoltage,
+            m_hoodMotorStatorCurrent
+        ) == StatusCode.OK;
 
-        // loggableInputs.hoodMotorPosition = m_hoodMotorPosition.getValue();
-        // loggableInputs.hoodMotorVelocity = m_hoodMotorVelocity.getValue();
-        // loggableInputs.hoodMotorAppliedVoltage = m_hoodMotorAppliedVoltage.getValue();
-        // loggableInputs.hoodMotorStatorCurrent = m_hoodMotorStatorCurrent.getValue();
+        loggableInputs.hoodMotorPosition = m_hoodMotorPosition.getValue();
+        loggableInputs.hoodMotorVelocity = m_hoodMotorVelocity.getValue();
+        loggableInputs.hoodMotorAppliedVoltage = m_hoodMotorAppliedVoltage.getValue();
+        loggableInputs.hoodMotorStatorCurrent = m_hoodMotorStatorCurrent.getValue();
 
-        // loggableInputs.isHoodHomingSwitchPressed = m_hoodHomingSwitch.get();
+        if (m_foyer.isTOFSensorConnected()) {
+            loggableInputs.isHoodHomingSwitchConnected = true;
+            loggableInputs.isHoodHomingSwitchPressed = m_foyer.getTOFStatus().limit1();
+        } else {
+            loggableInputs.isHoodHomingSwitchConnected = false;
+            loggableInputs.isHoodHomingSwitchPressed = true;
+        }
     }
 
     @Override
     public void setTurretAzimuth(Angle azimuth) {
-        m_turretMotor.setControl(m_turretMotorSetpoint.withPosition(
-            azimuth.times(kTurretMotorRatio)
-        ));
-    }
-
-    @Override
-    public void setHoodAngle(Angle angle) {
-        // m_hoodMotor.setControl(m_hoodMotorSetpoint.withPosition(
-        //     angle.times(kHoodMotorRatio)
+        // m_turretMotor.setControl(m_turretMotorSetpoint.withPosition(
+        //     azimuth.times(kTurretMotorRatio * kTurretRingRatio)
         // ));
     }
 
     @Override
+    public void setHoodAngle(Angle angle) {
+        m_hoodMotor.setControl(m_hoodMotorSetpoint.withPosition(
+            Radians.of(angle.in(Degrees) * 11.838)
+        ));
+    }
+
+    @Override
     public void setTurretMotorPosition(Angle position) {
-        m_turretMotor.setPosition(position);
+        //m_turretMotor.setPosition(position);
     }
 
     @Override
     public void setHoodMotorPosition(Angle position) {
-        //m_hoodMotor.setPosition(position);
+        m_hoodMotor.setPosition(position);
     }
 
     @Override
     public void setHoodMotorVoltage(Voltage voltage) {
-        // m_hoodMotor.setVoltage(voltage.in(Volts));
+        m_hoodMotor.setVoltage(voltage.in(Volts));
     }
 }

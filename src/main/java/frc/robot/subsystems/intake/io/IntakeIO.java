@@ -15,6 +15,10 @@ import edu.wpi.first.units.measure.*;
 public abstract interface IntakeIO {
     @AutoLog
     public static abstract class IntakeInputs {
+        public double compressorPressure = 0.0;
+        public Voltage compressorVoltage = Volts.of(0.0);
+        public Current compressorCurrent = Amps.of(0.0);
+
         public boolean isIntakeExtended = false;
 
         public boolean isIntakeMotorConnected = false;

@@ -2,12 +2,7 @@ package frc.robot.utils;
 
 import static edu.wpi.first.units.Units.*;
 
-import java.util.Objects;
-
 import edu.wpi.first.math.Pair;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.*;
 
 public final class ShooterUtils {
@@ -20,11 +15,22 @@ public final class ShooterUtils {
         {   -0.001521081562816,    0.000000000000000,    0.000000000000000,    0.000000000000000,    0.000000000000000,    0.000000000000000}
     };
 
+    private static final double[] m_velocityCoefficients = {
+        -0.07263169, 0.02088818, -0.000004549778
+    };
+
     public static Angle getPolynomialAngle(Distance distance, LinearVelocity velocity) {
         return Degrees.of(PolynomialUtils.evaluateBivariate(
             m_angleCoefficients,
             distance.in(Meters),
             velocity.in(MetersPerSecond)
+        ));
+    }
+
+    public static LinearVelocity getPolynomialVelocity(AngularVelocity flywheelMotorVelocity) {
+        return MetersPerSecond.of(PolynomialUtils.evaluateUnivariate(
+            m_velocityCoefficients,
+            flywheelMotorVelocity.in(RadiansPerSecond)
         ));
     }
 
@@ -44,63 +50,6 @@ public final class ShooterUtils {
         return Pair.of(
             principalAngle.lt(secondaryAngle) ? principalAngle : secondaryAngle,
             principalAngle.gt(secondaryAngle) ? principalAngle : secondaryAngle
-        );
-    }
-
-    public static Translation2d getLeadedTranslation(
-        Pose2d robotPose,
-        Translation2d targetTranslation,
-        LinearVelocity projectileVelocity,
-        ChassisSpeeds robotSpeeds,
-        Angle staticAngle,
-        int iterations
-    ) {
-        // TODO: Add rotation compensation for our offset turret.
-        Translation2d targetRelative = targetTranslation.minus(robotPose.getTranslation());
-        ChassisSpeeds targetSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(robotSpeeds, robotPose.getRotation());
-        Translation2d robotSpeedsVector = new Translation2d(
-            targetSpeeds.vxMetersPerSecond,
-            targetSpeeds.vyMetersPerSecond
-        );
-
-        double v = projectileVelocity.in(MetersPerSecond);
-        Translation2d leadVector = targetRelative;
-
-        for (int i = 0; i < iterations; i++) {
-            double launchAngle = Objects.requireNonNullElse(
-                staticAngle,
-                getQuadraticAngles(
-                    Meters.of(leadVector.getNorm()),
-                    Meters.of(1.58),
-                    projectileVelocity
-                ).getSecond()
-            ).in(Radians);
-
-            if ((0.0 < launchAngle) && (launchAngle < (Math.PI / 2.0))) {
-                double nextLeadTime = leadVector.getNorm() / (v * Math.cos(launchAngle));
-                leadVector = targetRelative.minus(robotSpeedsVector.times(nextLeadTime));
-            } else {
-                return targetRelative;
-            }
-        }
-
-        return leadVector;
-    }
-
-    public static Translation2d getLeadedTranslation(
-        Pose2d robotPose,
-        Translation2d targetTranslation,
-        LinearVelocity projectileVelocity,
-        ChassisSpeeds robotSpeeds,
-        Angle... staticAngle
-    ) {
-        return getLeadedTranslation(
-            robotPose,
-            targetTranslation,
-            projectileVelocity,
-            robotSpeeds,
-            (staticAngle.length > 0) ? staticAngle[0] : null,
-            5
         );
     }
 }
