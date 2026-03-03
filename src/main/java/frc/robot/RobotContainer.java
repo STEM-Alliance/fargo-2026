@@ -220,6 +220,14 @@ public final class RobotContainer {
         );
 
         System.out.println(ShotCalculator.getLaunchAngle().in(Degrees));
+
+        // System.out.println(
+        //     MathUtil.clamp(
+        //         ShotCalculator.getLaunchAngle().in(Degrees),
+        //         22.5,
+        //         64.0
+        //     )
+        // );
     }
 
     private final void configureBindings() {
@@ -233,11 +241,24 @@ public final class RobotContainer {
             m_turret.setHoodAngle(Degrees.of(SmartDashboard.getNumber("ShooterAngleDeg", 55.0)));
         }));
 
+        // press a to zero, b to spin up flywheels, and then a to set hood angle.
         m_programmerController.b().onTrue(
-            Commands.runOnce(() -> m_flywheel.setMotorVelocities(RadiansPerSecond.of(-325.0)))
+            Commands.runOnce(() -> m_flywheel.setMotorVelocities(RadiansPerSecond.of(-275.0)))
         ).onFalse(Commands.runOnce(() -> m_flywheel.setMotorVelocities(RadiansPerSecond.of(0.0))));
 
-        m_programmerController.a().onTrue(m_turret.zeroHoodRoutine());
+        m_programmerController.a().whileTrue(
+            Commands.run(() -> {
+                m_turret.setHoodAngle(Degrees.of(
+                    MathUtil.clamp(
+                        ShotCalculator.getLaunchAngle().in(Degrees),
+                        22.5,
+                        64.0
+                    )
+                ));
+            })
+        );
+
+        m_programmerController.x().onTrue(m_turret.zeroHoodRoutine());
         m_programmerController.leftTrigger().whileTrue(Commands.run(() -> {
         m_turret.setHoodMotorVoltage(Volts.of(
             MathUtil.applyDeadband(
@@ -249,7 +270,7 @@ public final class RobotContainer {
 
         if (!RobotConstants.isCompetition()) {
             m_programmerController.rightTrigger().whileTrue(new ControllerDriveCommand(m_programmerController, m_drivetrain));
-            m_programmerController.a().whileTrue(TuningCommands.getWheelRadiusCommand(m_drivetrain));
+            //m_programmerController.a().whileTrue(TuningCommands.getWheelRadiusCommand(m_drivetrain));
             //m_programmerController.b().whileFalse(TuningCommands.getCharacterizationRoutine(m_drivetrain));
         }
 
