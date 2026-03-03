@@ -3,6 +3,8 @@ package frc.robot.subsystems.shooter;
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.shooter.ShooterConfiguration.*;
 
+import java.util.Optional;
+
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -19,11 +21,13 @@ public final class ShotCalculator {
 
     private static final Distance kHubExpansion = Meters.of(0.75);
     private static final Distance kHubTolerance = Meters.of(1.25);
+    private static final LinearVelocity kPassingVelocity = MetersPerSecond.of(9.0);
     private static final Angle kPassingAngle = Degrees.of(22.5);
 
     private static Translation2d m_targetTurretRelative;
     private static Translation2d m_targetRobotRelative;
     private static Translation2d m_targetFieldRelative;
+    private static LinearVelocity m_fuelVelocity;
     private static Angle m_launchAngle;
     private static Time m_timeOfFlight;
 
@@ -31,8 +35,15 @@ public final class ShotCalculator {
 
     public static void update(
         Pose2d robotPose,
+        ChassisSpeeds robotSpeeds
+    ) {
+        update(robotPose, robotSpeeds, Optional.empty());
+    }
+
+    public static void update(
+        Pose2d robotPose,
         ChassisSpeeds robotSpeeds,
-        LinearVelocity fuelVelocity
+        Optional<LinearVelocity> fuelVelocity
     ) {
         boolean passing = !FieldUtils.inFriendlyAllianceZone(robotPose);
 
@@ -40,7 +51,6 @@ public final class ShotCalculator {
         Translation2d targetOffset = getTargetOffset(robotPose, passing);
         Translation2d inducedSpeeds = new Translation2d();//getInducedSpeeds(robotPose, robotSpeeds, turretOffset);
 
-        double v = fuelVelocity.in(MetersPerSecond);
         Translation2d leadedOffset = targetOffset.minus(turretOffset);
 
         // The idea is that the robot is stationary and the target is instead moving with the negative
@@ -48,17 +58,23 @@ public final class ShotCalculator {
         // are estimated and the target offset is shifted by how far it (or the robot) would move.
         for (int i = 0; i < kMaxIterations; i++) {
             if (passing) {
+                m_fuelVelocity = fuelVelocity.orElse(kPassingVelocity);
                 m_launchAngle = kPassingAngle;
             } else {
+                m_fuelVelocity = fuelVelocity.orElse(
+                    ShooterUtils.getOptimalVelocity(Meters.of(leadedOffset.getNorm()))
+                );
+
                 // This might be wrong; we are only accounting for the shooter
                 // velocity and ingoring the induced velocity with the polynomial.
                 // Maybe instead of moving the target and robot we sum the speeds?
                 m_launchAngle = ShooterUtils.getPolynomialAngle(
                     Meters.of(leadedOffset.getNorm()),
-                    fuelVelocity
+                    m_fuelVelocity
                 );
             }
 
+            double v = m_fuelVelocity.in(MetersPerSecond);
             double launchAngle = m_launchAngle.in(Radians);
 
             if ((0.0 <= launchAngle) && (launchAngle < (Math.PI / 2.0))) {
@@ -87,6 +103,7 @@ public final class ShotCalculator {
         Logger.recordOutput("ShotCalculator/TargetTurretRelative", m_targetTurretRelative);
         Logger.recordOutput("ShotCalculator/TargetRobotRelative", m_targetRobotRelative);
         Logger.recordOutput("ShotCalculator/TargetFieldRelative", m_targetFieldRelative);
+        Logger.recordOutput("ShotCalculator/FuelVelocity", m_fuelVelocity);
         Logger.recordOutput("ShotCalculator/LaunchAngle", m_launchAngle);
         Logger.recordOutput("ShotCalculator/TimeOfFlight", m_timeOfFlight);
     }
@@ -101,6 +118,10 @@ public final class ShotCalculator {
 
     public static Translation2d getTargetFieldRelative() {
         return m_targetFieldRelative;
+    }
+
+    public static LinearVelocity getFuelVelocity() {
+        return m_fuelVelocity;
     }
 
     public static Angle getLaunchAngle() {

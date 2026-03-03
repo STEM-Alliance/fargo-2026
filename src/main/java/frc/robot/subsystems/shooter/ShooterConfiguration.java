@@ -78,8 +78,8 @@ public final class ShooterConfiguration {
 
     public static final TalonFXConfiguration kFlywheelMotorsConfiguration = new TalonFXConfiguration()
         .withSlot0(new Slot0Configs()
-            .withKP(0.000).withKI(0.000).withKD(0.000)
-            .withKS(0.000).withKV(0.13).withKA(0.000)
+            .withKP(0.125).withKI(0.000).withKD(0.000)
+            .withKS(0.000).withKV(0.115).withKA(0.000)
         ).withMotionMagic(new MotionMagicConfigs()
             .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(1000.0))
             .withMotionMagicCruiseVelocity(RotationsPerSecond.of(500.0))

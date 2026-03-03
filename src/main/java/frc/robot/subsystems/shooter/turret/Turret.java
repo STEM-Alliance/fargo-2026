@@ -7,6 +7,7 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.shooter.turret.io.TurretIO;
 import frc.robot.subsystems.shooter.turret.io.TurretIO.TurretInputs;
@@ -38,10 +39,14 @@ public final class Turret {
             Commands.waitSeconds(0.05),
             Commands.runOnce(() -> m_turretIO.setHoodMotorVoltage(Volts.of(0.75))), // 2.0
             Commands.waitSeconds(0.1),
-            Commands.waitUntil(() -> Math.abs(m_turretInputs.hoodMotorStatorCurrent.in(Amps)) > 7.5)
+            Commands.waitUntil(() -> Math.abs(m_turretInputs.hoodMotorStatorCurrent.in(Amps)) > 6.0)
         ).finallyDo(() -> {
             m_turretIO.setHoodMotorVoltage(Volts.of(0.0));
             m_turretIO.setHoodMotorPosition(Radians.of(62.0 * 11.838));
+            CommandScheduler.getInstance().schedule(Commands.sequence(
+                Commands.waitSeconds(0.25),
+                Commands.runOnce(() -> m_turretIO.setHoodMotorPosition(Radians.of(62.0 * 11.838)))
+            ));
             //m_turretIO.setHoodAngle(Degrees.of(61.0));
             // at 0 is 62, 22 at full.
             // 62 at 0, 22 at full

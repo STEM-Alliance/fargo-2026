@@ -7,12 +7,12 @@ import edu.wpi.first.units.measure.*;
 
 public final class ShooterUtils {
     private static final double[][] m_angleCoefficients = {
-        {  -71.266188447569920,   92.239379642263190,  -20.485516376989940,    2.209791809586092,   -0.115910911316219,    0.002368592334477},
-        { -161.684430508642980,   60.667295795086860,   -8.891620351789737,    0.581145838107222,   -0.014099175681324,    0.000000000000000},
-        {  -23.929486123536780,    7.360878175921579,   -0.737863730283898,    0.023983217832612,    0.000000000000000,    0.000000000000000},
-        {   -2.364418630234339,    0.452911516474226,   -0.021204463188639,    0.000000000000000,    0.000000000000000,    0.000000000000000},
-        {   -0.091830256743059,    0.008526541591285,    0.000000000000000,    0.000000000000000,    0.000000000000000,    0.000000000000000},
-        {   -0.001521081562816,    0.000000000000000,    0.000000000000000,    0.000000000000000,    0.000000000000000,    0.000000000000000}
+        {  3389.486004565701477,  -397.528277605048572, -1075.503117627168421,    462.622280784542397,  -68.393732133847620,   3.342514698879313},
+        { -2530.778725952642616,  4956.036810751237680, -2338.662316331670808,    403.643062621687022,   -22.40682636493625,   0.000000000000000},
+        { -4250.044565640008841,  3497.284239981390783,  -827.460783399764068,     56.061603770760086,     0.00000000000000,   0.000000000000000},
+        { -1621.282913177519503,   709.343592205059280,   -65.318515504337710,      0.000000000000000,     0.00000000000000,   0.000000000000000},
+        {  -214.969655905166007,    34.829546035331929,     0.0000000000000000,     0.000000000000000,     0.00000000000000,   0.000000000000000},
+        {    -6.489619195975671,     0.000000000000000,     0.0000000000000000,     0.000000000000000,     0.00000000000000,   0.000000000000000}
     };
 
     private static final double[] m_velocityCoefficients = {
@@ -32,6 +32,22 @@ public final class ShooterUtils {
             m_velocityCoefficients,
             flywheelMotorVelocity.in(RadiansPerSecond)
         ));
+    }
+
+    public static AngularVelocity getPolynomialVelocityRoot(LinearVelocity fuelVelocity) {
+        double a = m_velocityCoefficients[2];
+        double b = m_velocityCoefficients[1];
+        double c = m_velocityCoefficients[0] - fuelVelocity.in(MetersPerSecond);
+
+        return RadiansPerSecond.of(
+            (-b + Math.sqrt(Math.pow(b, 2) - (4.0 * a * c))) / (2.0 * a)
+        );
+    }
+
+    public static LinearVelocity getOptimalVelocity(Distance distance) {
+        // Linear equation based off of simulation results, returns the
+        // velocity in the middle of the "valley" of all possible shots.
+        return MetersPerSecond.of(distance.in(Meters) * 1.188 + 4.1556);
     }
 
     public static Pair<Angle, Angle> getQuadraticAngles(

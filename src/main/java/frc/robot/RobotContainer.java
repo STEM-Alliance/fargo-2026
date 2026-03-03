@@ -208,18 +208,34 @@ public final class RobotContainer {
         //     MathUtil.applyDeadband(
         //         -m_programmerController.getRightY(),
         //         0.25
-        //     ) * 13.0
+        //     ) * 2.0
         // ));
 
         ShotCalculator.update(
             m_drivetrain.getEstimatedPose(),
-            m_drivetrain.getChassisSpeeds(),
-                ShooterUtils.getPolynomialVelocity(RadiansPerSecond.of(
-                    filter.calculate(flywheelInputs.rightMotorVelocity.abs(RadiansPerSecond)))
-                )
+            m_drivetrain.getChassisSpeeds()
         );
 
-        System.out.println(ShotCalculator.getLaunchAngle().in(Degrees));
+        if (m_programmerController.b().getAsBoolean()) {
+            // we set the motor velocity to our ideal velocity
+            m_flywheel.setMotorVelocities(ShooterUtils.getPolynomialVelocityRoot(
+                ShotCalculator.getFuelVelocity()
+            ).times(-1.0));
+        } else {
+            // zero if not used
+            m_flywheel.setMotorVoltages(Volts.of(0.0));
+        }
+
+        // now, targetting the optimal velocity, correct to the current velocity.
+        ShotCalculator.update(
+            m_drivetrain.getEstimatedPose(),
+            m_drivetrain.getChassisSpeeds(),
+                Optional.of(ShooterUtils.getPolynomialVelocity(RadiansPerSecond.of(
+                    filter.calculate(flywheelInputs.rightMotorVelocity.abs(RadiansPerSecond)))
+                ))
+        );
+
+        System.out.println("Angle: " + ShotCalculator.getLaunchAngle().in(Degrees) + ", Speed: " + ShotCalculator.getFuelVelocity());
 
         // System.out.println(
         //     MathUtil.clamp(
@@ -242,9 +258,9 @@ public final class RobotContainer {
         }));
 
         // press a to zero, b to spin up flywheels, and then a to set hood angle.
-        m_programmerController.b().onTrue(
-            Commands.runOnce(() -> m_flywheel.setMotorVelocities(RadiansPerSecond.of(-275.0)))
-        ).onFalse(Commands.runOnce(() -> m_flywheel.setMotorVelocities(RadiansPerSecond.of(0.0))));
+        // m_programmerController.b().onTrue(
+        //     Commands.runOnce(() -> m_flywheel.setMotorVelocities(RadiansPerSecond.of(-300.0)))
+        // ).onFalse(Commands.runOnce(() -> m_flywheel.setMotorVelocities(RadiansPerSecond.of(0.0))));
 
         m_programmerController.a().whileTrue(
             Commands.run(() -> {
@@ -279,8 +295,8 @@ public final class RobotContainer {
                 Commands.runOnce(() -> {
                     ShotCalculator.update(
                         m_drivetrain.getEstimatedPose(),
-                        m_drivetrain.getChassisSpeeds(),
-                        MetersPerSecond.of(8.0)
+                        m_drivetrain.getChassisSpeeds()
+                        // MetersPerSecond.of(8.0)
                     );
 
                     Logger.recordOutput("ShotTarget", ShotCalculator.getTargetFieldRelative());
