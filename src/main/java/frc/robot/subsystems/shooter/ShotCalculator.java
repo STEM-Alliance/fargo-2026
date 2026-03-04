@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -69,11 +70,18 @@ public final class ShotCalculator {
                 // This might be wrong; we are only accounting for the shooter
                 // velocity and ingoring the induced velocity with the polynomial.
                 // Maybe instead of moving the target and robot we sum the speeds?
-                m_launchAngle = ShooterUtils.getQuadraticAngles(
+                Pair<Angle, Angle> launchAngles = ShooterUtils.getQuadraticAngles(
                     Meters.of(leadedOffset.getNorm()),
                     Meters.of(Units.inchesToMeters(71.5) - Units.inchesToMeters(27.0) - 0.0075),
                     m_fuelVelocity
-                ).getSecond();
+                );
+
+                // Logic for lower angles than ~55 degrees with low velocities.
+                if (Double.isFinite(launchAngles.getSecond().in(Degrees))) {
+                    m_launchAngle = launchAngles.getSecond();
+                } else {
+                    m_launchAngle = launchAngles.getFirst();
+                }
             }
 
             double v = m_fuelVelocity.in(MetersPerSecond);
