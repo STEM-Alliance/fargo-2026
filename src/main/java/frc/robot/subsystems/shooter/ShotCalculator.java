@@ -10,6 +10,7 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
 
 import frc.robot.utils.FieldUtils;
@@ -62,16 +63,18 @@ public final class ShotCalculator {
                 m_launchAngle = kPassingAngle;
             } else {
                 m_fuelVelocity = fuelVelocity.orElse(
-                    ShooterUtils.getOptimalVelocity(Meters.of(leadedOffset.getNorm()))
+                    // we need to fix this velocity calculation; the quadratic seems to work pretty well.
+                    ShooterUtils.getOptimalVelocity(Meters.of(targetOffset.minus(turretOffset).getNorm() - 1.55))
                 );
 
                 // This might be wrong; we are only accounting for the shooter
                 // velocity and ingoring the induced velocity with the polynomial.
                 // Maybe instead of moving the target and robot we sum the speeds?
-                m_launchAngle = ShooterUtils.getPolynomialAngle(
+                m_launchAngle = ShooterUtils.getQuadraticAngles(
                     Meters.of(leadedOffset.getNorm()),
+                    Meters.of(Units.inchesToMeters(71.5) - Units.inchesToMeters(27.0) - 0.0075),
                     m_fuelVelocity
-                );
+                ).getSecond();
             }
 
             double v = m_fuelVelocity.in(MetersPerSecond);

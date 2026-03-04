@@ -227,13 +227,13 @@ public final class RobotContainer {
         }
 
         // now, targetting the optimal velocity, correct to the current velocity.
-        ShotCalculator.update(
-            m_drivetrain.getEstimatedPose(),
-            m_drivetrain.getChassisSpeeds(),
-                Optional.of(ShooterUtils.getPolynomialVelocity(RadiansPerSecond.of(
-                    filter.calculate(flywheelInputs.rightMotorVelocity.abs(RadiansPerSecond)))
-                ))
-        );
+        // ShotCalculator.update(
+        //     m_drivetrain.getEstimatedPose(),
+        //     m_drivetrain.getChassisSpeeds(),
+        //         Optional.of(ShooterUtils.getPolynomialVelocity(RadiansPerSecond.of(
+        //             filter.calculate(flywheelInputs.rightMotorVelocity.abs(RadiansPerSecond)))
+        //         ))
+        // );
 
         System.out.println("Angle: " + ShotCalculator.getLaunchAngle().in(Degrees) + ", Speed: " + ShotCalculator.getFuelVelocity());
 
@@ -264,13 +264,15 @@ public final class RobotContainer {
 
         m_programmerController.a().whileTrue(
             Commands.run(() -> {
-                m_turret.setHoodAngle(Degrees.of(
-                    MathUtil.clamp(
-                        ShotCalculator.getLaunchAngle().in(Degrees),
-                        22.5,
-                        64.0
-                    )
-                ));
+                if (!Double.isNaN(ShotCalculator.getLaunchAngle().in(Degrees))) {
+                    m_turret.setHoodAngle(Degrees.of(
+                        MathUtil.clamp(
+                            ShotCalculator.getLaunchAngle().in(Degrees),
+                            22.5,
+                            61.0
+                        )
+                    ));
+                }
             })
         );
 
