@@ -63,8 +63,7 @@ public final class ShotCalculator {
                 m_launchAngle = kPassingAngle;
             } else {
                 m_fuelVelocity = fuelVelocity.orElse(
-                    // we need to fix this velocity calculation; the quadratic seems to work pretty well.
-                    ShooterUtils.getOptimalVelocity(Meters.of(targetOffset.minus(turretOffset).getNorm() - 1.55))
+                    ShooterUtils.getOptimalVelocity(Meters.of(leadedOffset.getNorm()))
                 );
 
                 // This might be wrong; we are only accounting for the shooter

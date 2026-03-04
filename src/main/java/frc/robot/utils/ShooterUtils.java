@@ -47,7 +47,7 @@ public final class ShooterUtils {
     public static LinearVelocity getOptimalVelocity(Distance distance) {
         // Linear equation based off of simulation results, returns the
         // velocity in the middle of the "valley" of all possible shots.
-        return MetersPerSecond.of(distance.in(Meters) * 1.188 + 4.1556);
+        return MetersPerSecond.of(distance.in(Meters) * 0.7187 + 4.431);
     }
 
     public static Pair<Angle, Angle> getQuadraticAngles(
@@ -55,17 +55,17 @@ public final class ShooterUtils {
         Distance verticalDistance,
         LinearVelocity velocity
     ) {
-        double v = velocity.in(MetersPerSecond);
+        double v2 = Math.pow(velocity.in(MetersPerSecond), 2);
         double x = horizontalDistance.in(Meters);
         double y = verticalDistance.in(Meters);
 
-        double principal = Math.sqrt(Math.pow(v, 4) - 9.8 * (9.8 * Math.pow(x, 2) + 2.0 * y * Math.pow(v, 2)));
-        Angle principalAngle = Degrees.of(Math.toDegrees(Math.atan((Math.pow(v, 2) + principal) / (9.8 * x))));
-        Angle secondaryAngle = Degrees.of(Math.toDegrees(Math.atan((Math.pow(v, 2) - principal) / (9.8 * x))));
+        double principalRoot = Math.sqrt(Math.pow(v2, 2) - 9.8 * (9.8 * Math.pow(x, 2) + 2.0 * y * v2));
+        double positiveRootAngle = Math.toDegrees(Math.atan((v2 + principalRoot) / (9.8 * x)));
+        double negativeRootAngle = Math.toDegrees(Math.atan((v2 - principalRoot) / (9.8 * x)));
 
         return Pair.of(
-            principalAngle.lt(secondaryAngle) ? principalAngle : secondaryAngle,
-            principalAngle.gt(secondaryAngle) ? principalAngle : secondaryAngle
+            Degrees.of((positiveRootAngle < negativeRootAngle) ? positiveRootAngle : negativeRootAngle),
+            Degrees.of((positiveRootAngle > negativeRootAngle) ? positiveRootAngle : negativeRootAngle)
         );
     }
 }
