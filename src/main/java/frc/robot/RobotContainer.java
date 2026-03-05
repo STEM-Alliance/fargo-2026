@@ -180,9 +180,11 @@ public final class RobotContainer {
         }
 
         if (m_programmerController.a().getAsBoolean()) {
-            m_shooter.setHoodAngle(ShotCalculator.getLaunchAngle());
+            // TODO: Should we require the individual components of the shooter instead of it as a subsystem?
+            // We could have a commmand to run the kicker that requires the kicker, have a hood angle command, etc.
+            Commands.runOnce(() -> m_shooter.setHoodAngle(ShotCalculator.getLaunchAngle()), m_shooter);
         } else {
-            m_shooter.stopHood();
+            Commands.runOnce(m_shooter::stopHood, m_shooter);
         }
 
         RobotVisualizer.updateComponents();

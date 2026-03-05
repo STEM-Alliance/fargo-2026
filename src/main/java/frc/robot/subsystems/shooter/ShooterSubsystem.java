@@ -51,7 +51,7 @@ public final class ShooterSubsystem implements Subsystem {
     public final Command getZeroRoutine() {
         // Parallel group commands share their requirements.
         Command shooterZeroRoutine = Commands.parallel(
-            Commands.runOnce(m_turret::syncTurretMotorEncoder, m_turret),
+            Commands.runOnce(m_turret::syncTurretMotorEncoder, this),
             m_turret.getHoodZeroRoutine()
         ).withName("ShooterZeroRoutine");
 
