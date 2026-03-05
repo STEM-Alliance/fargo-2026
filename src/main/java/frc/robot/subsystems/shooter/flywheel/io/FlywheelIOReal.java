@@ -1,7 +1,7 @@
 package frc.robot.subsystems.shooter.flywheel.io;
 
 import static edu.wpi.first.units.Units.*;
-import static frc.robot.subsystems.shooter.ShooterConfiguration.*;
+import static frc.robot.subsystems.shooter.ShooterConfiguration.FlywheelConfiguration.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusCode;
@@ -17,7 +17,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 
-import frc.robot.subsystems.shooter.flywheel.FlywheelConfig;
+import frc.robot.subsystems.shooter.flywheel.FlywheelHardware;
 
 public class FlywheelIOReal implements FlywheelIO {
     private final TalonFX m_leftMotor;
@@ -36,9 +36,9 @@ public class FlywheelIOReal implements FlywheelIO {
     private final StatusSignal<Voltage> m_rightMotorAppliedVoltage;
     private final StatusSignal<Current> m_rightMotorStatorCurrent;
 
-    public FlywheelIOReal(FlywheelConfig configuration) {
-        m_leftMotor = new TalonFX(configuration.leftMotorID());
-        m_rightMotor = new TalonFX(configuration.rightMotorID());
+    public FlywheelIOReal(FlywheelHardware hardware) {
+        m_leftMotor = new TalonFX(hardware.leftMotorID());
+        m_rightMotor = new TalonFX(hardware.rightMotorID());
 
         m_leftMotor.getConfigurator().apply(kFlywheelMotorsConfiguration);
         m_rightMotor.getConfigurator().apply(kFlywheelMotorsConfiguration);
@@ -48,7 +48,7 @@ public class FlywheelIOReal implements FlywheelIO {
             .withEnableFOC(true);
 
         m_rightMotorSetpoint = new Follower(
-            configuration.leftMotorID(),
+            hardware.leftMotorID(),
             MotorAlignmentValue.Opposed
         ).withUpdateFreqHz(100.0);
 

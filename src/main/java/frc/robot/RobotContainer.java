@@ -6,40 +6,28 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.drivetrain.DrivetrainConfiguration.*;
-import static frc.robot.subsystems.shooter.ShooterConfiguration.kTurretConfiguration;
-import static frc.robot.subsystems.shooter.ShooterConfiguration.kTurretOffset;
+import static frc.robot.subsystems.shooter.ShooterConfiguration.FlywheelConfiguration.*;
+import static frc.robot.subsystems.shooter.ShooterConfiguration.TurretConfiguration.*;
 
 import java.util.Objects;
-import java.util.Optional;
 
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.ironmaple.simulation.motorsims.SimulatedBattery;
 import org.ironmaple.simulation.seasonspecific.rebuilt2026.Arena2026Rebuilt;
-import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnFly;
-import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.photonvision.simulation.SimCameraProperties;
 
-import com.pathplanner.lib.auto.NamedCommands;
-import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.util.PathPlannerLogging;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.filter.LinearFilter;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Alert.AlertType;
-import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -48,7 +36,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 import frc.robot.commands.ControllerDriveCommand;
-import frc.robot.commands.TuningCommands;
 import frc.robot.subsystems.drivetrain.DrivetrainSubsystem;
 import frc.robot.subsystems.drivetrain.gyro.io.GyroIO;
 import frc.robot.subsystems.drivetrain.gyro.io.GyroIOReal;
@@ -56,27 +43,19 @@ import frc.robot.subsystems.drivetrain.gyro.io.GyroIOSim;
 import frc.robot.subsystems.drivetrain.swervemodule.io.SwerveModuleIO;
 import frc.robot.subsystems.drivetrain.swervemodule.io.SwerveModuleIOReal;
 import frc.robot.subsystems.drivetrain.swervemodule.io.SwerveModuleIOSim;
+import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.subsystems.shooter.ShotCalculator;
-import frc.robot.subsystems.shooter.flywheel.FlywheelConfig;
-import frc.robot.subsystems.shooter.flywheel.io.FlywheelIO;
 import frc.robot.subsystems.shooter.flywheel.io.FlywheelIOReal;
-import frc.robot.subsystems.shooter.flywheel.io.FlywheelinputsAutoLogged;
-import frc.robot.subsystems.shooter.turret.Turret;
 import frc.robot.subsystems.shooter.turret.io.TurretIOReal;
-//import frc.robot.subsystems.shooter.turret.io.TurretIOSim;
 import frc.robot.subsystems.vision.VisionSubsystem;
-import frc.robot.subsystems.vision.io.VisionIO;
 import frc.robot.subsystems.vision.io.VisionIOReal;
 import frc.robot.subsystems.vision.io.VisionIOSim;
-import frc.robot.utils.FieldUtils;
-import frc.robot.utils.HubShiftUtil;
-import frc.robot.utils.HubShiftUtil;
 import frc.robot.utils.RobotVisualizer;
 import frc.robot.utils.ShooterUtils;
 
 public final class RobotContainer {
     private final CommandXboxController m_driverController = new CommandXboxController(0);
-    private final CommandXboxController m_programmerController;
+    private final CommandXboxController m_programmerController = new CommandXboxController(5);
 
     private final Field2d m_field = new Field2d();
     private final LoggedDashboardChooser<Command> m_autoChooser = new LoggedDashboardChooser<>("Auto");
@@ -84,13 +63,7 @@ public final class RobotContainer {
 
     private final DrivetrainSubsystem m_drivetrain;
     private final VisionSubsystem m_vision;
-    // intake
-    // shooter
-    // climber
-    private final Turret m_turret;
-    private final FlywheelIO m_flywheel;
-    private final FlywheelinputsAutoLogged flywheelInputs = new FlywheelinputsAutoLogged();
-    private final LinearFilter filter = LinearFilter.movingAverage(10);
+    private final ShooterSubsystem m_shooter;
 
     public RobotContainer() {
         switch (RobotConstants.getBehavior()) {
@@ -110,6 +83,8 @@ public final class RobotContainer {
                         new Rotation3d(0.0, Units.degreesToRadians(20.0), Units.degreesToRadians(-1.5)))
                     )
                 );
+
+                m_shooter = null;
             }
 
             case SIMULATION -> {
@@ -134,6 +109,8 @@ public final class RobotContainer {
                     )
                 );
 
+                m_shooter = null;
+
                 SimulatedArena.overrideInstance(new Arena2026Rebuilt(false));
                 SimulatedArena.getInstance().addDriveTrainSimulation(drivetrainSimulation);
             }
@@ -147,11 +124,6 @@ public final class RobotContainer {
                     new SwerveModuleIO() {}
                 );
 
-                // m_vision = new VisionSubsystem(
-                //     m_drivetrain.getPoseEstimator(),
-                //     new VisionIO() {},
-                //     new VisionIO() {}
-                // );
                 m_vision = new VisionSubsystem(
                     m_drivetrain.getPoseEstimator(),
                     new VisionIOReal("FrontCamera", new Transform3d(
@@ -159,38 +131,32 @@ public final class RobotContainer {
                         new Rotation3d(0.0, Units.degreesToRadians(20.0), Units.degreesToRadians(-1.5)))
                     )
                 );
+
+                m_shooter = new ShooterSubsystem(
+                    null,
+                    new TurretIOReal(kTurretHardware),
+                    new FlywheelIOReal(kFlywheelHardware)
+                );
             }
 
             default -> throw new UnsupportedOperationException();
         }
 
+        // TODO: Look into implementing subsystems like 6328's 2026.
         CommandScheduler.getInstance().registerSubsystem(
             m_vision,
-            m_drivetrain//,
+            m_drivetrain,
             //m_intake,
             //m_indexer,
-            //m_shooter,
+            m_shooter
         );
-
-        if (!RobotConstants.isCompetition()) {
-            m_programmerController = new CommandXboxController(5);
-        } else {
-            m_programmerController = null;
-        }
-
-        m_turret = new Turret(new TurretIOReal(kTurretConfiguration));
-        m_flywheel = new FlywheelIOReal(new FlywheelConfig(22, 23));
 
         configureBindings();
         configurePathPlanner();
         configureDashboard();
-        SmartDashboard.putNumber("ShooterAngleDeg", 55.0);
-        //m_turret.zeroTurretMotor();
 
-        CommandScheduler.getInstance().schedule(
-            Commands.waitUntil(() -> m_turret.getInputs().isTurretEncoderConnected)
-            .andThen(Commands.runOnce(m_turret::syncTurretMotorEncoder))
-        );
+        // After every power-cycle, we re-zero on enable.
+        CommandScheduler.getInstance().schedule(m_shooter.getZeroRoutine());
     }
 
     public final void periodic() {
@@ -200,125 +166,35 @@ public final class RobotContainer {
             RobotController.getBatteryVoltage() : SimulatedBattery.getBatteryVoltage().in(Volts)
         );
 
-        RobotVisualizer.updateComponents();
-        m_turret.periodic();
-        m_flywheel.updateInputs(flywheelInputs);
-        Logger.processInputs("ShooterSubsystem/", flywheelInputs);
-        // m_flywheel.setMotorVoltages(Volts.of(
-        //     MathUtil.applyDeadband(
-        //         -m_programmerController.getRightY(),
-        //         0.25
-        //     ) * 2.0
-        // ));
-
         ShotCalculator.update(
             m_drivetrain.getEstimatedPose(),
             m_drivetrain.getChassisSpeeds()
         );
 
         if (m_programmerController.b().getAsBoolean()) {
-            // we set the motor velocity to our ideal velocity
-            m_flywheel.setMotorVelocities(ShooterUtils.getPolynomialVelocityRoot(
+            m_shooter.setFlywheelVelocity(ShooterUtils.getPolynomialVelocityRoot(
                 ShotCalculator.getFuelVelocity()
-            ).times(-1.0));
+            ));
         } else {
-            // zero if not used
-            m_flywheel.setMotorVoltages(Volts.of(0.0));
+            m_shooter.stopFlywheel();
         }
 
-        // now, targetting the optimal velocity, correct to the current velocity.
-        // ShotCalculator.update(
-        //     m_drivetrain.getEstimatedPose(),
-        //     m_drivetrain.getChassisSpeeds(),
-        //         Optional.of(ShooterUtils.getPolynomialVelocity(RadiansPerSecond.of(
-        //             filter.calculate(flywheelInputs.rightMotorVelocity.abs(RadiansPerSecond)))
-        //         ))
-        // );
+        if (m_programmerController.a().getAsBoolean()) {
+            m_shooter.setHoodAngle(ShotCalculator.getLaunchAngle());
+        } else {
+            m_shooter.stopHood();
+        }
 
+        RobotVisualizer.updateComponents();
         System.out.println("Angle: " + ShotCalculator.getLaunchAngle().in(Degrees) + ", Speed: " + ShotCalculator.getFuelVelocity());
-
-        // System.out.println(
-        //     MathUtil.clamp(
-        //         ShotCalculator.getLaunchAngle().in(Degrees),
-        //         22.5,
-        //         64.0
-        //     )
-        // );
     }
 
     private final void configureBindings() {
         m_drivetrain.setDefaultCommand(new ControllerDriveCommand(m_driverController, m_drivetrain));
 
-        m_driverController.leftTrigger().whileTrue(TuningCommands.getCharacterizationRoutine(m_drivetrain));
-        m_driverController.x().onTrue(Commands.runOnce(() -> m_drivetrain.zeroYaw()));
-        //m_driverController.a().onTrue(Commands.runOnce(() -> m_turret.zeroTurretMotor()));
-        //m_driverController.a().onTrue(Commands.runOnce(() -> m_turret.syncTurretMotor()).ignoringDisable(true));
-        m_programmerController.rightTrigger().whileTrue(Commands.run(() -> {
-            m_turret.setHoodAngle(Degrees.of(SmartDashboard.getNumber("ShooterAngleDeg", 55.0)));
-        }));
+        if (!RobotConstants.isCompetition()) {}
 
-        // press a to zero, b to spin up flywheels, and then a to set hood angle.
-        // m_programmerController.b().onTrue(
-        //     Commands.runOnce(() -> m_flywheel.setMotorVelocities(RadiansPerSecond.of(-300.0)))
-        // ).onFalse(Commands.runOnce(() -> m_flywheel.setMotorVelocities(RadiansPerSecond.of(0.0))));
-
-        m_programmerController.a().whileTrue(
-            Commands.run(() -> {
-                if (!Double.isNaN(ShotCalculator.getLaunchAngle().in(Degrees))) {
-                    m_turret.setHoodAngle(Degrees.of(
-                        MathUtil.clamp(
-                            ShotCalculator.getLaunchAngle().in(Degrees),
-                            22.5,
-                            61.0
-                        )
-                    ));
-                }
-            })
-        );
-
-        m_programmerController.x().onTrue(m_turret.zeroHoodRoutine());
-        m_programmerController.leftTrigger().whileTrue(Commands.run(() -> {
-        m_turret.setHoodMotorVoltage(Volts.of(
-            MathUtil.applyDeadband(
-                -m_programmerController.getLeftY(),
-                0.25
-            ) * 5.0
-        ));
-        }));
-
-        if (!RobotConstants.isCompetition()) {
-            m_programmerController.rightTrigger().whileTrue(new ControllerDriveCommand(m_programmerController, m_drivetrain));
-            //m_programmerController.a().whileTrue(TuningCommands.getWheelRadiusCommand(m_drivetrain));
-            //m_programmerController.b().whileFalse(TuningCommands.getCharacterizationRoutine(m_drivetrain));
-        }
-
-        if (RobotConstants.isSimulated()) {
-            m_driverController.rightTrigger().whileTrue(Commands.repeatingSequence(
-                Commands.runOnce(() -> {
-                    ShotCalculator.update(
-                        m_drivetrain.getEstimatedPose(),
-                        m_drivetrain.getChassisSpeeds()
-                        // MetersPerSecond.of(8.0)
-                    );
-
-                    Logger.recordOutput("ShotTarget", ShotCalculator.getTargetFieldRelative());
-
-                    SimulatedArena.getInstance().addGamePieceProjectile(
-                        new RebuiltFuelOnFly(
-                            m_drivetrain.getSimulationPose().getTranslation().plus(kTurretOffset.rotateBy(m_drivetrain.getSimulationPose().getRotation())),
-                            Translation2d.kZero,
-                            m_drivetrain.getFieldChassisSpeeds(true),
-                            ShotCalculator.getTargetTurretRelative().getAngle(),
-                            Meters.of(0.762),
-                            MetersPerSecond.of(8.0),
-                            ShotCalculator.getLaunchAngle()
-                        )
-                    );
-                }),
-
-                Commands.waitSeconds(0.2)
-            ));
-        }
+        if (RobotConstants.isSimulated()) {}
     }
 
     private final void configurePathPlanner() {
@@ -330,10 +206,7 @@ public final class RobotContainer {
             poses -> m_field.getObject("path").setPoses(poses)
         );
 
-        // NamedCommands.registerCommand(null, Commands.none());
-
         m_autoChooser.addDefaultOption("None", Commands.none());
-        // m_autoChooser.addOption(null, new PathPlannerAuto());
     }
 
     private final void configureDashboard() {

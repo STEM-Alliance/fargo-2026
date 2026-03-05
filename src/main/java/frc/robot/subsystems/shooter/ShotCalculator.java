@@ -1,9 +1,7 @@
 package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.*;
-import static frc.robot.subsystems.shooter.ShooterConfiguration.*;
-
-import java.util.Optional;
+import static frc.robot.subsystems.shooter.ShooterConfiguration.TurretConfiguration.kTurretOffset;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -39,14 +37,6 @@ public final class ShotCalculator {
         Pose2d robotPose,
         ChassisSpeeds robotSpeeds
     ) {
-        update(robotPose, robotSpeeds, Optional.empty());
-    }
-
-    public static void update(
-        Pose2d robotPose,
-        ChassisSpeeds robotSpeeds,
-        Optional<LinearVelocity> fuelVelocity
-    ) {
         boolean passing = !FieldUtils.inFriendlyAllianceZone(robotPose);
 
         Translation2d turretOffset = getTurretOffset(robotPose);
@@ -60,23 +50,21 @@ public final class ShotCalculator {
         // are estimated and the target offset is shifted by how far it (or the robot) would move.
         for (int i = 0; i < kMaxIterations; i++) {
             if (passing) {
-                m_fuelVelocity = fuelVelocity.orElse(kPassingVelocity);
+                m_fuelVelocity = kPassingVelocity;
                 m_launchAngle = kPassingAngle;
             } else {
-                m_fuelVelocity = fuelVelocity.orElse(
-                    ShooterUtils.getOptimalVelocity(Meters.of(leadedOffset.getNorm()))
-                );
+                m_fuelVelocity = ShooterUtils.getOptimalVelocity(Meters.of(leadedOffset.getNorm()));
 
                 // This might be wrong; we are only accounting for the shooter
                 // velocity and ingoring the induced velocity with the polynomial.
                 // Maybe instead of moving the target and robot we sum the speeds?
                 Pair<Angle, Angle> launchAngles = ShooterUtils.getQuadraticAngles(
                     Meters.of(leadedOffset.getNorm()),
-                    Meters.of(Units.inchesToMeters(71.5) - Units.inchesToMeters(27.0) - 0.0075),
+                    Meters.of(Units.inchesToMeters(71.5) - Units.inchesToMeters(27.0) - 0.075),
                     m_fuelVelocity
                 );
 
-                // Logic for lower angles than ~55 degrees with low velocities.
+                // (TODO: Test) Logic for lower angles than ~55 degrees with low velocities.
                 if (Double.isFinite(launchAngles.getSecond().in(Degrees))) {
                     m_launchAngle = launchAngles.getSecond();
                 } else {

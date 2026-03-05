@@ -16,75 +16,87 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorArrangementValue;
 
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
 
-import frc.robot.subsystems.shooter.turret.TurretConfig;
+import frc.robot.subsystems.shooter.flywheel.FlywheelHardware;
+import frc.robot.subsystems.shooter.turret.TurretHardware;
 
 public final class ShooterConfiguration {
-    public static final double kTurretMotorRatio = 25.0;
-    public static final double kTurretRingRatio = 3.5;
-    public static final double kHoodMotorRatio = 60.0; // 60 on stack,
-    public static final Translation2d kTurretOffset = new Translation2d(0.0, Units.inchesToMeters(6.5));
+    public static class KickerConfiguration {}
 
-    public static final Angle kTurretEncoderZero = Radians.of(5.198);
+    public static class TurretConfiguration {
+        public static final double kTurretRingRatio = 3.5;
+        public static final double kTurretMotorRatio = 25.0;
+        public static final double kHoodDegToMotorRot = 11.838;
+        public static final Translation2d kTurretOffset = new Translation2d(0.0, 0.1651);
 
-    // TODO: Record zero
-    public static final TurretConfig kTurretConfiguration = new TurretConfig(
-        21, 6, 24, 1
-    );
+        public static final Angle kTurretEncoderZero = Rotations.of(0.8273);
+        public static final Angle kHoodMotorZero = Rotations.of(62.0 * kHoodDegToMotorRot);
 
-    // TODO: Tune, CTRE software limits + setpoint unwrapping.
-    public static final TalonFXSConfiguration kTurretMotorConfiguration = new TalonFXSConfiguration()
-        .withSlot0(new Slot0Configs()
-            .withKP(5.000).withKI(0.000).withKD(0.000) // P=25
-            .withKS(0.100).withKV(0.11).withKA(0.000) // kV is volts per rps
-            .withGainSchedBehavior(GainSchedBehaviorValue.ZeroOutput)
-        ).withMotionMagic(new MotionMagicConfigs()
-            .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(0.0)) // 350
-            .withMotionMagicCruiseVelocity(RotationsPerSecond.of(0.0)) // 500
-        ).withCurrentLimits(new CurrentLimitsConfigs()
-            .withStatorCurrentLimit(Amps.of(40.0))
-            .withSupplyCurrentLimit(Amps.of(40.0))
-        ).withCommutation(new CommutationConfigs()
-            .withMotorArrangement(MotorArrangementValue.Minion_JST)
-        ).withClosedLoopGeneral(new ClosedLoopGeneralConfigs()
-            .withGainSchedErrorThreshold(Rotations.of(0.5))
-        ).withSoftwareLimitSwitch(new SoftwareLimitSwitchConfigs()
-            .withForwardSoftLimitThreshold(Rotations.of(190.0 * kTurretMotorRatio * kTurretRingRatio))
-            .withReverseSoftLimitThreshold(Rotations.of(-190.0 * kTurretMotorRatio * kTurretRingRatio))
-            .withForwardSoftLimitEnable(true)
-            .withReverseSoftLimitEnable(true)
-        ).withMotorOutput(new MotorOutputConfigs()
-            .withInverted(InvertedValue.Clockwise_Positive)
+        public static final TurretHardware kTurretHardware = new TurretHardware(
+            21, 6, 24
         );
 
-    // TODO: Tune, CTRE & setpoint software limits.
-    public static final TalonFXSConfiguration kHoodMotorConfiguration = new TalonFXSConfiguration()
-        .withSlot0(new Slot0Configs()
-            .withKP(1.000).withKI(0.000).withKD(0.000)
-            .withKS(0.000).withKV(0.010).withKA(0.000)
-        ).withMotionMagic(new MotionMagicConfigs()
-            .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(800.0)) // 1000
-            .withMotionMagicCruiseVelocity(RotationsPerSecond.of(250.0)) // 250
-        ).withCurrentLimits(new CurrentLimitsConfigs()
-            .withStatorCurrentLimit(Amps.of(15.0))
-            .withSupplyCurrentLimit(Amps.of(15.0))
-            .withSupplyCurrentLowerLimit(Amps.of(10.0))
-            .withSupplyCurrentLowerTime(Seconds.of(2.5))
-        ).withCommutation(new CommutationConfigs()
-            .withMotorArrangement(MotorArrangementValue.NEO550_JST)
-        );
+        public static final TalonFXSConfiguration kTurretMotorConfiguration = new TalonFXSConfiguration()
+            .withSlot0(new Slot0Configs()
+                .withKP(5.000).withKI(0.000).withKD(0.000)
+                .withKS(0.100).withKV(0.110).withKA(0.000)
+                .withGainSchedBehavior(GainSchedBehaviorValue.ZeroOutput)
+            ).withMotionMagic(new MotionMagicConfigs()
+                .withMotionMagicCruiseVelocity(RotationsPerSecond.of(500.0))
+                .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(350.0))
+            ).withSoftwareLimitSwitch(new SoftwareLimitSwitchConfigs()
+                .withForwardSoftLimitThreshold(Rotations.of(190.0 * kTurretRingRatio * kTurretMotorRatio))
+                .withForwardSoftLimitEnable(true)
+                .withReverseSoftLimitThreshold(Rotations.of(-190.0 * kTurretRingRatio * kTurretMotorRatio))
+                .withReverseSoftLimitEnable(true)
+            ).withClosedLoopGeneral(new ClosedLoopGeneralConfigs()
+                .withGainSchedErrorThreshold(Rotations.of(0.1))
+            ).withCurrentLimits(new CurrentLimitsConfigs()
+                .withStatorCurrentLimit(Amps.of(40.0))
+                .withSupplyCurrentLimit(Amps.of(40.0))
+                .withSupplyCurrentLowerTime(Seconds.zero())
+            ).withCommutation(new CommutationConfigs()
+                .withMotorArrangement(MotorArrangementValue.Minion_JST)
+            );
 
-    public static final TalonFXConfiguration kFlywheelMotorsConfiguration = new TalonFXConfiguration()
-        .withSlot0(new Slot0Configs()
-            .withKP(0.125).withKI(0.000).withKD(0.000)
-            .withKS(0.000).withKV(0.115).withKA(0.000)
-        ).withMotionMagic(new MotionMagicConfigs()
-            .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(1000.0))
-            .withMotionMagicCruiseVelocity(RotationsPerSecond.of(500.0))
-        ).withCurrentLimits(new CurrentLimitsConfigs()
-            .withStatorCurrentLimit(Amps.of(40.0))
-            .withSupplyCurrentLimit(Amps.of(40.0))
-        );
+        public static final TalonFXSConfiguration kHoodMotorConfiguration = new TalonFXSConfiguration()
+            .withSlot0(new Slot0Configs()
+                .withKP(1.000).withKI(0.000).withKD(0.000)
+                .withKS(0.000).withKV(0.010).withKA(0.000)
+            ).withMotionMagic(new MotionMagicConfigs()
+                .withMotionMagicCruiseVelocity(RotationsPerSecond.of(250.0))
+                .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(800.0))
+            ).withSoftwareLimitSwitch(new SoftwareLimitSwitchConfigs()
+                .withForwardSoftLimitThreshold(Rotations.of(61.0 * kHoodDegToMotorRot))
+                .withForwardSoftLimitEnable(true)
+                .withReverseSoftLimitThreshold(Rotations.of(22.5 * kHoodDegToMotorRot))
+                .withReverseSoftLimitEnable(true)
+            ).withCurrentLimits(new CurrentLimitsConfigs()
+                .withStatorCurrentLimit(Amps.of(15.0))
+                .withSupplyCurrentLimit(Amps.of(15.0))
+                .withSupplyCurrentLowerTime(Seconds.zero())
+            ).withCommutation(new CommutationConfigs()
+                .withMotorArrangement(MotorArrangementValue.NEO550_JST)
+            );
+    }
+
+    public static class FlywheelConfiguration {
+        public static final FlywheelHardware kFlywheelHardware = new FlywheelHardware(22, 23);
+
+        public static final TalonFXConfiguration kFlywheelMotorsConfiguration = new TalonFXConfiguration()
+            .withSlot0(new Slot0Configs()
+                .withKP(0.125).withKI(0.000).withKD(0.000)
+                .withKS(0.000).withKV(0.115).withKA(0.000)
+            ).withMotionMagic(new MotionMagicConfigs()
+                .withMotionMagicCruiseVelocity(RotationsPerSecond.of(500.0))
+                .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(1000.0))
+            ).withCurrentLimits(new CurrentLimitsConfigs()
+                .withStatorCurrentLimit(Amps.of(40.0))
+                .withSupplyCurrentLimit(Amps.of(40.0))
+                .withSupplyCurrentLowerTime(Seconds.zero())
+            ).withMotorOutput(new MotorOutputConfigs()
+                .withInverted(InvertedValue.Clockwise_Positive)
+            );
+    }
 }

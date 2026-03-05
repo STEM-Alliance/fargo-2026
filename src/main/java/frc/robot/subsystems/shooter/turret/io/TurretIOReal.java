@@ -1,7 +1,7 @@
 package frc.robot.subsystems.shooter.turret.io;
 
 import static edu.wpi.first.units.Units.*;
-import static frc.robot.subsystems.shooter.ShooterConfiguration.*;
+import static frc.robot.subsystems.shooter.ShooterConfiguration.TurretConfiguration.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusCode;
@@ -16,7 +16,7 @@ import com.ctre.phoenix6.signals.MotorArrangementValue;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.DigitalInput;
 
-import frc.robot.subsystems.shooter.turret.TurretConfig;
+import frc.robot.subsystems.shooter.turret.TurretHardware;
 import frc.robot.utils.FoyerDevice;
 
 public class TurretIOReal implements TurretIO {
@@ -37,10 +37,10 @@ public class TurretIOReal implements TurretIO {
     private final StatusSignal<Voltage> m_hoodMotorAppliedVoltage;
     private final StatusSignal<Current> m_hoodMotorStatorCurrent;
 
-    public TurretIOReal(TurretConfig configuration) {
+    public TurretIOReal(TurretHardware hardware) {
         //m_turretMotor = new TalonFXS(configuration.turretMotorID());
-        m_hoodMotor = new TalonFXS(configuration.hoodMotorID());
-        m_foyer = new FoyerDevice(configuration.turretEncoderID());
+        m_hoodMotor = new TalonFXS(hardware.hoodMotorID());
+        m_foyer = new FoyerDevice(hardware.turretPorchID());
 
         //m_turretMotor.getConfigurator().apply(kTurretMotorConfiguration);
         m_hoodMotor.getConfigurator().apply(kHoodMotorConfiguration);
@@ -81,6 +81,8 @@ public class TurretIOReal implements TurretIO {
         );
 
         ParentDevice.optimizeBusUtilizationForAll(/*m_turretMotor, */m_hoodMotor);
+
+        m_hoodMotor.setPosition(kHoodMotorZero);
     }
 
     @Override
