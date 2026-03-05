@@ -22,6 +22,7 @@ public final class Turret implements Subsystem {
         m_turretInputs = new TurretInputsAutoLogged();
     }
 
+    @Override
     public final void periodic() {
         m_turretIO.updateInputs(m_turretInputs);
         Logger.processInputs("ShooterSubsystem/Turret", m_turretInputs);

@@ -26,6 +26,12 @@ public final class ShooterSubsystem implements Subsystem {
         m_flywheel = new Flywheel(flywheelIO);
     }
 
+    @Override
+    public final void periodic() {
+        m_turret.periodic();
+        m_flywheel.periodic();
+    }
+
     public final void setHoodAngle(Angle angle) {
         m_turret.setHoodAngle(angle);
     }
