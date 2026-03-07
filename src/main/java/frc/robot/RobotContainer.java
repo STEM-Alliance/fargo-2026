@@ -156,7 +156,7 @@ public final class RobotContainer {
         configureDashboard();
 
         // After every power-cycle, we re-zero on enable.
-        CommandScheduler.getInstance().schedule(m_shooter.getZeroRoutine());
+        CommandScheduler.getInstance().schedule(m_shooter.getZeroRoutine().ignoringDisable(true));
     }
 
     public final void periodic() {
@@ -180,12 +180,16 @@ public final class RobotContainer {
         }
 
         if (m_programmerController.a().getAsBoolean()) {
-            // TODO: Should we require the individual components of the shooter instead of it as a subsystem?
-            // We could have a commmand to run the kicker that requires the kicker, have a hood angle command, etc.
-            Commands.runOnce(() -> m_shooter.setHoodAngle(ShotCalculator.getLaunchAngle()), m_shooter);
-        } else {
-            Commands.runOnce(m_shooter::stopHood, m_shooter);
+            m_shooter.setHoodAngle(ShotCalculator.getLaunchAngle());
         }
+
+        // if (m_programmerController.a().getAsBoolean()) {
+        //     // TODO: Should we require the individual components of the shooter instead of it as a subsystem?
+        //     // We could have a commmand to run the kicker that requires the kicker, have a hood angle command, etc.
+        //     Commands.runOnce(() -> m_shooter.setHoodAngle(ShotCalculator.getLaunchAngle()), m_shooter);
+        // } else {
+        //     Commands.runOnce(m_shooter::stopHood, m_shooter);
+        // }
 
         RobotVisualizer.updateComponents();
         System.out.println("Angle: " + ShotCalculator.getLaunchAngle().in(Degrees) + ", Speed: " + ShotCalculator.getFuelVelocity());
@@ -193,6 +197,7 @@ public final class RobotContainer {
 
     private final void configureBindings() {
         m_drivetrain.setDefaultCommand(new ControllerDriveCommand(m_driverController, m_drivetrain));
+        // m_programmerController.x().onTrue(m_shooter.getZeroRoutine());
 
         if (!RobotConstants.isCompetition()) {}
 

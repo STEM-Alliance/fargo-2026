@@ -37,7 +37,7 @@ public final class ShotCalculator {
         Pose2d robotPose,
         ChassisSpeeds robotSpeeds
     ) {
-        boolean passing = !FieldUtils.inFriendlyAllianceZone(robotPose);
+        boolean passing = false;//!FieldUtils.inFriendlyAllianceZone(robotPose);
 
         Translation2d turretOffset = getTurretOffset(robotPose);
         Translation2d targetOffset = getTargetOffset(robotPose, passing);
@@ -60,7 +60,8 @@ public final class ShotCalculator {
                 // Maybe instead of moving the target and robot we sum the speeds?
                 Pair<Angle, Angle> launchAngles = ShooterUtils.getQuadraticAngles(
                     Meters.of(leadedOffset.getNorm()),
-                    Meters.of(Units.inchesToMeters(71.5) - Units.inchesToMeters(27.0) - 0.075),
+                    // 34.0 is the height from the floor to the top of the flywheel plus the fuel diameter.
+                    Meters.of(Units.inchesToMeters(72.5) - Units.inchesToMeters(34.0)),
                     m_fuelVelocity
                 );
 

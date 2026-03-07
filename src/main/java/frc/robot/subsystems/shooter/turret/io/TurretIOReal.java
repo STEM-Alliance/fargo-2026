@@ -139,7 +139,7 @@ public class TurretIOReal implements TurretIO {
     @Override
     public void setHoodAngle(Angle angle) {
         m_hoodMotor.setControl(m_hoodMotorSetpoint.withPosition(
-            Radians.of(angle.in(Degrees) * 11.838)
+            Rotations.of(angle.in(Degrees) * kHoodDegToMotorRot)
         ));
     }
 

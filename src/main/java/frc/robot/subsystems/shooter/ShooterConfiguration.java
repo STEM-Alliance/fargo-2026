@@ -43,8 +43,8 @@ public final class ShooterConfiguration {
                 .withKS(0.100).withKV(0.110).withKA(0.000)
                 .withGainSchedBehavior(GainSchedBehaviorValue.ZeroOutput)
             ).withMotionMagic(new MotionMagicConfigs()
-                .withMotionMagicCruiseVelocity(RotationsPerSecond.of(500.0))
-                .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(350.0))
+                .withMotionMagicCruiseVelocity(RotationsPerSecond.of(0.0)) // 500
+                .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(0.0)) //350
             ).withSoftwareLimitSwitch(new SoftwareLimitSwitchConfigs()
                 .withForwardSoftLimitThreshold(Rotations.of(190.0 * kTurretRingRatio * kTurretMotorRatio))
                 .withForwardSoftLimitEnable(true)
@@ -65,13 +65,13 @@ public final class ShooterConfiguration {
                 .withKP(1.000).withKI(0.000).withKD(0.000)
                 .withKS(0.000).withKV(0.010).withKA(0.000)
             ).withMotionMagic(new MotionMagicConfigs()
-                .withMotionMagicCruiseVelocity(RotationsPerSecond.of(250.0))
-                .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(800.0))
+                .withMotionMagicCruiseVelocity(RotationsPerSecond.of(250.0)) // 250
+                .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(800.0)) // 800
             ).withSoftwareLimitSwitch(new SoftwareLimitSwitchConfigs()
                 .withForwardSoftLimitThreshold(Rotations.of(61.0 * kHoodDegToMotorRot))
-                .withForwardSoftLimitEnable(true)
+                .withForwardSoftLimitEnable(false)
                 .withReverseSoftLimitThreshold(Rotations.of(22.5 * kHoodDegToMotorRot))
-                .withReverseSoftLimitEnable(true)
+                .withReverseSoftLimitEnable(false)
             ).withCurrentLimits(new CurrentLimitsConfigs()
                 .withStatorCurrentLimit(Amps.of(15.0))
                 .withSupplyCurrentLimit(Amps.of(15.0))
@@ -89,8 +89,8 @@ public final class ShooterConfiguration {
                 .withKP(0.125).withKI(0.000).withKD(0.000)
                 .withKS(0.000).withKV(0.115).withKA(0.000)
             ).withMotionMagic(new MotionMagicConfigs()
-                .withMotionMagicCruiseVelocity(RotationsPerSecond.of(500.0))
-                .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(1000.0))
+                .withMotionMagicCruiseVelocity(RotationsPerSecond.of(500.0)) // 500
+                .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(1000.0)) // 1000
             ).withCurrentLimits(new CurrentLimitsConfigs()
                 .withStatorCurrentLimit(Amps.of(40.0))
                 .withSupplyCurrentLimit(Amps.of(40.0))
