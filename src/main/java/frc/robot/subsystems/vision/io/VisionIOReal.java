@@ -9,7 +9,7 @@ import org.photonvision.targeting.PhotonPipelineResult;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform3d;
-
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.utils.FieldUtils;
 
 public class VisionIOReal implements VisionIO {
@@ -17,6 +17,8 @@ public class VisionIOReal implements VisionIO {
     protected final PhotonPoseEstimator m_poseEstimator;
 
     public VisionIOReal(String cameraName, Transform3d cameraTransform) {
+        setRecording(false);
+
         m_camera = new PhotonCamera(cameraName);
         m_poseEstimator = new PhotonPoseEstimator(FieldUtils.getAprilTagLayout(), cameraTransform);
     }
@@ -28,6 +30,12 @@ public class VisionIOReal implements VisionIO {
         loggableInputs.isConnected = m_camera.isConnected();
         loggableInputs.poseEstimations = getPoseEstimations(cameraResults);
         loggableInputs.aprilTagDetections = getAprilTagDetections(cameraResults);
+    }
+
+    @Override
+    public void setRecording(boolean recording) {
+        // TODO: Implement.
+        // SmartDashboard.putBoolean("" + m_camera.getName(), recording);
     }
 
     private final LoggablePoseEstimation[] getPoseEstimations(List<PhotonPipelineResult> cameraResults) {

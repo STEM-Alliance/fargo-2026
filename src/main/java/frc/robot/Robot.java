@@ -81,16 +81,6 @@ public final class Robot extends LoggedRobot {
         // Loop overruns that only span the duration of a a few loops are trivial.
         CommandScheduler.getInstance().setPeriod(kLoopWatchdogPeriod.in(Seconds));
 
-        // This allows for some warmup time before setting the main thread priority.
-        // If our main thread is too slow, this can cause issues with other threads.
-        // Assuming low enough CPU usage, this will ultimately reduce loop overruns.
-        // Doesn't this comment block look so neatly aligned? It's rather exquisite!
-        // CommandScheduler.getInstance().schedule(Commands.sequence(
-        //     Commands.waitSeconds(10.0),
-        //     Commands.runOnce(() -> Threads.setCurrentThreadPriority(true, 99)),
-        //     Commands.print("Enabled RT thread priority (99) for robot main thread.")
-        // ).ignoringDisable(true));
-
         m_robotContainer = new RobotContainer();
     }
 

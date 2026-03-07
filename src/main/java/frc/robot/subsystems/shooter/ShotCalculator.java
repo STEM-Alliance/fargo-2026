@@ -5,7 +5,6 @@ import static frc.robot.subsystems.shooter.ShooterConfiguration.TurretConfigurat
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -22,7 +21,10 @@ public final class ShotCalculator {
     private static final Distance kHubExpansion = Meters.of(0.75);
     private static final Distance kHubTolerance = Meters.of(1.25);
     private static final LinearVelocity kPassingVelocity = MetersPerSecond.of(9.0);
-    private static final Angle kPassingAngle = Degrees.of(22.5);
+    private static final Angle kPassingAngle = Degrees.of(35.0);
+
+    private static final Distance kVelocityOffset = Meters.of(-0.325);
+    private static final Distance kAngleOffset = Meters.of(0.0);
 
     private static Translation2d m_targetTurretRelative;
     private static Translation2d m_targetRobotRelative;
@@ -41,7 +43,7 @@ public final class ShotCalculator {
 
         Translation2d turretOffset = getTurretOffset(robotPose);
         Translation2d targetOffset = getTargetOffset(robotPose, passing);
-        Translation2d inducedSpeeds = new Translation2d();//getInducedSpeeds(robotPose, robotSpeeds, turretOffset);
+        Translation2d inducedSpeeds = getInducedSpeeds(robotPose, robotSpeeds, turretOffset);
 
         Translation2d leadedOffset = targetOffset.minus(turretOffset);
 
@@ -58,25 +60,22 @@ public final class ShotCalculator {
                 // This might be wrong; we are only accounting for the shooter
                 // velocity and ingoring the induced velocity with the polynomial.
                 // Maybe instead of moving the target and robot we sum the speeds?
-                Pair<Angle, Angle> launchAngles = ShooterUtils.getQuadraticAngles(
-                    Meters.of(leadedOffset.getNorm()),
-                    // 34.0 is the height from the floor to the top of the flywheel plus the fuel diameter.
-                    Meters.of(Units.inchesToMeters(72.5) - Units.inchesToMeters(34.0)),
+                m_launchAngle = ShooterUtils.getQuadraticAngles(
+                    Meters.of(leadedOffset.getNorm()).plus(kAngleOffset),
+                    // 72.0 is the height from the floor to the center of the hub funnel.
+                    // 25.5 is the height frmo the floor to the top of the shooter flywheel.
+                    Meters.of(Units.inchesToMeters(72.0) - Units.inchesToMeters(25.5)),
                     m_fuelVelocity
-                );
+                ).getSecond();
 
-                // (TODO: Test) Logic for lower angles than ~55 degrees with low velocities.
-                if (Double.isFinite(launchAngles.getSecond().in(Degrees))) {
-                    m_launchAngle = launchAngles.getSecond();
-                } else {
-                    m_launchAngle = launchAngles.getFirst();
-                }
+                // After we update the angle for the "optimal" velocity, we apply our offset to correct any distance error.
+                m_fuelVelocity = ShooterUtils.getOptimalVelocity(Meters.of(leadedOffset.getNorm()).plus(kVelocityOffset));
             }
 
             double v = m_fuelVelocity.in(MetersPerSecond);
             double launchAngle = m_launchAngle.in(Radians);
 
-            if ((0.0 <= launchAngle) && (launchAngle < (Math.PI / 2.0))) {
+            //if ((0.0 <= launchAngle) && (launchAngle < (Math.PI / 2.0))) {
                 double nextLeadTime = leadedOffset.getNorm() / (v * Math.cos(launchAngle));
 
                 Translation2d nextLeadedOffset = targetOffset
@@ -92,11 +91,11 @@ public final class ShotCalculator {
 
                     break;
                 }
-            }
+            //}
         }
 
         m_targetTurretRelative = leadedOffset;
-        m_targetRobotRelative = m_targetTurretRelative.plus(turretOffset);
+        m_targetRobotRelative = m_targetTurretRelative.minus(turretOffset);
         m_targetFieldRelative = m_targetRobotRelative.plus(robotPose.getTranslation());
 
         Logger.recordOutput("ShotCalculator/TargetTurretRelative", m_targetTurretRelative);

@@ -26,12 +26,6 @@ public abstract interface IntakeIO {
         public AngularVelocity intakeMotorVelocity = RadiansPerSecond.of(0.0);
         public Voltage intakeMotorAppliedVoltage = Volts.of(0.0);
         public Current intakeMotorStatorCurrent = Amps.of(0.0);
-
-        public boolean isAgitatorMotorConnected = false;
-        public Angle agitatorMotorPosition = Radians.of(0.0);
-        public AngularVelocity agitatorMotorVelocity = RadiansPerSecond.of(0.0);
-        public Voltage agitatorMotorAppliedVoltage = Volts.of(0.0);
-        public Current agitatorMotorStatorCurrent = Amps.of(0.0);
     }
 
     /**
@@ -55,11 +49,4 @@ public abstract interface IntakeIO {
      * @param voltage The voltage to apply to the intake motor.
     */
     public default void setIntakeMotorVoltage(Voltage voltage) {}
-
-    /**
-     * Directly sets the applied voltage to the agitator motor.
-     * 
-     * @param voltage The voltage to apply to the agitator motor.
-    */
-    public default void setAgitatorMotorVoltage(Voltage voltage) {}
 }

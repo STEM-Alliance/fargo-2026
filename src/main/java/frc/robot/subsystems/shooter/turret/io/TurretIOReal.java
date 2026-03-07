@@ -20,17 +20,17 @@ import frc.robot.subsystems.shooter.turret.TurretHardware;
 import frc.robot.utils.FoyerDevice;
 
 public class TurretIOReal implements TurretIO {
-    // protected final TalonFXS m_turretMotor;
+    protected final TalonFXS m_turretMotor;
     protected final TalonFXS m_hoodMotor;
     protected final FoyerDevice m_foyer;
 
     private final MotionMagicVoltage m_turretMotorSetpoint;
     private final MotionMagicVoltage m_hoodMotorSetpoint;
 
-    // private final StatusSignal<Angle> m_turretMotorPosition;
-    // private final StatusSignal<AngularVelocity> m_turretMotorVelocity;
-    // private final StatusSignal<Voltage> m_turretMotorAppliedVoltage;
-    // private final StatusSignal<Current> m_turretMotorStatorCurrent;
+    private final StatusSignal<Angle> m_turretMotorPosition;
+    private final StatusSignal<AngularVelocity> m_turretMotorVelocity;
+    private final StatusSignal<Voltage> m_turretMotorAppliedVoltage;
+    private final StatusSignal<Current> m_turretMotorStatorCurrent;
 
     private final StatusSignal<Angle> m_hoodMotorPosition;
     private final StatusSignal<AngularVelocity> m_hoodMotorVelocity;
@@ -38,25 +38,25 @@ public class TurretIOReal implements TurretIO {
     private final StatusSignal<Current> m_hoodMotorStatorCurrent;
 
     public TurretIOReal(TurretHardware hardware) {
-        //m_turretMotor = new TalonFXS(configuration.turretMotorID());
+        m_turretMotor = new TalonFXS(hardware.turretMotorID());
         m_hoodMotor = new TalonFXS(hardware.hoodMotorID());
         m_foyer = new FoyerDevice(hardware.turretPorchID());
 
-        //m_turretMotor.getConfigurator().apply(kTurretMotorConfiguration);
+        m_turretMotor.getConfigurator().apply(kTurretMotorConfiguration);
         m_hoodMotor.getConfigurator().apply(kHoodMotorConfiguration);
 
         m_turretMotorSetpoint = new MotionMagicVoltage(0.0)
-            .withUpdateFreqHz(100.0);
-            //.withEnableFOC(true);
+            .withUpdateFreqHz(100.0)
+            .withEnableFOC(true);
 
         m_hoodMotorSetpoint = new MotionMagicVoltage(0.0)
-            .withUpdateFreqHz(100.0);
-            //.withEnableFOC(true);
+            .withUpdateFreqHz(100.0)
+            .withEnableFOC(true);
 
-        // m_turretMotorPosition = m_turretMotor.getPosition(false);
-        // m_turretMotorVelocity = m_turretMotor.getVelocity(false);
-        // m_turretMotorAppliedVoltage = m_turretMotor.getMotorVoltage(false);
-        // m_turretMotorStatorCurrent = m_turretMotor.getStatorCurrent(false);
+        m_turretMotorPosition = m_turretMotor.getPosition(false);
+        m_turretMotorVelocity = m_turretMotor.getVelocity(false);
+        m_turretMotorAppliedVoltage = m_turretMotor.getMotorVoltage(false);
+        m_turretMotorStatorCurrent = m_turretMotor.getStatorCurrent(false);
 
         m_hoodMotorPosition = m_hoodMotor.getPosition(false);
         m_hoodMotorVelocity = m_hoodMotor.getVelocity(false);
@@ -65,9 +65,9 @@ public class TurretIOReal implements TurretIO {
 
         BaseStatusSignal.setUpdateFrequencyForAll(
             50.0,
-            // m_turretMotorVelocity,
-            // m_turretMotorAppliedVoltage,
-            // m_turretMotorStatorCurrent,
+            m_turretMotorVelocity,
+            m_turretMotorAppliedVoltage,
+            m_turretMotorStatorCurrent,
 
             m_hoodMotorVelocity,
             m_hoodMotorAppliedVoltage,
@@ -76,28 +76,28 @@ public class TurretIOReal implements TurretIO {
 
         BaseStatusSignal.setUpdateFrequencyForAll(
             100.0,
-            // m_turretMotorPosition,
+            m_turretMotorPosition,
             m_hoodMotorPosition
         );
 
-        ParentDevice.optimizeBusUtilizationForAll(/*m_turretMotor, */m_hoodMotor);
+        ParentDevice.optimizeBusUtilizationForAll(m_turretMotor, m_hoodMotor);
 
-        m_hoodMotor.setPosition(kHoodMotorZero);
+        m_hoodMotor.setPosition(Rotations.of(32.0 * kHoodDegToMotorRot));
     }
 
     @Override
     public void updateInputs(TurretInputs loggableInputs) {
-        // loggableInputs.isTurretMotorConnected = BaseStatusSignal.refreshAll(
-        //     m_turretMotorPosition,
-        //     m_turretMotorVelocity,
-        //     m_turretMotorAppliedVoltage,
-        //     m_turretMotorStatorCurrent
-        // ) == StatusCode.OK;
+        loggableInputs.isTurretMotorConnected = BaseStatusSignal.refreshAll(
+            m_turretMotorPosition,
+            m_turretMotorVelocity,
+            m_turretMotorAppliedVoltage,
+            m_turretMotorStatorCurrent
+        ) == StatusCode.OK;
 
-        // loggableInputs.turretMotorPosition = m_turretMotorPosition.getValue();
-        // loggableInputs.turretMotorVelocity = m_turretMotorVelocity.getValue();
-        // loggableInputs.turretMotorAppliedVoltage = m_turretMotorAppliedVoltage.getValue();
-        // loggableInputs.turretMotorStatorCurrent = m_turretMotorStatorCurrent.getValue();
+        loggableInputs.turretMotorPosition = m_turretMotorPosition.getValue();
+        loggableInputs.turretMotorVelocity = m_turretMotorVelocity.getValue();
+        loggableInputs.turretMotorAppliedVoltage = m_turretMotorAppliedVoltage.getValue();
+        loggableInputs.turretMotorStatorCurrent = m_turretMotorStatorCurrent.getValue();
 
         if (m_foyer.isEncoderConnected()) {
             loggableInputs.isTurretEncoderConnected = true;
@@ -131,9 +131,9 @@ public class TurretIOReal implements TurretIO {
 
     @Override
     public void setTurretAzimuth(Angle azimuth) {
-        // m_turretMotor.setControl(m_turretMotorSetpoint.withPosition(
-        //     azimuth.times(kTurretMotorRatio * kTurretRingRatio)
-        // ));
+        m_turretMotor.setControl(m_turretMotorSetpoint.withPosition(
+            azimuth.times(kTurretMotorRatio * kTurretRingRatio)
+        ));
     }
 
     @Override
@@ -145,7 +145,7 @@ public class TurretIOReal implements TurretIO {
 
     @Override
     public void setTurretMotorPosition(Angle position) {
-        //m_turretMotor.setPosition(position);
+        m_turretMotor.setPosition(position);
     }
 
     @Override

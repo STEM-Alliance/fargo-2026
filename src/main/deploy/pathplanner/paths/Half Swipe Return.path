@@ -3,32 +3,53 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 0.4659371145500324,
-        "y": 6.0
+        "x": 7.66,
+        "y": 4.85
       },
       "prevControl": null,
       "nextControl": {
-        "x": 0.724985488365929,
-        "y": 5.97502717554549
+        "x": 7.75140200755386,
+        "y": 5.59440961373099
       },
       "isLocked": false,
-      "linkedName": "Linked Waypoint 1"
+      "linkedName": "Half Swipe L1 5"
     },
     {
       "anchor": {
-        "x": 1.6425313688871253,
-        "y": 4.895257937153477
+        "x": 6.205,
+        "y": 5.57
       },
       "prevControl": {
-        "x": 1.638213951230931,
-        "y": 5.885681706185577
+        "x": 6.455,
+        "y": 5.57
+      },
+      "nextControl": {
+        "x": 5.955,
+        "y": 5.57
+      },
+      "isLocked": false,
+      "linkedName": "Half Swipe L Return 1"
+    },
+    {
+      "anchor": {
+        "x": 2.5,
+        "y": 5.57
+      },
+      "prevControl": {
+        "x": 2.75,
+        "y": 5.57
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "Linked Waypoint 2"
+      "linkedName": "Half Swipe L Return 2"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 1,
+      "rotationDegrees": 0.0
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],
@@ -42,13 +63,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -20.912547691367667
+    "rotation": 0.0
   },
   "reversed": false,
-  "folder": null,
+  "folder": "Half Swipe",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 0.0
+    "rotation": -90.0
   },
   "useDefaultConstraints": true
 }

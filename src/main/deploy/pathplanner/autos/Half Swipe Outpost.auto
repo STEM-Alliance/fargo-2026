@@ -7,13 +7,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "New New New New Path"
+            "pathName": "Right Half Swipe 1"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Right Half Swipe Return"
           }
         }
       ]
     }
   },
-  "resetOdom": false,
+  "resetOdom": true,
   "folder": null,
   "choreoAuto": false
 }

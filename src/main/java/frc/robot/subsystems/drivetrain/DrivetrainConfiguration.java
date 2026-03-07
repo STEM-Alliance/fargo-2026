@@ -48,10 +48,14 @@ public final class DrivetrainConfiguration {
     );
 
     public static final SwerveModuleConfig[] kModuleConfigurations = new SwerveModuleConfig[] {
-        new SwerveModuleConfig(1, 2, 3, new Translation2d(0.276, 0.276)), // Front Left
-        new SwerveModuleConfig(4, 5, 6, new Translation2d(0.276, -0.276)), // Front Right
-        new SwerveModuleConfig(7, 8, 9, new Translation2d(-0.276, 0.276)), // Back Left
-        new SwerveModuleConfig(10, 11, 12, new Translation2d(-0.276, -0.276)) // Back Right
+        new SwerveModuleConfig(7, 8, 9, new Translation2d(0.29845, 0.22225)),
+        new SwerveModuleConfig(1, 2, 3, new Translation2d(0.29845, -0.22225)),
+        new SwerveModuleConfig(10, 11, 12, new Translation2d(-0.29845, 0.22225)),
+        new SwerveModuleConfig(4, 5, 6, new Translation2d(-0.29845, -0.22225))
+        // new SwerveModuleConfig(1, 2, 3, new Translation2d(0.22225, 0.29845)), // Front Left
+        // new SwerveModuleConfig(4, 5, 6, new Translation2d(0.22225, -0.29845)), // Front Right
+        // new SwerveModuleConfig(7, 8, 9, new Translation2d(-0.22225, 0.29845)), // Back Left
+        // new SwerveModuleConfig(10, 11, 12, new Translation2d(-0.22225, -0.29845)) // Back Right
     };
 
     public static final TalonFXConfiguration kDriveMotorConfiguration = new TalonFXConfiguration()
@@ -68,7 +72,7 @@ public final class DrivetrainConfiguration {
 
     public static final TalonFXConfiguration kAzimuthMotorConfiguration = new TalonFXConfiguration()
         .withSlot0(new Slot0Configs()
-            .withKP(41.49 * 0.5).withKI(0.000).withKD(1.141)
+            .withKP(41.49).withKI(0.000).withKD(1.141)
             .withKS(0.000).withKV(0.000).withKA(0.000) // Exclude KV and KS.
             .withGainSchedBehavior(GainSchedBehaviorValue.ZeroOutput)
         ).withMotionMagic(new MotionMagicConfigs()

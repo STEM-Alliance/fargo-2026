@@ -53,6 +53,12 @@ public final class VisionSubsystem implements Subsystem {
         }
     }
 
+    public final void recordCaptures(boolean recording) {
+        for (var camera : m_cameras) {
+            camera.getFirst().setRecording(recording);
+        }
+    }
+
     private static final Matrix<N3, N1> getPoseStdDevs(LoggableAprilTagDetection[] aprilTags) {
         double totalArea = 0.0;
 

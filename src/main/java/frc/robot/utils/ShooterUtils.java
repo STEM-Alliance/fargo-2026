@@ -16,7 +16,7 @@ public final class ShooterUtils {
     };
 
     private static final double[] m_velocityCoefficients = {
-        -0.07263169, 0.02088818, -0.000004549778
+        1.5324306535, 0.012682714, 0.0000120326
     };
 
     public static Angle getPolynomialAngle(Distance distance, LinearVelocity velocity) {
@@ -47,7 +47,7 @@ public final class ShooterUtils {
     public static LinearVelocity getOptimalVelocity(Distance distance) {
         // Linear equation based off of simulation results, returns the
         // velocity in the middle of the "valley" of all possible shots.
-        return MetersPerSecond.of(distance.in(Meters) * 0.7187 + 4.431);
+        return MetersPerSecond.of(distance.in(Meters) * 0.7953 + 4.396);
     }
 
     public static Pair<Angle, Angle> getQuadraticAngles(

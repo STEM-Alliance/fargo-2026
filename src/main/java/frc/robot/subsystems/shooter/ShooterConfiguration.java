@@ -14,41 +14,51 @@ import com.ctre.phoenix6.configs.TalonFXSConfiguration;
 import com.ctre.phoenix6.signals.GainSchedBehaviorValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorArrangementValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
 
 import frc.robot.subsystems.shooter.flywheel.FlywheelHardware;
 import frc.robot.subsystems.shooter.turret.TurretHardware;
 
 public final class ShooterConfiguration {
-    public static class KickerConfiguration {}
+    public static class KickerConfiguration {
+        public static final TalonFXConfiguration kKickerMotorConfiguration = new TalonFXConfiguration()
+            .withCurrentLimits(new CurrentLimitsConfigs()
+                .withStatorCurrentLimit(Amps.of(80.0))
+                .withSupplyCurrentLimit(Amps.of(40.0))
+                .withSupplyCurrentLowerTime(Seconds.zero())
+            );
+    }
 
     public static class TurretConfiguration {
         public static final double kTurretRingRatio = 3.5;
         public static final double kTurretMotorRatio = 25.0;
-        public static final double kHoodDegToMotorRot = 11.838;
-        public static final Translation2d kTurretOffset = new Translation2d(0.0, 0.1651);
+        public static final double kHoodDegToMotorRot = Units.radiansToRotations(378.363) / 35.0;
+        public static final Translation2d kTurretOffset = new Translation2d(Units.inchesToMeters(-6.5), Units.inchesToMeters(-3.5));
 
-        public static final Angle kTurretEncoderZero = Rotations.of(0.8273);
-        public static final Angle kHoodMotorZero = Rotations.of(62.0 * kHoodDegToMotorRot);
+        public static final Angle kTurretEncoderZero = Radians.of(5.039);
+        public static final Angle kHoodMotorZero = Rotations.of(67.0 * kHoodDegToMotorRot);
 
         public static final TurretHardware kTurretHardware = new TurretHardware(
-            21, 6, 24
+            21, 5, 24
         );
 
         public static final TalonFXSConfiguration kTurretMotorConfiguration = new TalonFXSConfiguration()
+        //-278, +200
             .withSlot0(new Slot0Configs()
-                .withKP(5.000).withKI(0.000).withKD(0.000)
-                .withKS(0.100).withKV(0.110).withKA(0.000)
+                .withKP(7.500).withKI(0.000).withKD(0.000)
+                .withKS(0.000).withKV(0.110).withKA(0.000) // TODO: Add KS, tune KV, up accel.
                 .withGainSchedBehavior(GainSchedBehaviorValue.ZeroOutput)
             ).withMotionMagic(new MotionMagicConfigs()
-                .withMotionMagicCruiseVelocity(RotationsPerSecond.of(0.0)) // 500
-                .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(0.0)) //350
+                .withMotionMagicCruiseVelocity(RotationsPerSecond.of(50.0)) // 500
+                .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(150.0)) //350
             ).withSoftwareLimitSwitch(new SoftwareLimitSwitchConfigs()
-                .withForwardSoftLimitThreshold(Rotations.of(190.0 * kTurretRingRatio * kTurretMotorRatio))
+                .withForwardSoftLimitThreshold(Radians.of(200.0))
                 .withForwardSoftLimitEnable(true)
-                .withReverseSoftLimitThreshold(Rotations.of(-190.0 * kTurretRingRatio * kTurretMotorRatio))
+                .withReverseSoftLimitThreshold(Radians.of(-270.0))
                 .withReverseSoftLimitEnable(true)
             ).withClosedLoopGeneral(new ClosedLoopGeneralConfigs()
                 .withGainSchedErrorThreshold(Rotations.of(0.1))
@@ -65,13 +75,13 @@ public final class ShooterConfiguration {
                 .withKP(1.000).withKI(0.000).withKD(0.000)
                 .withKS(0.000).withKV(0.010).withKA(0.000)
             ).withMotionMagic(new MotionMagicConfigs()
-                .withMotionMagicCruiseVelocity(RotationsPerSecond.of(250.0)) // 250
-                .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(800.0)) // 800
+                .withMotionMagicCruiseVelocity(RotationsPerSecond.of(100.0)) // 250
+                .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(300.0)) // 800
             ).withSoftwareLimitSwitch(new SoftwareLimitSwitchConfigs()
-                .withForwardSoftLimitThreshold(Rotations.of(61.0 * kHoodDegToMotorRot))
-                .withForwardSoftLimitEnable(false)
-                .withReverseSoftLimitThreshold(Rotations.of(22.5 * kHoodDegToMotorRot))
-                .withReverseSoftLimitEnable(false)
+                .withForwardSoftLimitThreshold(Rotations.of(67.0 * kHoodDegToMotorRot))
+                .withForwardSoftLimitEnable(true)
+                .withReverseSoftLimitThreshold(Rotations.of(32.0 * kHoodDegToMotorRot))
+                .withReverseSoftLimitEnable(true)
             ).withCurrentLimits(new CurrentLimitsConfigs()
                 .withStatorCurrentLimit(Amps.of(15.0))
                 .withSupplyCurrentLimit(Amps.of(15.0))
@@ -92,7 +102,7 @@ public final class ShooterConfiguration {
                 .withMotionMagicCruiseVelocity(RotationsPerSecond.of(500.0)) // 500
                 .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(1000.0)) // 1000
             ).withCurrentLimits(new CurrentLimitsConfigs()
-                .withStatorCurrentLimit(Amps.of(40.0))
+                .withStatorCurrentLimit(Amps.of(80.0))
                 .withSupplyCurrentLimit(Amps.of(40.0))
                 .withSupplyCurrentLowerTime(Seconds.zero())
             ).withMotorOutput(new MotorOutputConfigs()

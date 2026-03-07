@@ -28,6 +28,13 @@ public abstract interface VisionIO {
     */
     public default void updateInputs(VisionInputs loggableInputs, Pose2d estimatedPose) {}
 
+    /**
+     * Enables onboard capturing of processed video streams on the coprocessor.
+     * 
+     * @param recording Whether or not to start recording.
+    */
+    public default void setRecording(boolean recording) {}
+
     public static final record LoggablePoseEstimation(Pose3d pose, double timestamp) {}
     public static final record LoggableAprilTagDetection(int id, double area, double distance) {}
 }
