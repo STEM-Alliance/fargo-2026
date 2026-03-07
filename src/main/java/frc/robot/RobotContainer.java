@@ -63,11 +63,10 @@ public final class RobotContainer {
 
     private final DrivetrainSubsystem m_drivetrain;
     private final VisionSubsystem m_vision;
-    private final ShooterSubsystem m_shooter;
 
     public RobotContainer() {
         switch (RobotConstants.getBehavior()) {
-            case COMPETITION -> {
+            case COMPETITION, DEVELOPMENT -> {
                 m_drivetrain = new DrivetrainSubsystem(
                     new GyroIOReal(13),
                     new SwerveModuleIOReal(kModuleConfigurations[0]),
@@ -83,8 +82,6 @@ public final class RobotContainer {
                         new Rotation3d(0.0, Units.degreesToRadians(20.0), Units.degreesToRadians(-1.5)))
                     )
                 );
-
-                m_shooter = null;
             }
 
             case SIMULATION -> {
@@ -109,13 +106,11 @@ public final class RobotContainer {
                     )
                 );
 
-                m_shooter = null;
-
                 SimulatedArena.overrideInstance(new Arena2026Rebuilt(false));
                 SimulatedArena.getInstance().addDriveTrainSimulation(drivetrainSimulation);
             }
 
-            case LOG_REPLAY, DEVELOPMENT -> {
+            case LOG_REPLAY -> {
                 m_drivetrain = new DrivetrainSubsystem(
                     new GyroIO() {},
                     new SwerveModuleIO() {},
@@ -131,12 +126,6 @@ public final class RobotContainer {
                         new Rotation3d(0.0, Units.degreesToRadians(20.0), Units.degreesToRadians(-1.5)))
                     )
                 );
-
-                m_shooter = new ShooterSubsystem(
-                    null,
-                    new TurretIOReal(kTurretHardware),
-                    new FlywheelIOReal(kFlywheelHardware)
-                );
             }
 
             default -> throw new UnsupportedOperationException();
@@ -145,18 +134,12 @@ public final class RobotContainer {
         // TODO: Look into implementing subsystems like 6328's 2026.
         CommandScheduler.getInstance().registerSubsystem(
             m_vision,
-            m_drivetrain,
-            //m_intake,
-            //m_indexer,
-            m_shooter
+            m_drivetrain
         );
 
         configureBindings();
         configurePathPlanner();
         configureDashboard();
-
-        // After every power-cycle, we re-zero on enable.
-        CommandScheduler.getInstance().schedule(m_shooter.getZeroRoutine().ignoringDisable(true));
     }
 
     public final void periodic() {
@@ -166,33 +149,7 @@ public final class RobotContainer {
             RobotController.getBatteryVoltage() : SimulatedBattery.getBatteryVoltage().in(Volts)
         );
 
-        ShotCalculator.update(
-            m_drivetrain.getEstimatedPose(),
-            m_drivetrain.getChassisSpeeds()
-        );
-
-        if (m_programmerController.b().getAsBoolean()) {
-            m_shooter.setFlywheelVelocity(ShooterUtils.getPolynomialVelocityRoot(
-                ShotCalculator.getFuelVelocity()
-            ));
-        } else {
-            m_shooter.stopFlywheel();
-        }
-
-        if (m_programmerController.a().getAsBoolean()) {
-            m_shooter.setHoodAngle(ShotCalculator.getLaunchAngle());
-        }
-
-        // if (m_programmerController.a().getAsBoolean()) {
-        //     // TODO: Should we require the individual components of the shooter instead of it as a subsystem?
-        //     // We could have a commmand to run the kicker that requires the kicker, have a hood angle command, etc.
-        //     Commands.runOnce(() -> m_shooter.setHoodAngle(ShotCalculator.getLaunchAngle()), m_shooter);
-        // } else {
-        //     Commands.runOnce(m_shooter::stopHood, m_shooter);
-        // }
-
         RobotVisualizer.updateComponents();
-        System.out.println("Angle: " + ShotCalculator.getLaunchAngle().in(Degrees) + ", Speed: " + ShotCalculator.getFuelVelocity());
     }
 
     private final void configureBindings() {

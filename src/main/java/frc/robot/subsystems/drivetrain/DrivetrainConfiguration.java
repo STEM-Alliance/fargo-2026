@@ -56,8 +56,8 @@ public final class DrivetrainConfiguration {
 
     public static final TalonFXConfiguration kDriveMotorConfiguration = new TalonFXConfiguration()
         .withSlot0(new Slot0Configs()
-            .withKP(0.100 * 0.5).withKI(0.000).withKD(0.000)
-            .withKS(0.000).withKV(0.114 * 0.5).withKA(0.001)
+            .withKP(0.100).withKI(0.000).withKD(0.000)
+            .withKS(0.000).withKV(0.114).withKA(0.001)
         ).withMotionMagic(new MotionMagicConfigs()
             .withMotionMagicCruiseVelocity(RotationsPerSecond.of(500.0))
             .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(800.0))
@@ -68,7 +68,7 @@ public final class DrivetrainConfiguration {
 
     public static final TalonFXConfiguration kAzimuthMotorConfiguration = new TalonFXConfiguration()
         .withSlot0(new Slot0Configs()
-            .withKP(41.49 * 0.5).withKI(0.000).withKD(1.141)
+            .withKP(41.49).withKI(0.000).withKD(1.141)
             .withKS(0.000).withKV(0.000).withKA(0.000) // Exclude KV and KS.
             .withGainSchedBehavior(GainSchedBehaviorValue.ZeroOutput)
         ).withMotionMagic(new MotionMagicConfigs()
