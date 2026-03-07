@@ -8,12 +8,11 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.Subsystem;
 
 import frc.robot.subsystems.shooter.turret.io.TurretIO;
 import frc.robot.subsystems.shooter.turret.io.TurretInputsAutoLogged;
 
-public final class Turret implements Subsystem {
+public final class Turret {
     private final TurretIO m_turretIO;
     private final TurretInputsAutoLogged m_turretInputs;
 
@@ -22,7 +21,6 @@ public final class Turret implements Subsystem {
         m_turretInputs = new TurretInputsAutoLogged();
     }
 
-    @Override
     public final void periodic() {
         m_turretIO.updateInputs(m_turretInputs);
         Logger.processInputs("ShooterSubsystem/Turret", m_turretInputs);
@@ -48,6 +46,10 @@ public final class Turret implements Subsystem {
 
     public final void stopHoodMotor() {
         m_turretIO.setHoodMotorVoltage(Volts.zero());
+    }
+
+    public final void setHoodVoltage(Voltage voltage) {
+        m_turretIO.setHoodMotorVoltage(voltage);
     }
 
     public final void syncTurretMotorEncoder() {

@@ -138,9 +138,9 @@ public class TurretIOReal implements TurretIO {
 
     @Override
     public void setHoodAngle(Angle angle) {
-        m_hoodMotor.setControl(m_hoodMotorSetpoint.withPosition(
-            Rotations.of(angle.in(Degrees) * kHoodDegToMotorRot)
-        ));
+        // m_hoodMotor.setControl(m_hoodMotorSetpoint.withPosition(
+        //     Rotations.of(angle.in(Degrees) * kHoodDegToMotorRot)
+        // ));
     }
 
     @Override
@@ -155,6 +155,6 @@ public class TurretIOReal implements TurretIO {
 
     @Override
     public void setHoodMotorVoltage(Voltage voltage) {
-        m_hoodMotor.setVoltage(voltage.in(Volts));
+        // m_hoodMotor.setVoltage(voltage.in(Volts));
     }
 }

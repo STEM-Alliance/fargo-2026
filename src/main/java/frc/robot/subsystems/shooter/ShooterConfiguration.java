@@ -22,7 +22,14 @@ import frc.robot.subsystems.shooter.flywheel.FlywheelHardware;
 import frc.robot.subsystems.shooter.turret.TurretHardware;
 
 public final class ShooterConfiguration {
-    public static class KickerConfiguration {}
+    public static class KickerConfiguration {
+        public static final TalonFXConfiguration kKickerMotorConfiguration = new TalonFXConfiguration()
+            .withCurrentLimits(new CurrentLimitsConfigs()
+                .withStatorCurrentLimit(Amps.of(40.0))
+                .withSupplyCurrentLimit(Amps.of(40.0))
+                .withSupplyCurrentLowerTime(Seconds.zero())
+            );
+    }
 
     public static class TurretConfiguration {
         public static final double kTurretRingRatio = 3.5;

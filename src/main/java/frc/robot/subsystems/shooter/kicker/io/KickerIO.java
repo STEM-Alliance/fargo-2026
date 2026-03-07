@@ -23,12 +23,11 @@ import edu.wpi.first.units.measure.Voltage;
 public abstract interface KickerIO {
     @AutoLog
     public static abstract class KickerInputs {
-        public boolean isMotorConnected = false;
-        public Angle motorPosition = Radians.of(0.0);
-        public AngularVelocity motorVelocity = RadiansPerSecond.of(0.0);
-        public AngularAcceleration motorAcceleration = RadiansPerSecondPerSecond.of(0.0);
-        public Voltage motorAppliedVoltage = Volts.of(0.0);
-        public Current motorStatorCurrent = Amps.of(0.0);
+        public boolean isKickerMotorConnected = false;
+        public Angle kickerMotorPosition = Radians.of(0.0);
+        public AngularVelocity kickerMotorVelocity = RadiansPerSecond.of(0.0);
+        public Voltage kickerMotorAppliedVoltage = Volts.of(0.0);
+        public Current kickerMotorStatorCurrent = Amps.of(0.0);
     }
 
     /**
@@ -40,17 +39,10 @@ public abstract interface KickerIO {
     public default void updateInputs(KickerInputs loggableInputs) {}
 
     /**
-     * Sets the kicker motor's onboard velocity setpoint.
-     * 
-     * @param velocity The desired angular velocity of the kicker motor.
-    */
-    public default void setMotorVelocity(AngularVelocity velocity) {}
-
-    /**
      * Directly sets the applied voltage to the kicker motor.
      * <p> This will cancel any onboard closed-loop control.
      * 
      * @param voltage The voltage to apply to the kicker motor.
     */
-    public default void setMotorVoltage(Voltage voltaeg) {}
+    public default void setKickerMotorVoltage(Voltage voltaeg) {}
 }

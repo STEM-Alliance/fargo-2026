@@ -31,6 +31,10 @@ public class Flywheel {
         }
     }
 
+    public final void setMotorVoltages(Voltage voltage) {
+        m_flywheelIO.setMotorVoltages(voltage);
+    }
+
     public final void stopMotors() {
         m_flywheelIO.setMotorVoltages(Volts.zero());
     }

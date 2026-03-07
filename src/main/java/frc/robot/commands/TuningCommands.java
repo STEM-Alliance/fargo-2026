@@ -20,7 +20,7 @@ public final class TuningCommands {
         // do 0.05 pos error and 4pi vel error 6v max input
         var driveMotorRoutine = new SysIdRoutine(
             new SysIdRoutine.Config(
-                null, Volts.of(4.0), null,
+                null, Volts.of(3.0), null,
                 (state) -> Logger.recordOutput("SysIDState1", state.toString())
             ),
             new SysIdRoutine.Mechanism(drivetrain::setSwerveModulesDriveMotorVoltage, null, drivetrain)
@@ -28,7 +28,7 @@ public final class TuningCommands {
 
         var azimuthMotorRoutine = new SysIdRoutine(
             new SysIdRoutine.Config(
-                null, Volts.of(4.0), null,
+                null, Volts.of(3.0), null,
                 (state) -> Logger.recordOutput("SysIDState2", state.toString())
             ),
             new SysIdRoutine.Mechanism(drivetrain::setSwerveModulesAzimuthMotorVoltage, null, drivetrain)
@@ -88,7 +88,7 @@ public final class TuningCommands {
                     }
 
                     // temp
-                    Logger.recordOutput("WheelDiameterMeters", ((currentSpeeds.omegaRadiansPerSecond * 6.12 * Math.hypot(0.276, 0.276)) / (driveMotorVelocities / 4.0)));
+                    Logger.recordOutput("WheelDiameterMeters", ((currentSpeeds.omegaRadiansPerSecond * 6.12 * Math.hypot(0.22225, 0.29845)) / (driveMotorVelocities / 4.0)));
                 },
                 drivetrain
             )
