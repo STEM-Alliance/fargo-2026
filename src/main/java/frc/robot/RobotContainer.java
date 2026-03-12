@@ -19,6 +19,8 @@ import org.ironmaple.simulation.seasonspecific.rebuilt2026.Arena2026Rebuilt;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.photonvision.simulation.SimCameraProperties;
 
+import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.util.PathPlannerLogging;
 
 import edu.wpi.first.math.MathUtil;
@@ -279,7 +281,37 @@ public final class RobotContainer {
             poses -> m_field.getObject("path").setPoses(poses)
         );
 
+        NamedCommands.registerCommand("StartIntaking", Commands.runOnce(() -> {
+            m_intake.setIntakeExtended(true);
+            m_intake.startIntake();
+        }));
+
+        NamedCommands.registerCommand("Shoot", Commands.parallel(
+            Commands.run(() -> {
+                m_shooter.setFlywheelVelocity(ShooterUtils.getPolynomialVelocityRoot(
+                    ShotCalculator.getFuelVelocity()
+                ));
+            }),
+
+            Commands.sequence(
+                Commands.waitSeconds(0.75),
+                Commands.runOnce(() -> {
+                    m_indexer.start();
+                    m_shooter.setKickerRunning(true);
+                })
+            )
+        ));
+
+        NamedCommands.registerCommand("AutoFinish", Commands.runOnce(() -> {
+            m_shooter.stopFlywheel();
+            m_shooter.setKickerRunning(false);
+            m_indexer.stop();
+            m_intake.stopIntake();
+        }));
+
         m_autoChooser.addDefaultOption("None", Commands.none());
+        m_autoChooser.addOption("Left Self Pass", new PathPlannerAuto("self_pass", false));
+        m_autoChooser.addOption("Right Self Pass", new PathPlannerAuto("self_pass", true));
     }
 
     private final void configureDashboard() {
