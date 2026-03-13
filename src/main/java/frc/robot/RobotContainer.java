@@ -231,8 +231,7 @@ public final class RobotContainer {
         ).onFalse(
             Commands.runOnce(() -> {
                 m_intake.stopIntake();
-            })
-        );
+        }));
 
         m_driverController.b().onTrue(
             Commands.runOnce(m_intake::toggleIntakeExtended)
@@ -244,23 +243,22 @@ public final class RobotContainer {
                     m_shooter.setFlywheelVelocity(ShooterUtils.getPolynomialVelocityRoot(
                         ShotCalculator.getFuelVelocity()
                     ));
-                }).until(() -> m_driverController.rightTrigger().getAsBoolean()),
+                }),
 
                 Commands.sequence(
-                    Commands.waitSeconds(0.75),
+                    Commands.waitSeconds(1.5),
                     Commands.runOnce(() -> {
                         m_indexer.start();
                         m_shooter.setKickerRunning(true);
                     })
                 )
+            ).until(() -> !m_driverController.rightTrigger().getAsBoolean()).andThen(
+                Commands.runOnce(() -> {
+                    m_shooter.stopFlywheel();
+                    m_shooter.setKickerRunning(false);
+                    m_indexer.stop();
+                })
             )
-        ).onFalse(
-            Commands.runOnce(() -> {
-                m_shooter.stopFlywheel();
-                m_shooter.setKickerRunning(false);
-                m_indexer.stop();
-                m_intake.setIntakeExtended(true);
-            })
         );
 
         m_driverController.x().onTrue(Commands.runOnce(m_drivetrain::zeroYaw));
@@ -301,13 +299,18 @@ public final class RobotContainer {
             }),
 
             Commands.sequence(
-                Commands.waitSeconds(0.75),
+                Commands.waitSeconds(2.5),
                 Commands.runOnce(() -> {
                     m_indexer.start();
                     m_shooter.setKickerRunning(true);
                 })
             )
-        ));
+        ).until(() -> !DriverStation.isAutonomousEnabled()).finallyDo(() -> {
+            m_shooter.stopFlywheel();
+            m_indexer.stop();
+            m_intake.stopIntake();
+            m_shooter.setKickerRunning(false);
+        }));
 
         NamedCommands.registerCommand("AutoFinish", Commands.runOnce(() -> {
             m_shooter.stopFlywheel();
@@ -320,6 +323,8 @@ public final class RobotContainer {
         m_autoChooser.addOption("Alliance Side", new PathPlannerAuto("Alliance Side", false));
         m_autoChooser.addOption("Left Self Pass", new PathPlannerAuto("self_pass", false));
         m_autoChooser.addOption("Right Self Pass", new PathPlannerAuto("self_pass", true));
+        m_autoChooser.addOption("Shallow Self Pass Left", new PathPlannerAuto("shallow self pass", false));
+        m_autoChooser.addOption("Shallow Self Pass Right", new PathPlannerAuto("shallow self pass", true));
     }
 
     private final void configureDashboard() {

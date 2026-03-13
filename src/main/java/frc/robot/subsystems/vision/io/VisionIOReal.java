@@ -10,6 +10,9 @@ import org.photonvision.targeting.PhotonPipelineResult;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.utils.FieldUtils;
 
 public class VisionIOReal implements VisionIO {
@@ -21,6 +24,10 @@ public class VisionIOReal implements VisionIO {
 
         m_camera = new PhotonCamera(cameraName);
         m_poseEstimator = new PhotonPoseEstimator(FieldUtils.getAprilTagLayout(), cameraTransform);
+        CommandScheduler.getInstance().schedule(Commands.repeatingSequence(
+            Commands.runOnce(m_camera::takeOutputSnapshot),
+            Commands.waitSeconds(5.0)
+        ));
     }
 
     @Override

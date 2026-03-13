@@ -37,9 +37,9 @@ public final class ShooterConfiguration {
         public static final double kTurretRingRatio = 3.5;
         public static final double kTurretMotorRatio = 25.0;
         public static final double kHoodDegToMotorRot = Units.radiansToRotations(378.363) / 35.0;
-        public static final Translation2d kTurretOffset = new Translation2d(Units.inchesToMeters(-6.5), Units.inchesToMeters(3.5));
+        public static final Translation2d kTurretOffset = new Translation2d(Units.inchesToMeters(-6.5), Units.inchesToMeters(-3.5));
 
-        public static final Angle kTurretEncoderZero = Radians.of(3.929);
+        public static final Angle kTurretEncoderZero = Radians.of(2.640);
         public static final Angle kHoodMotorZero = Rotations.of(67.0 * kHoodDegToMotorRot);
 
         public static final TurretHardware kTurretHardware = new TurretHardware(
@@ -56,9 +56,9 @@ public final class ShooterConfiguration {
                 .withMotionMagicCruiseVelocity(RotationsPerSecond.of(50.0)) // 500
                 .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(150.0)) //350
             ).withSoftwareLimitSwitch(new SoftwareLimitSwitchConfigs()
-                .withForwardSoftLimitThreshold(Radians.of(264.0-26.883))
+                .withForwardSoftLimitThreshold(Radians.of(170.0 - 69.0))
                 .withForwardSoftLimitEnable(true)
-                .withReverseSoftLimitThreshold(Radians.of(-310.0-26.883))
+                .withReverseSoftLimitThreshold(Radians.of(-388.0 - 69.0))
                 .withReverseSoftLimitEnable(true)
             ).withClosedLoopGeneral(new ClosedLoopGeneralConfigs()
                 .withGainSchedErrorThreshold(Rotations.of(0.1))

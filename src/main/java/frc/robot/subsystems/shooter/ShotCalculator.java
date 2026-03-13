@@ -20,10 +20,11 @@ public final class ShotCalculator {
 
     private static final Distance kHubExpansion = Meters.of(0.75);
     private static final Distance kHubTolerance = Meters.of(1.25);
-    private static final LinearVelocity kPassingVelocity = MetersPerSecond.of(9.5);
+    private static final LinearVelocity kPassingVelocity = MetersPerSecond.of(10.5);
+    private static final LinearVelocity kPassingVelocity34 = MetersPerSecond.of(11.25);
     private static final Angle kPassingAngle = Degrees.of(35.0);
 
-    private static final Distance kVelocityOffset = Meters.of(-0.35);
+    private static final Distance kVelocityOffset = Meters.of(-0.2875);
     private static final Distance kAngleOffset = Meters.of(0.0);
 
     private static Translation2d m_targetTurretRelative;
@@ -59,7 +60,12 @@ public final class ShotCalculator {
         // are estimated and the target offset is shifted by how far it (or the robot) would move.
         for (int i = 0; i < kMaxIterations; i++) {
             if (passing) {
-                m_fuelVelocity = kPassingVelocity;
+                if (FieldUtils.isBlueAlliance()) {
+                    m_fuelVelocity = (robotPose.getTranslation().getX() >= FieldUtils.kFieldLength.in(Meters) * 3.0 / 5.0) ? kPassingVelocity34 : kPassingVelocity;
+                } else {
+                    m_fuelVelocity = (robotPose.getTranslation().getX() <= FieldUtils.kFieldLength.in(Meters) * 3.0 / 5.0) ? kPassingVelocity34 : kPassingVelocity;
+                }
+
                 m_launchAngle = kPassingAngle;
             } else {
                 m_fuelVelocity = ShooterUtils.getOptimalVelocity(Meters.of(leadedOffset.getNorm()));

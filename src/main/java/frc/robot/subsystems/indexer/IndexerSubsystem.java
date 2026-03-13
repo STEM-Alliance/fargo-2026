@@ -25,7 +25,7 @@ public final class IndexerSubsystem implements Subsystem {
     }
 
     public final void start() {
-        m_indexerIO.setIndexerMotorVoltage(Volts.of(-3.5));
+        m_indexerIO.setIndexerMotorVoltage(Volts.of(-6.0));
     }
 
     public final void stop() {
