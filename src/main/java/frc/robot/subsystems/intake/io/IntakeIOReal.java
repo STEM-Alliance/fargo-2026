@@ -55,8 +55,6 @@ public class IntakeIOReal implements IntakeIO {
         );
 
         m_intakeMotor.optimizeBusUtilization();
-
-        setIntakeExtended(true);
     }
 
     @Override
