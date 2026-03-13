@@ -24,7 +24,7 @@ public final class ShotCalculator {
     private static final LinearVelocity kPassingVelocity34 = MetersPerSecond.of(11.25);
     private static final Angle kPassingAngle = Degrees.of(35.0);
 
-    private static final Distance kVelocityOffset = Meters.of(-0.2875);
+    private static final Distance kVelocityOffset = Meters.of(-0.315);
     private static final Distance kAngleOffset = Meters.of(0.0);
 
     private static Translation2d m_targetTurretRelative;

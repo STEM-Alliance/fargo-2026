@@ -299,7 +299,7 @@ public final class RobotContainer {
             }),
 
             Commands.sequence(
-                Commands.waitSeconds(2.5),
+                Commands.waitSeconds(3.5),
                 Commands.runOnce(() -> {
                     m_indexer.start();
                     m_shooter.setKickerRunning(true);

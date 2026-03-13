@@ -35,7 +35,7 @@
                                 {
                                   "type": "wait",
                                   "data": {
-                                    "waitTime": 5.0
+                                    "waitTime": 2.25
                                   }
                                 },
                                 {
@@ -46,24 +46,24 @@
                                 }
                               ]
                             }
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "type": "parallel",
-                      "data": {
-                        "commands": [
-                          {
-                            "type": "path",
-                            "data": {
-                              "pathName": "self_pass_score"
-                            }
                           },
                           {
-                            "type": "named",
+                            "type": "sequential",
                             "data": {
-                              "name": "Shoot"
+                              "commands": [
+                                {
+                                  "type": "wait",
+                                  "data": {
+                                    "waitTime": 9.0
+                                  }
+                                },
+                                {
+                                  "type": "named",
+                                  "data": {
+                                    "name": "Shoot"
+                                  }
+                                }
+                              ]
                             }
                           }
                         ]
