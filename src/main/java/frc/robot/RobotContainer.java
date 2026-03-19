@@ -19,6 +19,8 @@ import org.ironmaple.simulation.seasonspecific.rebuilt2026.Arena2026Rebuilt;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.photonvision.simulation.SimCameraProperties;
 
+import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.util.PathPlannerLogging;
 
 import edu.wpi.first.math.MathUtil;
@@ -134,7 +136,7 @@ public final class RobotContainer {
 
             case LOG_REPLAY, DEVELOPMENT -> {
                 m_drivetrain = new DrivetrainSubsystem(
-                    new GyroIOReal(13),
+                    new GyroIOReal(0),
                     new SwerveModuleIOReal(kModuleConfigurations[0]),
                     new SwerveModuleIOReal(kModuleConfigurations[1]),
                     new SwerveModuleIOReal(kModuleConfigurations[2]),
@@ -144,12 +146,12 @@ public final class RobotContainer {
                 m_vision = new VisionSubsystem(
                     m_drivetrain.getPoseEstimator(),
                     new VisionIOReal("BackLeftCamera", new Transform3d(
-                        new Translation3d(Units.inchesToMeters(-12.1875), -Units.inchesToMeters(9.3125), Units.inchesToMeters(12.5)),
+                        new Translation3d(Units.inchesToMeters(-12.1875), Units.inchesToMeters(9.3125), Units.inchesToMeters(12.5)),
                         new Rotation3d(0.0, Units.degreesToRadians(-20.0), Units.degreesToRadians(180.0 - 45.0))
                     )),
 
                     new VisionIOReal("BackRightCamera", new Transform3d(
-                        new Translation3d(Units.inchesToMeters(-12.1875), Units.inchesToMeters(9.3125), Units.inchesToMeters(12.5)),
+                        new Translation3d(Units.inchesToMeters(-12.1875), Units.inchesToMeters(-9.3125), Units.inchesToMeters(12.5)),
                         new Rotation3d(0.0, Units.degreesToRadians(-20.0), Units.degreesToRadians(180.0 + 45.0))
                     ))
                 );
@@ -200,6 +202,7 @@ public final class RobotContainer {
 
     public final void periodic() {
         m_field.setRobotPose(m_drivetrain.getEstimatedPose());
+        ShotCalculator.update(m_drivetrain.getEstimatedPose(), m_drivetrain.getChassisSpeeds());
         SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
         SmartDashboard.putNumber("Battery Voltage", RobotConstants.isReal() ?
             RobotController.getBatteryVoltage() : SimulatedBattery.getBatteryVoltage().in(Volts)
@@ -213,6 +216,13 @@ public final class RobotContainer {
         m_drivetrain.setDefaultCommand(new ControllerDriveCommand(m_driverController, m_drivetrain));
         m_shooter.setDefaultCommand(new ShooterControlCommand(m_shooter, m_drivetrain::getEstimatedPose, m_drivetrain::getChassisSpeeds));
 
+        m_driverController.y().whileTrue(Commands.run(() -> {
+            m_shooter.setTurretAzimuth(Degrees.zero());
+            m_shooter.setHoodElevation(Degrees.of(66.0));
+        }, m_shooter));
+
+        // on bumpers diable shooter default command, set voltages, press y to reset controller command?
+
         // make triggers that vibrate controller 10 seconds before shift and 2 seconds before next shift (if scorable)
         m_driverController.leftTrigger().onTrue(
             Commands.runOnce(() -> {
@@ -222,10 +232,9 @@ public final class RobotContainer {
         ).onFalse(
             Commands.runOnce(() -> {
                 m_intake.stopIntake();
-            })
-        );
+        }));
 
-        m_driverController.leftBumper().onTrue(
+        m_driverController.b().onTrue(
             Commands.runOnce(m_intake::toggleIntakeExtended)
         );
 
@@ -235,23 +244,22 @@ public final class RobotContainer {
                     m_shooter.setFlywheelVelocity(ShooterUtils.getPolynomialVelocityRoot(
                         ShotCalculator.getFuelVelocity()
                     ));
-                }).until(() -> m_driverController.rightTrigger().getAsBoolean()),
+                }),
 
                 Commands.sequence(
-                    Commands.waitSeconds(0.75),
+                    Commands.waitSeconds(0.925),
                     Commands.runOnce(() -> {
                         m_indexer.start();
                         m_shooter.setKickerRunning(true);
                     })
                 )
+            ).until(() -> !m_driverController.rightTrigger().getAsBoolean()).andThen(
+                Commands.runOnce(() -> {
+                    m_shooter.stopFlywheel();
+                    m_shooter.setKickerRunning(false);
+                    m_indexer.stop();
+                })
             )
-        ).onFalse(
-            Commands.runOnce(() -> {
-                m_shooter.stopFlywheel();
-                m_shooter.setKickerRunning(false);
-                m_indexer.stop();
-                m_intake.setIntakeExtended(true);
-            })
         );
 
         m_driverController.x().onTrue(Commands.runOnce(m_drivetrain::zeroYaw));
@@ -279,7 +287,79 @@ public final class RobotContainer {
             poses -> m_field.getObject("path").setPoses(poses)
         );
 
+        NamedCommands.registerCommand("StartIntaking", Commands.runOnce(() -> {
+            m_intake.setIntakeExtended(true);
+            m_intake.startIntake();
+        }));
+
+        NamedCommands.registerCommand("StopIntaking", Commands.runOnce(m_intake::stopIntake));
+
+        NamedCommands.registerCommand("ShootQuick", Commands.parallel(
+            Commands.run(() -> {
+                m_shooter.setFlywheelVelocity(ShooterUtils.getPolynomialVelocityRoot(
+                    ShotCalculator.getFuelVelocity()
+                ));
+            }),
+
+            Commands.sequence(
+                Commands.waitSeconds(0.925),
+                Commands.runOnce(() -> {
+                    m_indexer.start();
+                    m_shooter.setKickerRunning(true);
+                })
+            )
+        ).until(() -> !DriverStation.isAutonomousEnabled()).finallyDo(() -> {
+            m_shooter.stopFlywheel();
+            m_indexer.stop();
+            m_intake.stopIntake();
+            m_shooter.setKickerRunning(false);
+        }));
+
+        NamedCommands.registerCommand("Shoot", Commands.parallel(
+            Commands.run(() -> {
+                m_shooter.setFlywheelVelocity(ShooterUtils.getPolynomialVelocityRoot(
+                    ShotCalculator.getFuelVelocity()
+                ));
+            }),
+
+            Commands.sequence(
+                Commands.waitSeconds(3.5),
+                Commands.runOnce(() -> {
+                    m_indexer.start();
+                    m_shooter.setKickerRunning(true);
+                })
+            )
+        ).until(() -> !DriverStation.isAutonomousEnabled()).finallyDo(() -> {
+            m_shooter.stopFlywheel();
+            m_indexer.stop();
+            m_intake.stopIntake();
+            m_shooter.setKickerRunning(false);
+        }));
+
+        NamedCommands.registerCommand("AutoFinish", Commands.runOnce(() -> {
+            m_shooter.stopFlywheel();
+            m_shooter.setKickerRunning(false);
+            m_indexer.stop();
+            m_intake.stopIntake();
+        }));
+
+        NamedCommands.registerCommand("AutoFinished", Commands.runOnce(() -> {
+            m_shooter.stopFlywheel();
+            m_shooter.setKickerRunning(false);
+            m_indexer.stop();
+            m_intake.stopIntake();
+        }));
+
         m_autoChooser.addDefaultOption("None", Commands.none());
+        m_autoChooser.addOption("Alliance Side", new PathPlannerAuto("Alliance Side", false));
+        m_autoChooser.addOption("Left Self Pass", new PathPlannerAuto("self_pass", false));
+        m_autoChooser.addOption("Right Self Pass", new PathPlannerAuto("self_pass", true));
+        m_autoChooser.addOption("Shallow Self Pass Left", new PathPlannerAuto("shallow self pass", false));
+        m_autoChooser.addOption("Shallow Self Pass Right", new PathPlannerAuto("shallow self pass", true));
+        m_autoChooser.addOption("Alliance Side Full", new PathPlannerAuto("alliance side front"));
+        m_autoChooser.addOption("Alliance Side Half", new PathPlannerAuto("alliance side half"));
+        m_autoChooser.addOption("Broken Turret Left", new PathPlannerAuto("broken turret", false));
+        m_autoChooser.addOption("Broken Turret Right", new PathPlannerAuto("broken turret", true));
     }
 
     private final void configureDashboard() {

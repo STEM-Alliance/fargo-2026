@@ -20,10 +20,12 @@ public final class ShotCalculator {
 
     private static final Distance kHubExpansion = Meters.of(0.75);
     private static final Distance kHubTolerance = Meters.of(1.25);
-    private static final LinearVelocity kPassingVelocity = MetersPerSecond.of(9.0);
+    private static final LinearVelocity kPassingNearVelocity = MetersPerSecond.of(8.5);
+    private static final LinearVelocity kPassingMidVelocity = MetersPerSecond.of(9.5); // 3/5
+    private static final LinearVelocity kPassingFarVelocity = MetersPerSecond.of(12.0); // 4/5
     private static final Angle kPassingAngle = Degrees.of(35.0);
 
-    private static final Distance kVelocityOffset = Meters.of(-0.325);
+    private static final Distance kVelocityOffset = Meters.of(-0.2975);
     private static final Distance kAngleOffset = Meters.of(0.0);
 
     private static Translation2d m_targetTurretRelative;
@@ -37,13 +39,20 @@ public final class ShotCalculator {
 
     public static void update(
         Pose2d robotPose,
-        ChassisSpeeds robotSpeeds
+        ChassisSpeeds robotSpeeds,
+        Translation2d... customTarget
     ) {
-        boolean passing = false;//!FieldUtils.inFriendlyAllianceZone(robotPose);
+        boolean passing = !FieldUtils.inFriendlyAllianceZone(robotPose);
 
         Translation2d turretOffset = getTurretOffset(robotPose);
-        Translation2d targetOffset = getTargetOffset(robotPose, passing);
         Translation2d inducedSpeeds = getInducedSpeeds(robotPose, robotSpeeds, turretOffset);
+        Translation2d targetOffset;
+
+        if (customTarget.length > 0) {
+            targetOffset = customTarget[0].minus(robotPose.getTranslation());
+        } else {
+            targetOffset = getTargetOffset(robotPose, passing);
+        }
 
         Translation2d leadedOffset = targetOffset.minus(turretOffset);
 
@@ -52,7 +61,24 @@ public final class ShotCalculator {
         // are estimated and the target offset is shifted by how far it (or the robot) would move.
         for (int i = 0; i < kMaxIterations; i++) {
             if (passing) {
-                m_fuelVelocity = kPassingVelocity;
+                if (FieldUtils.isBlueAlliance()) {
+                    if (robotPose.getTranslation().getX() <= FieldUtils.kFieldLength.in(Meters) * 2.0 / 5.0) {
+                        m_fuelVelocity = kPassingNearVelocity;
+                    } else if (robotPose.getTranslation().getX() <= FieldUtils.kFieldLength.in(Meters) * 3.0 / 5.0) {
+                        m_fuelVelocity = kPassingMidVelocity;
+                    } else {
+                        m_fuelVelocity = kPassingFarVelocity;
+                    }
+                } else {
+                    if (robotPose.getTranslation().getX() >= FieldUtils.kFieldLength.in(Meters) * 3.0 / 5.0) {
+                        m_fuelVelocity = kPassingNearVelocity;
+                    } else if (robotPose.getTranslation().getX() >= FieldUtils.kFieldLength.in(Meters) * 2.0 / 5.0) {
+                        m_fuelVelocity = kPassingMidVelocity;
+                    } else {
+                        m_fuelVelocity = kPassingFarVelocity;
+                    }
+                }
+
                 m_launchAngle = kPassingAngle;
             } else {
                 m_fuelVelocity = ShooterUtils.getOptimalVelocity(Meters.of(leadedOffset.getNorm()));

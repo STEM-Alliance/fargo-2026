@@ -9,22 +9,29 @@ import org.photonvision.targeting.PhotonPipelineResult;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.utils.FieldUtils;
 
 public class VisionIOReal implements VisionIO {
     protected final PhotonCamera m_camera;
     protected final PhotonPoseEstimator m_poseEstimator;
+    protected final Timer m_snapshotTimer = new Timer();
+    protected boolean m_recording = true;
 
     public VisionIOReal(String cameraName, Transform3d cameraTransform) {
-        setRecording(false);
-
         m_camera = new PhotonCamera(cameraName);
         m_poseEstimator = new PhotonPoseEstimator(FieldUtils.getAprilTagLayout(), cameraTransform);
+
+        m_snapshotTimer.start();
     }
 
     @Override
     public void updateInputs(VisionInputs loggableInputs, Pose2d estimatedPose) {
+        if (m_recording && m_snapshotTimer.advanceIfElapsed(5.0)) {
+            m_camera.takeOutputSnapshot();
+            m_camera.takeInputSnapshot();
+        }
+
         List<PhotonPipelineResult> cameraResults = m_camera.getAllUnreadResults();
 
         loggableInputs.isConnected = m_camera.isConnected();
@@ -34,8 +41,7 @@ public class VisionIOReal implements VisionIO {
 
     @Override
     public void setRecording(boolean recording) {
-        // TODO: Implement.
-        // SmartDashboard.putBoolean("" + m_camera.getName(), recording);
+        m_recording = recording;
     }
 
     private final LoggablePoseEstimation[] getPoseEstimations(List<PhotonPipelineResult> cameraResults) {

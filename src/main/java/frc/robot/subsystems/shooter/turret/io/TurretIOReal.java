@@ -82,6 +82,7 @@ public class TurretIOReal implements TurretIO {
 
         ParentDevice.optimizeBusUtilizationForAll(m_turretMotor, m_hoodMotor);
 
+        m_turretMotor.setPosition(Rotations.of(0.0));
         m_hoodMotor.setPosition(Rotations.of(32.0 * kHoodDegToMotorRot));
     }
 
@@ -131,9 +132,9 @@ public class TurretIOReal implements TurretIO {
 
     @Override
     public void setTurretAzimuth(Angle azimuth) {
-        m_turretMotor.setControl(m_turretMotorSetpoint.withPosition(
-            azimuth.times(kTurretMotorRatio * kTurretRingRatio)
-        ));
+        // m_turretMotor.setControl(m_turretMotorSetpoint.withPosition(
+        //     azimuth.times(kTurretMotorRatio * kTurretRingRatio)
+        // ));
     }
 
     @Override
@@ -145,7 +146,7 @@ public class TurretIOReal implements TurretIO {
 
     @Override
     public void setTurretMotorPosition(Angle position) {
-        m_turretMotor.setPosition(position);
+        // m_turretMotor.setPosition(position);
     }
 
     @Override

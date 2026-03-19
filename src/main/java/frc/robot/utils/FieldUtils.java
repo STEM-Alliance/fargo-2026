@@ -112,7 +112,7 @@ public final class FieldUtils {
 
     public static Translation2d getPassingTarget(Pose2d robotPose, Distance expansion, Distance directTolerance) {
         if (!inlineWithHubs(robotPose, directTolerance.in(Meters))) {
-            return new Translation2d(0.0, kFieldWidthCenter.in(Meters));
+            return new Translation2d(isBlueAlliance() ? 0.0 : kFieldLength.in(Meters), kFieldWidthCenter.in(Meters));
         } else {
             double hubSideLengths = kHubWidth.plus(expansion).in(Meters) / 2.0;
             Translation2d hubRelative = robotPose.getTranslation().minus(getAllianceHub());

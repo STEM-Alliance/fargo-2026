@@ -60,8 +60,17 @@ public final class Turret {
     }
 
     public final Command getTurretZeroRoutine() {
-        return Commands.waitUntil(() -> m_turretInputs.isTurretEncoderConnected)
-            .andThen(Commands.runOnce(this::syncTurretMotorEncoder));
+        return Commands.none();
+        // return Commands.waitUntil(() -> m_turretInputs.isTurretEncoderConnected).withTimeout(Seconds.of(5.0))
+        //     .andThen(Commands.runOnce(() -> {
+        //         if (m_turretInputs.isTurretEncoderConnected) {
+        //             syncTurretMotorEncoder();
+        //         } else {
+        //             m_turretIO.setTurretMotorPosition(Rotations.zero());
+        //         }
+        //     }));
+        // return Commands.waitUntil(() -> m_turretInputs.isTurretEncoderConnected)
+        //     .andThen(Commands.runOnce(this::syncTurretMotorEncoder));
     }
 
     public final Command getHoodZeroRoutine() {
