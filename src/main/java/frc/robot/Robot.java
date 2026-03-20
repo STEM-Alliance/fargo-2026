@@ -18,6 +18,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import com.ctre.phoenix6.SignalLogger;
 
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -80,6 +81,9 @@ public final class Robot extends LoggedRobot {
 
         // Loop overruns that only span the duration of a a few loops are trivial.
         CommandScheduler.getInstance().setPeriod(kLoopWatchdogPeriod.in(Seconds));
+
+        // We have degraded batteries and the 6.75v brownout voltage is very safe.
+        RobotController.setBrownoutVoltage(kBrownoutVoltage);
 
         m_robotContainer = new RobotContainer();
     }

@@ -1,16 +1,18 @@
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.*;
 
-import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.units.measure.*;
 
 public final class RobotConstants {
     // There are some small tweaks that may want to be made between development
     // and during a competition, like disabling some NetworkTables information.
     public static final RobotBehavior kRealBehavior = RobotBehavior.DEVELOPMENT;
     public static final RobotBehavior kSimulationBehavior = RobotBehavior.SIMULATION;
+
     public static final Time kLoopPeriod = Seconds.of(0.02);
     public static final Time kLoopWatchdogPeriod = Seconds.of(0.08);
+    public static final Voltage kBrownoutVoltage = Volts.of(5.25);
 
     public enum RobotBehavior {
         COMPETITION,
