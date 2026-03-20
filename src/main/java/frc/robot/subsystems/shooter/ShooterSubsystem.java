@@ -2,12 +2,11 @@ package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.*;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
-import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
+
 import frc.robot.subsystems.shooter.flywheel.Flywheel;
 import frc.robot.subsystems.shooter.flywheel.io.FlywheelIO;
 import frc.robot.subsystems.shooter.kicker.Kicker;
@@ -38,11 +37,7 @@ public final class ShooterSubsystem implements Subsystem {
     }
 
     public final void setKickerRunning(boolean running) {
-        if (running) {
-            m_kicker.start();
-        } else {
-            m_kicker.stop();
-        }
+        m_kicker.setRunning(running);
     }
 
     public final void setTurretAzimuth(Angle azimuth) {
@@ -61,6 +56,10 @@ public final class ShooterSubsystem implements Subsystem {
 
     public final void stopFlywheel() {
         m_flywheel.setMotorVoltages(Volts.zero());
+    }
+
+    public final Flywheel getFlywheel() {
+        return m_flywheel;
     }
 
     public final Command getTurretZeroRoutine() {

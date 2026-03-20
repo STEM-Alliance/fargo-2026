@@ -43,8 +43,8 @@ public final class DrivetrainConfiguration {
     public static final AngularVelocity kMaxAngularSpeed = RotationsPerSecond.of(0.5);
 
     public static final PPHolonomicDriveController kPathplannerController = new PPHolonomicDriveController(
-        new PIDConstants(8.0, 0.0, 0.0, 0.0),
-        new PIDConstants(4.0, 0.0, 0.0, 0.0)
+        new PIDConstants(3.0, 0.0, 0.0, 0.0),
+        new PIDConstants(2.0, 0.0, 0.0, 0.0)
     );
 
     public static final SwerveModuleConfig[] kModuleConfigurations = new SwerveModuleConfig[] {
@@ -87,14 +87,14 @@ public final class DrivetrainConfiguration {
         );
 
     // clean up below
-    public static final Pose2d kSimulationStartingPose = new Pose2d(7.0, 2.75, Rotation2d.fromDegrees(150.0));
+    public static final Pose2d kSimulationStartingPose = new Pose2d(4.5, (8.0692 - 7.3), Rotation2d.fromDegrees(-180.0));
     // maybe use static initializer like in camera sim io
 
     @SuppressWarnings("unchecked")
     public static final DriveTrainSimulationConfig kSimulationConfig = new DriveTrainSimulationConfig(
         Pounds.of(135.0), // Robot mass
-        Meters.of(0.965), // Bumper length (x)
-        Meters.of(0.855), // Bumper length (y)
+        Meters.of(0.940), // Bumper length (x)
+        Meters.of(0.800), // Bumper length (y)
         Meters.of(kModuleConfigurations[0].moduleTranslation().getX() * 2.0), // Drivetrain x
         Meters.of(kModuleConfigurations[0].moduleTranslation().getY() * 2.0), // Drivetrain y
         COTS.ofPigeon2(),

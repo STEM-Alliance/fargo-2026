@@ -5,11 +5,12 @@ import static edu.wpi.first.units.Units.*;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.units.measure.*;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 
 import frc.robot.subsystems.shooter.flywheel.io.FlywheelIO;
 import frc.robot.subsystems.shooter.flywheel.io.FlywheelinputsAutoLogged;
 
-public class Flywheel {
+public class Flywheel implements Subsystem {
     private final FlywheelIO m_flywheelIO;
     private final FlywheelinputsAutoLogged m_flywheelInputs;
 

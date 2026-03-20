@@ -29,14 +29,26 @@ public final class HubShiftUtil {
         if (currentHubShift.isPresent()) {
             Alliance autoWinner = getAutoWinner().orElse(FieldUtils.getAlliance());
 
-            if (autoWinner == FieldUtils.getAlliance()) {
+            if (currentHubShift.get().activeHub == ActiveHub.BOTH) {
+                return true;
+            } else if (autoWinner == FieldUtils.getAlliance()) {
                 return currentHubShift.get().activeHub == ActiveHub.AUTO_WINNER;
             } else {
                 return currentHubShift.get().activeHub == ActiveHub.AUTO_LOOSER;
             }
         } else {
-            return DriverStation.isEnabled();
+            return false;
         }
+    }
+
+    public static Optional<HubShift> getHubShiftAtTime(int endTimeElapsed) {
+        for (HubShift hubShift : HubShift.values()) {
+            if (endTimeElapsed <= hubShift.endTimeElapsed) {
+                return Optional.of(hubShift);
+            }
+        }
+
+        return Optional.empty();
     }
 
     public static Optional<HubShift> getCurrentHubShift() {
@@ -66,6 +78,7 @@ public final class HubShiftUtil {
             return Optional.of((int)Math.floor(140.0 - periodTime + 20.0));
         }
     }
+
     public static Optional<Alliance> getAutoWinner() {
         String gameData = DriverStation.getGameSpecificMessage();
         char autoWinner = (gameData.length() > 0) ? gameData.charAt(0) : ' ';
@@ -90,10 +103,26 @@ public final class HubShiftUtil {
         public final int endTimeElapsed;
         public final ActiveHub activeHub;
 
+        private static final HubShift[] values = values();
+
         private HubShift(int startTimeElapsed, int endTimeElapsed, ActiveHub activeHub) {
             this.startTimeElapsed = startTimeElapsed;
             this.endTimeElapsed = endTimeElapsed;
             this.activeHub = activeHub;
+        }
+
+        public Optional<HubShift> getNext() {
+            if ((this.ordinal() + 1) < values.length) {
+                return Optional.of(values[this.ordinal() + 1]);
+            } else {
+                return Optional.empty();
+            }
+        }
+
+        public boolean isActive(boolean wonAuto) {
+            return (wonAuto && activeHub == ActiveHub.AUTO_WINNER) ||
+                   (wonAuto && activeHub == ActiveHub.BOTH) ||
+                   (!wonAuto && activeHub == ActiveHub.AUTO_LOOSER);
         }
     }
 

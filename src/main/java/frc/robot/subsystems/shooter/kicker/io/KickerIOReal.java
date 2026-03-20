@@ -1,17 +1,17 @@
 package frc.robot.subsystems.shooter.kicker.io;
 
-import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.shooter.ShooterConfiguration.KickerConfiguration.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
-import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.units.measure.*;
 
 public class KickerIOReal implements KickerIO {
     private final TalonFX m_kickerMotor;
+    private final VoltageOut m_kickerMotorSetpoint;
 
     private final StatusSignal<Angle> m_kickerMotorPosition;
     private final StatusSignal<AngularVelocity> m_kickerMotorVelocity;
@@ -21,12 +21,16 @@ public class KickerIOReal implements KickerIO {
     public KickerIOReal(int kickerMotorID) {
         m_kickerMotor = new TalonFX(kickerMotorID);
 
-        m_kickerMotor.getConfigurator().apply(kKickerMotorConfiguration);
+        m_kickerMotorSetpoint = new VoltageOut(0.0)
+            .withUpdateFreqHz(0.0)
+            .withEnableFOC(true);
 
         m_kickerMotorPosition = m_kickerMotor.getPosition(false);
         m_kickerMotorVelocity = m_kickerMotor.getVelocity(false);
         m_kickerMotorAppliedVoltage = m_kickerMotor.getMotorVoltage(false);
         m_kickerMotorStatorCurrent = m_kickerMotor.getStatorCurrent(false);
+
+        m_kickerMotor.getConfigurator().apply(kKickerMotorConfiguration);
 
         BaseStatusSignal.setUpdateFrequencyForAll(
             50.0,
@@ -36,7 +40,7 @@ public class KickerIOReal implements KickerIO {
             m_kickerMotorStatorCurrent
         );
 
-        m_kickerMotor.optimizeBusUtilization();
+        m_kickerMotor.optimizeBusUtilization(0.0);
     }
 
     @Override
@@ -46,7 +50,7 @@ public class KickerIOReal implements KickerIO {
             m_kickerMotorVelocity,
             m_kickerMotorAppliedVoltage,
             m_kickerMotorStatorCurrent
-        ) == StatusCode.OK;
+        ).isOK();
 
         loggableInputs.kickerMotorPosition = m_kickerMotorPosition.getValue();
         loggableInputs.kickerMotorVelocity = m_kickerMotorVelocity.getValue();
@@ -56,6 +60,6 @@ public class KickerIOReal implements KickerIO {
 
     @Override
     public final void setKickerMotorVoltage(Voltage voltage) {
-        m_kickerMotor.setVoltage(voltage.in(Volts));
+        m_kickerMotor.setControl(m_kickerMotorSetpoint.withOutput(voltage));
     }
 }

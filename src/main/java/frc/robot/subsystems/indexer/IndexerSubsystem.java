@@ -24,11 +24,9 @@ public final class IndexerSubsystem implements Subsystem {
         Logger.processInputs("IndexerSubsystem", m_indexerInputs);
     }
 
-    public final void start() {
-        m_indexerIO.setIndexerMotorVoltage(Volts.of(-5.0));
-    }
-
-    public final void stop() {
-        m_indexerIO.setIndexerMotorVoltage(Volts.zero());
+    public final void setRunning(boolean running) {
+        m_indexerIO.setIndexerMotorVoltage(
+            running ? Volts.of(5.0) : Volts.zero()
+        );
     }
 }

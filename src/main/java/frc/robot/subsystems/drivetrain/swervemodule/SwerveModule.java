@@ -49,6 +49,11 @@ public final class SwerveModule {
         m_swerveModuleIO.setWheelAzimuth(Radians.of(desiredState.angle.getRadians()));
     }
 
+    public final boolean shouldOptimize(SwerveModuleState desiredState) {
+        Rotation2d delta = desiredState.angle.minus(getWheelAzimuthAsRotation());
+        return Math.abs(delta.getDegrees()) > 90.0;
+    }
+
     public final void setDriveFFAccel(double gain) {
         m_swerveModuleIO.setDriveFFAccel(gain);
     }

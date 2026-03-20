@@ -1,5 +1,6 @@
 package frc.robot.subsystems.drivetrain;
 
+import static edu.wpi.first.units.Units.Amps;
 import static frc.robot.subsystems.drivetrain.DrivetrainConfiguration.*;
 
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
@@ -16,6 +17,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -86,7 +88,7 @@ public final class DrivetrainSubsystem implements Subsystem {
             (speeds, feedforwards) -> drive(speeds, false, false, feedforwards.accelerationsMPSSq()),
             kPathplannerController,
             robotConfig,
-            () -> {return !FieldUtils.isBlueAlliance();},
+            () -> !FieldUtils.isBlueAlliance(),
             this
 
         );

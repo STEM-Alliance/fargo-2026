@@ -42,7 +42,7 @@ public class GyroIOReal implements GyroIO {
             m_yawRate
         );
 
-        m_pigeon.optimizeBusUtilization();
+        m_pigeon.optimizeBusUtilization(0.0);
     }
 
     @Override

@@ -32,9 +32,7 @@ public abstract interface IndexerIO {
 
     /**
      * Directly sets the applied voltage to the indexer motor.
-     * <p> This will cancel any onboard closed-loop control.
-     * 
      * @param voltage The voltage to apply to the indexer motor.
     */
-    public default void setIndexerMotorVoltage(Voltage voltaeg) {}
+    public default void setIndexerMotorVoltage(Voltage voltage) {}
 }

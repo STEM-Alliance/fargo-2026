@@ -1,18 +1,10 @@
 package frc.robot.subsystems.shooter.kicker.io;
 
-import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Radians;
-import static edu.wpi.first.units.Units.RadiansPerSecond;
-import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
-import static edu.wpi.first.units.Units.Volts;
+import static edu.wpi.first.units.Units.*;
 
 import org.littletonrobotics.junction.AutoLog;
 
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularAcceleration;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.units.measure.*;
 
 /**
  * The generic kicker IO interface (with AdvantageKit support).
@@ -44,5 +36,5 @@ public abstract interface KickerIO {
      * 
      * @param voltage The voltage to apply to the kicker motor.
     */
-    public default void setKickerMotorVoltage(Voltage voltaeg) {}
+    public default void setKickerMotorVoltage(Voltage voltage) {}
 }

@@ -1,12 +1,7 @@
 package frc.robot.subsystems.drivetrain.swervemodule.io;
 
-import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-import static edu.wpi.first.units.Units.Volts;
-import static frc.robot.subsystems.drivetrain.DrivetrainConfiguration.kAzimuthMotorConfiguration;
-import static frc.robot.subsystems.drivetrain.DrivetrainConfiguration.kAzimuthMotorRatio;
-import static frc.robot.subsystems.drivetrain.DrivetrainConfiguration.kDriveMotorConfiguration;
-import static frc.robot.subsystems.drivetrain.DrivetrainConfiguration.kDriveMotorToWheelFactor;
+import static edu.wpi.first.units.Units.*;
+import static frc.robot.subsystems.drivetrain.DrivetrainConfiguration.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusCode;
@@ -46,7 +41,7 @@ public class SwerveModuleIOReal implements SwerveModuleIO {
     private final StatusSignal<Angle> m_azimuthEncoderPosition;
     private final StatusSignal<AngularVelocity> m_azimuthEncoderVelocity;
 
-    private Voltage driveFFAccel = Volts.of(0.0);
+    private AngularAcceleration m_driveFF = RotationsPerSecondPerSecond.zero();
 
     public SwerveModuleIOReal(SwerveModuleConfig configuration) {
         m_driveMotor = new TalonFX(configuration.driveMotorID());
@@ -107,7 +102,7 @@ public class SwerveModuleIOReal implements SwerveModuleIO {
             m_azimuthEncoderPosition
         );
 
-        ParentDevice.optimizeBusUtilizationForAll(m_driveMotor, m_azimuthMotor, m_azimuthEncoder);
+        ParentDevice.optimizeBusUtilizationForAll(0.0, m_driveMotor, m_azimuthMotor, m_azimuthEncoder);
     }
 
     @Override
@@ -153,14 +148,16 @@ public class SwerveModuleIOReal implements SwerveModuleIO {
 
     @Override
     public void setDriveFFAccel(double gain) {
-        driveFFAccel = Volts.of(gain * kDriveMotorConfiguration.Slot0.kA);
+        m_driveFF = RotationsPerSecondPerSecond.of(
+            (kDriveMotorRatio * gain) / (Math.PI * kWheelDiameter.in(Meters))
+        );
     }
 
     @Override
     public void setWheelVelocity(LinearVelocity velocity) {
         m_driveMotor.setControl(m_driveMotorSetpoint.withVelocity(
             RotationsPerSecond.of(velocity.in(MetersPerSecond) / kDriveMotorToWheelFactor)
-        ).withFeedForward(driveFFAccel));
+        ).withAcceleration(m_driveFF));
     }
 
     @Override

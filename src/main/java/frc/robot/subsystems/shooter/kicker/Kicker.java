@@ -21,11 +21,9 @@ public final class Kicker {
         Logger.processInputs("ShooterSubsystem/Kicker", m_kickerInputs);
     }
 
-    public final void start() {
-        m_kickerIO.setKickerMotorVoltage(Volts.of(12.0));
-    }
-
-    public final void stop() {
-        m_kickerIO.setKickerMotorVoltage(Volts.zero());
+    public final void setRunning(boolean running) {
+        m_kickerIO.setKickerMotorVoltage(
+            running ? Volts.of(12.0) : Volts.zero()
+        );
     }
 }

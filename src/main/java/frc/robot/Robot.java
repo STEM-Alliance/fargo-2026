@@ -4,7 +4,7 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.*;
 import static frc.robot.RobotConstants.*;
 
 import org.ironmaple.simulation.SimulatedArena;
@@ -19,11 +19,9 @@ import com.ctre.phoenix6.SignalLogger;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.utils.HubShiftUtil;
 
 public final class Robot extends LoggedRobot {
     private final RobotContainer m_robotContainer;

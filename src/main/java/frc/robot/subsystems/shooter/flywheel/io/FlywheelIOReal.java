@@ -4,13 +4,10 @@ import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.shooter.ShooterConfiguration.FlywheelConfiguration.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
-import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
+import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.MotorAlignmentValue;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -23,8 +20,8 @@ public class FlywheelIOReal implements FlywheelIO {
     private final TalonFX m_leftMotor;
     private final TalonFX m_rightMotor;
 
-    private final MotionMagicVelocityVoltage m_leftMotorSetpoint;
-    private final Follower m_rightMotorSetpoint;
+    private final VelocityTorqueCurrentFOC m_leftMotorSetpoint;
+    private final VelocityTorqueCurrentFOC m_rightMotorSetpoint;
 
     private final StatusSignal<Angle> m_leftMotorPosition;
     private final StatusSignal<AngularVelocity> m_leftMotorVelocity;
@@ -40,17 +37,11 @@ public class FlywheelIOReal implements FlywheelIO {
         m_leftMotor = new TalonFX(hardware.leftMotorID());
         m_rightMotor = new TalonFX(hardware.rightMotorID());
 
-        m_leftMotor.getConfigurator().apply(kFlywheelMotorsConfiguration);
-        m_rightMotor.getConfigurator().apply(kFlywheelMotorsConfiguration);
+        m_leftMotor.getConfigurator().apply(kLeftFlywheelMotorConfiguration);
+        m_rightMotor.getConfigurator().apply(kRightFlywheelMotorConfiguration);
 
-        m_leftMotorSetpoint = new MotionMagicVelocityVoltage(0.0)
-            .withUpdateFreqHz(100.0)
-            .withEnableFOC(true);
-
-        m_rightMotorSetpoint = new Follower(
-            hardware.leftMotorID(),
-            MotorAlignmentValue.Opposed
-        ).withUpdateFreqHz(100.0);
+        m_leftMotorSetpoint = new VelocityTorqueCurrentFOC(0.0).withUpdateFreqHz(250.0);
+        m_rightMotorSetpoint = new VelocityTorqueCurrentFOC(0.0).withUpdateFreqHz(250.0);
 
         m_leftMotorPosition = m_leftMotor.getPosition(false);
         m_leftMotorVelocity = m_leftMotor.getVelocity(false);
@@ -65,22 +56,17 @@ public class FlywheelIOReal implements FlywheelIO {
         BaseStatusSignal.setUpdateFrequencyForAll(
             50.0,
             m_leftMotorPosition,
-            m_leftMotorStatorCurrent,
-            m_rightMotorPosition,
-            m_rightMotorStatorCurrent
-        );
-
-        BaseStatusSignal.setUpdateFrequencyForAll(
-            100.0,
             m_leftMotorVelocity,
             m_leftMotorAppliedVoltage,
+            m_leftMotorStatorCurrent,
+
+            m_rightMotorPosition,
             m_rightMotorVelocity,
+            m_rightMotorAppliedVoltage,
             m_rightMotorStatorCurrent
         );
 
-        ParentDevice.optimizeBusUtilizationForAll(m_leftMotor, m_rightMotor);
-
-        m_rightMotor.setControl(m_rightMotorSetpoint);
+        ParentDevice.optimizeBusUtilizationForAll(0.0, m_leftMotor, m_rightMotor);
     }
 
     @Override
@@ -90,7 +76,7 @@ public class FlywheelIOReal implements FlywheelIO {
             m_leftMotorVelocity,
             m_leftMotorAppliedVoltage,
             m_leftMotorStatorCurrent
-        ) == StatusCode.OK;
+        ).isOK();
 
         loggableInputs.leftMotorPosition = m_leftMotorPosition.getValue();
         loggableInputs.leftMotorVelocity = m_leftMotorVelocity.getValue();
@@ -102,7 +88,7 @@ public class FlywheelIOReal implements FlywheelIO {
             m_rightMotorVelocity,
             m_rightMotorAppliedVoltage,
             m_rightMotorStatorCurrent
-        ) == StatusCode.OK;
+        ).isOK();
 
         loggableInputs.rightMotorPosition = m_rightMotorPosition.getValue();
         loggableInputs.rightMotorVelocity = m_rightMotorVelocity.getValue();
@@ -112,13 +98,13 @@ public class FlywheelIOReal implements FlywheelIO {
 
     @Override
     public final void setMotorVelocities(AngularVelocity velocity) {
-        // The follower will automatically update with the left motor.
         m_leftMotor.setControl(m_leftMotorSetpoint.withVelocity(velocity));
+        m_rightMotor.setControl(m_rightMotorSetpoint.withVelocity(velocity));
     }
 
     @Override
     public final void setMotorVoltages(Voltage voltage) {
-        // The follower will automatically update with the left motor.
         m_leftMotor.setVoltage(voltage.in(Volts));
+        m_rightMotor.setVoltage(voltage.in(Volts));
     }
 }

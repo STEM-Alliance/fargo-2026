@@ -11,6 +11,7 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXSConfiguration;
+import com.ctre.phoenix6.configs.VoltageConfigs;
 import com.ctre.phoenix6.signals.GainSchedBehaviorValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorArrangementValue;
@@ -94,19 +95,28 @@ public final class ShooterConfiguration {
     public static class FlywheelConfiguration {
         public static final FlywheelHardware kFlywheelHardware = new FlywheelHardware(22, 23);
 
-        public static final TalonFXConfiguration kFlywheelMotorsConfiguration = new TalonFXConfiguration()
+        public static final TalonFXConfiguration kLeftFlywheelMotorConfiguration = new TalonFXConfiguration()
             .withSlot0(new Slot0Configs()
+                // Tune kS for stationary motion.
+                // Set flywheel to setpoint, tune kV and then kP until no oscillation.
+                // Then lower and adjust kP down again for oscillation.
                 .withKP(0.125).withKI(0.000).withKD(0.000)
                 .withKS(0.000).withKV(0.115).withKA(0.000)
-            ).withMotionMagic(new MotionMagicConfigs()
-                .withMotionMagicCruiseVelocity(RotationsPerSecond.of(500.0)) // 500
-                .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(1000.0)) // 1000
             ).withCurrentLimits(new CurrentLimitsConfigs()
-                .withStatorCurrentLimit(Amps.of(80.0))
-                .withSupplyCurrentLimit(Amps.of(40.0))
-                .withSupplyCurrentLowerTime(Seconds.zero())
+                .withStatorCurrentLimit(Amps.of(120.0))
+                .withSupplyCurrentLimit(Amps.of(60.0))
+                .withSupplyCurrentLowerLimit(Amps.of(40.0))
+                .withSupplyCurrentLowerTime(Seconds.of(2.5))
+            ).withVoltage(new VoltageConfigs()
+                .withPeakForwardVoltage(Volts.of(10.0))
+                .withPeakReverseVoltage(Volts.of(-10.0))
             ).withMotorOutput(new MotorOutputConfigs()
                 .withInverted(InvertedValue.Clockwise_Positive)
+            );
+
+        public static final TalonFXConfiguration kRightFlywheelMotorConfiguration = kLeftFlywheelMotorConfiguration
+            .withMotorOutput(new MotorOutputConfigs()
+                .withInverted(InvertedValue.CounterClockwise_Positive)
             );
     }
 }

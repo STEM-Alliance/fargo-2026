@@ -4,7 +4,9 @@ import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Seconds;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXSConfiguration;
+import com.ctre.phoenix6.signals.InvertedValue;
 
 public final class IntakeConfiguration {
     public static final IntakeHardware kIntakeHardware = new IntakeHardware(
@@ -16,5 +18,7 @@ public final class IntakeConfiguration {
             .withStatorCurrentLimit(Amps.of(60.0))
             .withSupplyCurrentLimit(Amps.of(40.0))
             .withSupplyCurrentLowerTime(Seconds.zero())
+        ).withMotorOutput(new MotorOutputConfigs()
+            .withInverted(InvertedValue.Clockwise_Positive)
         );
 }

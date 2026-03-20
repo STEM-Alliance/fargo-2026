@@ -27,6 +27,7 @@ public final class Turret {
     }
 
     public final void setTurretAzimuth(Angle azimuth) {
+        // We want to be able to wrap this to +-270.
         double azimuthDegrees = azimuth.in(Degrees);
 
         if (Math.abs(azimuthDegrees) > 190.0) {

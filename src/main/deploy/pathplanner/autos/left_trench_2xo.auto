@@ -7,19 +7,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Half Swipe 1"
+            "pathName": "left_trench_2xo.0"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 3.0
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Half Swipe Return"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Depo 1"
+            "pathName": "left_trench_2xo.1"
           }
         }
       ]
@@ -27,5 +27,5 @@
   },
   "resetOdom": true,
   "folder": null,
-  "choreoAuto": false
+  "choreoAuto": true
 }

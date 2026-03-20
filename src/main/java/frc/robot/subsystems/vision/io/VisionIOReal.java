@@ -16,7 +16,7 @@ public class VisionIOReal implements VisionIO {
     protected final PhotonCamera m_camera;
     protected final PhotonPoseEstimator m_poseEstimator;
     protected final Timer m_snapshotTimer = new Timer();
-    protected boolean m_recording = true;
+    protected boolean m_recording = false;
 
     public VisionIOReal(String cameraName, Transform3d cameraTransform) {
         m_camera = new PhotonCamera(cameraName);
