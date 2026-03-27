@@ -4,33 +4,37 @@ import static edu.wpi.first.units.Units.*;
 
 import java.util.function.Supplier;
 
-import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
+import frc.robot.subsystems.indexer.IndexerSubsystem;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.subsystems.shooter.ShotCalculator;
-import frc.robot.utils.FieldUtils;
 
 public final class ShooterControlCommand extends Command {
     private final ShooterSubsystem m_shooter;
+    private final IndexerSubsystem m_indexer;
     private final Supplier<Pose2d> m_robotPoseSupplier;
     private final Supplier<ChassisSpeeds> m_robotSpeedsSupplier;
+    private final Debouncer m_autoShootDebouncer = new Debouncer(0.5, DebounceType.kRising);
 
     private boolean m_autoShootEnabled = false;
 
     public ShooterControlCommand(
         ShooterSubsystem shooter,
+        IndexerSubsystem indexer,
         Supplier<Pose2d> robotPoseSupplier,
         Supplier<ChassisSpeeds> robotSpeedsSupplier,
         Trigger toggleAutoShootTrigger
     ) {
         m_shooter = shooter;
+        m_indexer = indexer;
         m_robotPoseSupplier = robotPoseSupplier;
         m_robotSpeedsSupplier = robotSpeedsSupplier;
 
@@ -42,7 +46,32 @@ public final class ShooterControlCommand extends Command {
     }
 
     @Override
-    public final void initialize() {}
+    public final void initialize() {
+        new Trigger(() -> m_autoShootEnabled && isScheduled() && ShotCalculator.shouldStartShooting() &&
+            m_autoShootDebouncer.calculate(ShotCalculator.isShotPossible(m_robotPoseSupplier.get())
+        )).whileTrue(Commands.parallel(
+            // TODO: get shooting velocity like in new shotcalculator
+            Commands.runOnce(() -> m_shooter.setFlywheelVelocity(null)),
+            Commands.sequence(
+                // TODO: Check velocity with the same timeout.
+                Commands.waitSeconds(0.925),
+                Commands.runOnce(() -> {
+                    m_indexer.setRunning(true);
+                    m_shooter.setKickerRunning(true);
+                })
+            )
+        ).finallyDo(() -> {
+            // We always stop indexing to stop shooting
+            m_indexer.setRunning(false);
+
+            // If we stopped because our shift ended, then we spin down the flywheel
+            // We leave the kicker running as well to avoid jamming the shooter.
+            if (!ShotCalculator.shouldStartShooting() || !m_autoShootEnabled || !isScheduled()) {
+                m_shooter.stopFlywheel();
+                m_shooter.setKickerRunning(false);
+            }
+        }));
+    }
 
     @Override
     public final void execute() {
@@ -51,29 +80,20 @@ public final class ShooterControlCommand extends Command {
             m_robotSpeedsSupplier.get()
         );
 
-        Angle turretAzimuth;
-        if (FieldUtils.isBlueAlliance()) {
-            turretAzimuth = Degrees.of(
-                ShotCalculator.getTargetTurretRelative().getAngle().unaryMinus()
-                .plus(m_robotPoseSupplier.get().getRotation()).getDegrees()
-            );
-        } else {
-            turretAzimuth = Degrees.of(
-                ShotCalculator.getTargetTurretRelative().getAngle().unaryMinus()
-                .plus(m_robotPoseSupplier.get().getRotation())
-                .plus(Rotation2d.fromDegrees(5.0)).getDegrees()
-            );
-        }
-
-        // TODO: Move angle clamping and verification to the turret pseudo-subsystem.
-        Angle hoodElevation = Degrees.of(
-            MathUtil.clamp(ShotCalculator.getLaunchAngle().in(Degrees), 32.0, 67.0)
+        Angle turretAzimuth = Degrees.of(
+            ShotCalculator.getTargetTurretRelative().getAngle().unaryMinus()
+            .plus(m_robotPoseSupplier.get().getRotation()).getDegrees()
         );
 
-        // since our hood can move so quickly, it should always be "stowed" unless we are trying to shoot.
+        Angle hoodElevation;
+        if (m_shooter.isShooting()) {
+            hoodElevation = ShotCalculator.getLaunchAngle();
+        } else {
+            hoodElevation = Degrees.of(90.0);
+        }
+
         m_shooter.setTurretAzimuth(turretAzimuth);
         m_shooter.setHoodElevation(hoodElevation);
-        //m_shooter.setHoodElevation(Degrees.of(SmartDashboard.getNumber("HoodElevation", 60.0)));
     }
 
     @Override

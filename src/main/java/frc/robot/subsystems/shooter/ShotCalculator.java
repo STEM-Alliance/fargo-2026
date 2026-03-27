@@ -6,12 +6,14 @@ import static frc.robot.subsystems.shooter.ShooterConfiguration.TurretConfigurat
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
 
 import frc.robot.utils.FieldUtils;
+import frc.robot.utils.HubShiftUtil;
 import frc.robot.utils.ShooterUtils;
 
 public final class ShotCalculator {
@@ -130,6 +132,36 @@ public final class ShotCalculator {
         Logger.recordOutput("ShotCalculator/FuelVelocity", m_fuelVelocity);
         Logger.recordOutput("ShotCalculator/LaunchAngle", m_launchAngle);
         Logger.recordOutput("ShotCalculator/TimeOfFlight", m_timeOfFlight);
+    }
+
+    public static boolean shouldStartShooting() {
+        final double shotDelay = 1.0;
+
+        return HubShiftUtil.isHubActive() || ((m_timeOfFlight.in(Seconds) + shotDelay) >= HubShiftUtil.getTimeInCurrentShift().orElse(Seconds.zero()).in(Seconds));
+    }
+
+    public static boolean isShotPossible(Pose2d robotPose) {
+        // For simplicity we map to the blue alliance on red.
+        if (!FieldUtils.isBlueAlliance()) {
+            robotPose = new Pose2d(
+                FieldUtils.kFieldLength.in(Meters) - robotPose.getX(),
+                FieldUtils.kFieldWidth.in(Meters) - robotPose.getY(),
+                robotPose.getRotation().plus(Rotation2d.kPi)
+            );
+        }
+
+        Translation2d turretTranslation = getTurretOffset(robotPose).plus(robotPose.getTranslation());
+
+        if (turretTranslation.getX() <= 3.8) {
+            if (turretTranslation.getX() <= 1.0) {
+                // If inline with the tower, we check if we are behind it.
+                return !((2.9 <= turretTranslation.getY()) && (turretTranslation.getY() <= 4.6));
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
     }
 
     public static Translation2d getTargetTurretRelative() {

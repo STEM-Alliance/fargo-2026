@@ -282,6 +282,7 @@ public final class RobotContainer {
 
         m_shooter.setDefaultCommand(new ShooterControlCommand(
             m_shooter,
+            m_indexer,
             m_drivetrain::getEstimatedPose,
             m_drivetrain::getChassisSpeeds,
             m_driverController.rightBumper()

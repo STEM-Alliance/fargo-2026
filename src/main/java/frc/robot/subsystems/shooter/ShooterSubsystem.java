@@ -19,6 +19,8 @@ public final class ShooterSubsystem implements Subsystem {
     private final Turret m_turret;
     private final Flywheel m_flywheel;
 
+    private boolean m_isShooting;
+
     public ShooterSubsystem(
         KickerIO kickerIO,
         TurretIO turretIO,
@@ -36,6 +38,10 @@ public final class ShooterSubsystem implements Subsystem {
         m_flywheel.periodic();
     }
 
+    public final boolean isShooting() {
+        return m_isShooting;
+    }
+
     public final void setKickerRunning(boolean running) {
         m_kicker.setRunning(running);
     }
@@ -51,10 +57,12 @@ public final class ShooterSubsystem implements Subsystem {
     }
 
     public final void setFlywheelVelocity(AngularVelocity motorVelocity) {
+        m_isShooting = motorVelocity.abs(RotationsPerSecond) > 1e-6;
         m_flywheel.setMotorVelocities(motorVelocity);
     }
 
     public final void stopFlywheel() {
+        m_isShooting = false;
         m_flywheel.setMotorVoltages(Volts.zero());
     }
 
