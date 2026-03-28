@@ -17,6 +17,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
@@ -141,6 +142,10 @@ public final class DrivetrainSubsystem implements Subsystem {
 
     public final void zeroYaw() {
         m_gyro.zero();
+    }
+
+    public final AngularVelocity getGyroAngularVelocity() {
+        return m_gyro.getAngularVelocity();
     }
 
     public final void setSwerveModulesWheelVelocity(LinearVelocity velocity) {

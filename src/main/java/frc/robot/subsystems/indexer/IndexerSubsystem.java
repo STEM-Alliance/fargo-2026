@@ -24,9 +24,10 @@ public final class IndexerSubsystem implements Subsystem {
         Logger.processInputs("IndexerSubsystem", m_indexerInputs);
     }
 
-    public final void setRunning(boolean running) {
+    public final void setRunning(boolean running, boolean reverse) {
+        // TODO: Make indexder speed distance dependant.
         m_indexerIO.setIndexerMotorVoltage(
-            running ? Volts.of(5.0) : Volts.zero()
+            running ? Volts.of(reverse ? -3.0 : 3.0) : Volts.zero()
         );
     }
 }

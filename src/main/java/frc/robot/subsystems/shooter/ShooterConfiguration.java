@@ -73,22 +73,22 @@ public final class ShooterConfiguration {
 
         public static final TalonFXSConfiguration kHoodMotorConfiguration = new TalonFXSConfiguration()
             .withSlot0(new Slot0Configs()
-                .withKP(1.000).withKI(0.000).withKD(0.000)
-                .withKS(0.000).withKV(0.010).withKA(0.000)
+                .withKP(0.000).withKI(0.000).withKD(0.000)
+                .withKS(0.000).withKV(0.000).withKA(0.000)
             ).withMotionMagic(new MotionMagicConfigs()
                 .withMotionMagicCruiseVelocity(RotationsPerSecond.of(100.0)) // 250
                 .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(300.0)) // 800
             ).withSoftwareLimitSwitch(new SoftwareLimitSwitchConfigs()
-                .withForwardSoftLimitThreshold(Rotations.of(67.0 * kHoodDegToMotorRot))
+                .withForwardSoftLimitThreshold(Radians.of(3.886845))
                 .withForwardSoftLimitEnable(true)
-                .withReverseSoftLimitThreshold(Rotations.of(32.0 * kHoodDegToMotorRot))
+                .withReverseSoftLimitThreshold(Radians.zero())
                 .withReverseSoftLimitEnable(true)
             ).withCurrentLimits(new CurrentLimitsConfigs()
                 .withStatorCurrentLimit(Amps.of(15.0))
                 .withSupplyCurrentLimit(Amps.of(15.0))
                 .withSupplyCurrentLowerTime(Seconds.zero())
             ).withCommutation(new CommutationConfigs()
-                .withMotorArrangement(MotorArrangementValue.NEO550_JST)
+                .withMotorArrangement(MotorArrangementValue.Minion_JST)
             );
     }
 

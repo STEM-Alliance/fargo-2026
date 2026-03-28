@@ -6,15 +6,11 @@ import static frc.robot.subsystems.shooter.ShooterConfiguration.TurretConfigurat
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.configs.CommutationConfigs;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
-import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.hardware.TalonFXS;
-import com.ctre.phoenix6.signals.MotorArrangementValue;
 
 import edu.wpi.first.units.measure.*;
-import edu.wpi.first.wpilibj.DigitalInput;
 
 import frc.robot.subsystems.shooter.turret.TurretHardware;
 import frc.robot.utils.FoyerDevice;
@@ -83,7 +79,8 @@ public class TurretIOReal implements TurretIO {
         ParentDevice.optimizeBusUtilizationForAll(m_turretMotor, m_hoodMotor);
 
         m_turretMotor.setPosition(Rotations.of(0.0));
-        m_hoodMotor.setPosition(Rotations.of(32.0 * kHoodDegToMotorRot));
+        m_hoodMotor.setPosition(Radians.zero());
+        // m_hoodMotor.setPosition(Rotations.of(32.0 * kHoodDegToMotorRot));
     }
 
     @Override
@@ -139,9 +136,9 @@ public class TurretIOReal implements TurretIO {
 
     @Override
     public void setHoodAngle(Angle angle) {
-        m_hoodMotor.setControl(m_hoodMotorSetpoint.withPosition(
-            Rotations.of(angle.in(Degrees) * kHoodDegToMotorRot)
-        ));
+        // m_hoodMotor.setControl(m_hoodMotorSetpoint.withPosition(
+        //     Rotations.of(angle.in(Degrees) * kHoodDegToMotorRot)
+        // ));
     }
 
     @Override
@@ -151,11 +148,11 @@ public class TurretIOReal implements TurretIO {
 
     @Override
     public void setHoodMotorPosition(Angle position) {
-        m_hoodMotor.setPosition(position);
+        // m_hoodMotor.setPosition(position);
     }
 
     @Override
     public void setHoodMotorVoltage(Voltage voltage) {
-        m_hoodMotor.setVoltage(voltage.in(Volts));
+       m_hoodMotor.setVoltage(voltage.in(Volts));
     }
 }

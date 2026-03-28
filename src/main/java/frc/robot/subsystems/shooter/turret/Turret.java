@@ -5,14 +5,16 @@ import static frc.robot.subsystems.shooter.ShooterConfiguration.TurretConfigurat
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 
 import frc.robot.subsystems.shooter.turret.io.TurretIO;
 import frc.robot.subsystems.shooter.turret.io.TurretInputsAutoLogged;
 
-public final class Turret {
+public final class Turret implements Subsystem {
     private final TurretIO m_turretIO;
     private final TurretInputsAutoLogged m_turretInputs;
 
@@ -27,18 +29,34 @@ public final class Turret {
     }
 
     public final void setTurretAzimuth(Angle azimuth) {
-        // We want to be able to wrap this to +-270.
-        double azimuthDegrees = azimuth.in(Degrees);
+        double azimuthDegrees = (azimuth.in(Degrees) % 360.0 + 360.0) % 360.0;
 
-        if (Math.abs(azimuthDegrees) > 190.0) {
-            if (azimuthDegrees >= 0.0) {
-                azimuth = Degrees.of(azimuthDegrees - 360.0);
-            } else {
-                azimuth = Degrees.of(360.0 - azimuthDegrees);
+        double currentAzimuthDegrees = m_turretInputs.turretMotorPosition.div(
+            kTurretMotorRatio * kTurretRingRatio
+        ).in(Degrees);
+
+        double[] possibleAngles = new double[]{
+            azimuthDegrees,
+            azimuthDegrees + 360.0,
+            azimuthDegrees - 360.0
+        };
+
+        int closestIndex = 0;
+        double closestError = Double.MAX_VALUE;
+
+        for (int i = 0; i < possibleAngles.length; i++) {
+            double possibleAngle = possibleAngles[i];
+            if (Math.abs(possibleAngle) > 360.0) continue;
+
+            double error = Math.abs(possibleAngle - currentAzimuthDegrees);
+
+            if (error < closestError) {
+                closestError = error;
+                closestIndex = i;
             }
         }
 
-        m_turretIO.setTurretAzimuth(azimuth);
+        m_turretIO.setTurretAzimuth(Degrees.of(possibleAngles[closestIndex]));
     }
 
     public final void setHoodAngle(Angle angle) {
