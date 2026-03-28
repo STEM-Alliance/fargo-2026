@@ -26,7 +26,7 @@ public class IntakeSubsystem implements Subsystem {
 
     public final void setRunning(boolean running) {
         if (running) {
-            m_intakeIO.setIntakeMotorVoltage(Volts.of(7.0));
+            m_intakeIO.setIntakeMotorVoltage(Volts.of(12.0));
         } else {
             m_intakeIO.setIntakeMotorVoltage(Volts.zero());
         }

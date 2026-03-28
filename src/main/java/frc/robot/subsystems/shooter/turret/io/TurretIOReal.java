@@ -6,16 +6,12 @@ import static frc.robot.subsystems.shooter.ShooterConfiguration.TurretConfigurat
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.configs.CommutationConfigs;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
-import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.hardware.TalonFXS;
-import com.ctre.phoenix6.signals.MotorArrangementValue;
 
 import edu.wpi.first.units.measure.*;
-import edu.wpi.first.wpilibj.DigitalInput;
-
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.subsystems.shooter.turret.TurretHardware;
 import frc.robot.utils.FoyerDevice;
 
@@ -80,10 +76,10 @@ public class TurretIOReal implements TurretIO {
             m_hoodMotorPosition
         );
 
-        ParentDevice.optimizeBusUtilizationForAll(m_turretMotor, m_hoodMotor);
+        ParentDevice.optimizeBusUtilizationForAll(0.0, m_turretMotor, m_hoodMotor);
 
-        m_turretMotor.setPosition(Rotations.of(0.0));
-        m_hoodMotor.setPosition(Rotations.of(32.0 * kHoodDegToMotorRot));
+        m_turretMotor.setPosition(kTurretZeroOffset);
+        m_hoodMotor.setPosition(kHoodMotorZero);
     }
 
     @Override
@@ -132,21 +128,21 @@ public class TurretIOReal implements TurretIO {
 
     @Override
     public void setTurretAzimuth(Angle azimuth) {
-        // m_turretMotor.setControl(m_turretMotorSetpoint.withPosition(
-        //     azimuth.times(kTurretMotorRatio * kTurretRingRatio)
-        // ));
+        m_turretMotor.setControl(m_turretMotorSetpoint.withPosition(
+            azimuth.times(kTurretMotorRatio * kTurretRingRatio)
+        ));
     }
 
     @Override
     public void setHoodAngle(Angle angle) {
         m_hoodMotor.setControl(m_hoodMotorSetpoint.withPosition(
-            Rotations.of(angle.in(Degrees) * kHoodDegToMotorRot)
+            Radians.of(angle.in(Degrees) * kHoodDegToMotorRad)
         ));
     }
 
     @Override
     public void setTurretMotorPosition(Angle position) {
-        // m_turretMotor.setPosition(position);
+        m_turretMotor.setPosition(position);
     }
 
     @Override
@@ -156,6 +152,6 @@ public class TurretIOReal implements TurretIO {
 
     @Override
     public void setHoodMotorVoltage(Voltage voltage) {
-        m_hoodMotor.setVoltage(voltage.in(Volts));
+       m_hoodMotor.setVoltage(voltage.in(Volts));
     }
 }

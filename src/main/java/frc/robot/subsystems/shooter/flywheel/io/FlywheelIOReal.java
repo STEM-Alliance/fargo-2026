@@ -13,6 +13,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import frc.robot.subsystems.shooter.flywheel.FlywheelHardware;
 
@@ -66,11 +67,51 @@ public class FlywheelIOReal implements FlywheelIO {
             m_rightMotorStatorCurrent
         );
 
+        SmartDashboard.putNumber("Flywheel/KP", kLeftFlywheelMotorConfiguration.Slot0.kP);
+        SmartDashboard.putNumber("Flywheel/KS", kLeftFlywheelMotorConfiguration.Slot0.kS);
+        SmartDashboard.putNumber("Flywheel/KV", kLeftFlywheelMotorConfiguration.Slot0.kV);
+
         ParentDevice.optimizeBusUtilizationForAll(0.0, m_leftMotor, m_rightMotor);
+    }
+
+    private final void setKP(double kP) {
+        kLeftFlywheelMotorConfiguration.Slot0.kP = kP;
+        kRightFlywheelMotorConfiguration.Slot0.kP = kP;
+
+        m_leftMotor.getConfigurator().apply(kLeftFlywheelMotorConfiguration);
+        m_rightMotor.getConfigurator().apply(kRightFlywheelMotorConfiguration);
+    }
+
+    private final void setKS(double kS) {
+        kLeftFlywheelMotorConfiguration.Slot0.kS = kS;
+        kRightFlywheelMotorConfiguration.Slot0.kS = kS;
+
+        m_leftMotor.getConfigurator().apply(kLeftFlywheelMotorConfiguration);
+        m_rightMotor.getConfigurator().apply(kRightFlywheelMotorConfiguration);
+    }
+
+    private final void setKV(double kV) {
+        kLeftFlywheelMotorConfiguration.Slot0.kV = kV;
+        kRightFlywheelMotorConfiguration.Slot0.kV = kV;
+
+        m_leftMotor.getConfigurator().apply(kLeftFlywheelMotorConfiguration);
+        m_rightMotor.getConfigurator().apply(kRightFlywheelMotorConfiguration);
     }
 
     @Override
     public final void updateInputs(Flywheelinputs loggableInputs) {
+        if (kLeftFlywheelMotorConfiguration.Slot0.kP != SmartDashboard.getNumber("Flywheel/KP", 0.0)) {
+            setKP(SmartDashboard.getNumber("Flywheel/KP", 0.0));
+        }
+
+        if (kLeftFlywheelMotorConfiguration.Slot0.kS != SmartDashboard.getNumber("Flywheel/KS", 0.0)) {
+            setKS(SmartDashboard.getNumber("Flywheel/KS", 0.0));
+        }
+
+        if (kLeftFlywheelMotorConfiguration.Slot0.kV != SmartDashboard.getNumber("Flywheel/KV", 0.0)) {
+            setKV(SmartDashboard.getNumber("Flywheel/KV", 0.0));
+        }
+
         loggableInputs.isLeftMotorConnected = BaseStatusSignal.refreshAll(
             m_leftMotorPosition,
             m_leftMotorVelocity,

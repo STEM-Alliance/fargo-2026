@@ -12,6 +12,7 @@ import static frc.robot.subsystems.shooter.ShooterConfiguration.FlywheelConfigur
 import static frc.robot.subsystems.shooter.ShooterConfiguration.TurretConfiguration.*;
 
 import java.util.Objects;
+import java.util.Set;
 
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
@@ -26,9 +27,13 @@ import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.util.PathPlannerLogging;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -76,6 +81,7 @@ import frc.robot.subsystems.vision.io.VisionIO;
 import frc.robot.subsystems.vision.io.VisionIOReal;
 import frc.robot.subsystems.vision.io.VisionIOSim;
 import frc.robot.utils.HubShiftUtil;
+import frc.robot.utils.RobotBumpSim;
 import frc.robot.utils.ShiftTimeUtil;
 import frc.robot.utils.RobotVisualizer;
 import frc.robot.utils.ShooterUtils;
@@ -94,6 +100,9 @@ public final class RobotContainer {
     private final IndexerSubsystem m_indexer;
     private final ShooterSubsystem m_shooter;
 
+    private SwerveDriveSimulation m_drivetrainSimulation = null;
+    private RobotBumpSim m_robotBumpSim = null;
+
     public RobotContainer() {
         switch (RobotConstants.getBehavior()) {
             case COMPETITION, DEVELOPMENT -> {
@@ -107,6 +116,10 @@ public final class RobotContainer {
 
                 m_vision = new VisionSubsystem(
                     m_drivetrain.getPoseEstimator(),
+                    new VisionIOReal("FrontRightCamera", new Transform3d(
+                        new Translation3d(Units.inchesToMeters(-6.0), Units.inchesToMeters(-10.0), Units.inchesToMeters(11.5)),
+                        new Rotation3d(0.0, Units.degreesToRadians(-37.1), Units.degreesToRadians(180.0 + 124.0))
+                    )),
 
                     new VisionIOReal("BackLeftCamera", new Transform3d(
                         new Translation3d(Units.inchesToMeters(-12.1875), Units.inchesToMeters(9.3125), Units.inchesToMeters(12.5)),
@@ -131,15 +144,21 @@ public final class RobotContainer {
 
             case SIMULATION -> {
                 // TODO: implement basic simulation of all subsystems.
-                var drivetrainSimulation = new SwerveDriveSimulation(kSimulationConfig, kSimulationStartingPose);
+                m_drivetrainSimulation = new SwerveDriveSimulation(kSimulationConfig, kSimulationStartingPose);
+                m_robotBumpSim = new RobotBumpSim(new Translation2d[]{
+                    kModuleConfigurations[0].moduleTranslation(),
+                    kModuleConfigurations[1].moduleTranslation(),
+                    kModuleConfigurations[2].moduleTranslation(),
+                    kModuleConfigurations[3].moduleTranslation()
+                });
 
                 m_drivetrain = new DrivetrainSubsystem(
-                    new GyroIOSim(13, drivetrainSimulation.getGyroSimulation()),
-                    new SwerveModuleIOSim(kModuleConfigurations[0], drivetrainSimulation.getModules()[0]),
-                    new SwerveModuleIOSim(kModuleConfigurations[1], drivetrainSimulation.getModules()[1]),
-                    new SwerveModuleIOSim(kModuleConfigurations[2], drivetrainSimulation.getModules()[2]),
-                    new SwerveModuleIOSim(kModuleConfigurations[3], drivetrainSimulation.getModules()[3]),
-                    drivetrainSimulation
+                    new GyroIOSim(13, m_drivetrainSimulation.getGyroSimulation()),
+                    new SwerveModuleIOSim(kModuleConfigurations[0], m_drivetrainSimulation.getModules()[0]),
+                    new SwerveModuleIOSim(kModuleConfigurations[1], m_drivetrainSimulation.getModules()[1]),
+                    new SwerveModuleIOSim(kModuleConfigurations[2], m_drivetrainSimulation.getModules()[2]),
+                    new SwerveModuleIOSim(kModuleConfigurations[3], m_drivetrainSimulation.getModules()[3]),
+                    m_drivetrainSimulation
                 );
 
                 m_vision = new VisionSubsystem(
@@ -167,7 +186,7 @@ public final class RobotContainer {
                 );
 
                 SimulatedArena.overrideInstance(new Arena2026Rebuilt(false));
-                SimulatedArena.getInstance().addDriveTrainSimulation(drivetrainSimulation);
+                SimulatedArena.getInstance().addDriveTrainSimulation(m_drivetrainSimulation);
             }
 
             case LOG_REPLAY -> {
@@ -263,11 +282,10 @@ public final class RobotContainer {
             )
         );
 
-        // After every power-cycle, we re-zero on enable.
-        CommandScheduler.getInstance().schedule(m_shooter.getTurretZeroRoutine().ignoringDisable(true));
+        SmartDashboard.putNumber("DashboardDelay", 0.0);
     }
 
-    public final void periodic() {
+    public final void robotPeriodic() {
         m_field.setRobotPose(m_drivetrain.getEstimatedPose());
         SmartDashboard.putNumber("Alliance Shift", ShiftTimeUtil.getAllianceShiftTime());
         SmartDashboard.putNumber("Battery Voltage", RobotConstants.isReal() ?
@@ -275,6 +293,27 @@ public final class RobotContainer {
         );
 
         RobotVisualizer.updateComponents();
+    }
+
+    public final void teleopInit() {
+            m_shooter.setFlywheelVelocity(RadiansPerSecond.zero());
+            m_shooter.setKickerRunning(false, false);
+            m_indexer.setRunning(false, false, false);
+            m_intake.setRunning(false);
+    }
+
+    public final void simulationPeriodic() {
+        Pose2d simPose = m_drivetrainSimulation.getSimulatedDriveTrainPose();
+        ChassisSpeeds fieldRelativeSpeeds = m_drivetrainSimulation.getDriveTrainSimulatedChassisSpeedsFieldRelative();
+        Pose3d simPose3d = m_robotBumpSim.update(simPose, fieldRelativeSpeeds, 5);
+
+        Logger.recordOutput("SimulationPose3D", simPose3d);
+
+        if (m_robotBumpSim.isOnRamp()) {
+            m_drivetrainSimulation.setSimulationWorldPose(
+                m_robotBumpSim.getSimWorldPose(simPose)
+            );
+        }
     }
 
     private final void configureBindings() {
@@ -287,6 +326,37 @@ public final class RobotContainer {
             m_drivetrain::getChassisSpeeds,
             m_driverController.rightBumper()
         ));
+
+        m_driverController.leftTrigger().onTrue(Commands.runOnce(() -> {
+            m_intake.setExtended(true);
+            m_intake.setRunning(true);
+        })).onFalse(Commands.runOnce(() -> {
+            m_intake.setRunning(false);
+        }));
+
+        m_driverController.rightTrigger().whileTrue(
+            m_shooter.getShootCommand(m_indexer).alongWith(
+                Commands.sequence(
+                    Commands.waitSeconds(0.925),
+                    Commands.run(() -> {
+                        m_shooter.setKickerRunning(true, false);
+                    }).finallyDo(() -> {
+                        m_shooter.setKickerRunning(false, false);
+                    })
+                )
+            )
+        );
+
+        m_driverController.leftBumper().whileTrue(Commands.run(() -> {
+            m_indexer.setRunning(true, true, false);
+            m_shooter.setKickerRunning(true, true);
+            m_shooter.setFlywheelVelocity(RadiansPerSecond.zero());
+        }, m_indexer, m_shooter.getKicker(), m_shooter.getFlywheel()).finallyDo(() -> {
+            m_indexer.setRunning(false, false, false);
+            m_shooter.setKickerRunning(false, false);
+        }));
+
+        m_driverController.b().onTrue(Commands.runOnce(m_intake::toggleIntakeExtended));
 
         m_driverController.x().whileTrue(Commands.run(
             () -> {
@@ -302,43 +372,6 @@ public final class RobotContainer {
             },
             m_drivetrain
         ));
-
-        // TODO: right bumper run kicker and flywheel reverse to unjam
-        // TODO: add button to stop drive/azimuth motors to stop oscillation.
-        m_driverController.leftTrigger().onTrue(Commands.runOnce(() -> {
-            m_intake.setExtended(true);
-            m_intake.setRunning(true);
-        })).onFalse(Commands.runOnce(() -> {
-            m_intake.setRunning(false);
-        }));
-
-        m_driverController.b().onTrue(Commands.runOnce(m_intake::toggleIntakeExtended));
-
-        m_driverController.rightTrigger().onTrue(
-            Commands.parallel(
-                Commands.run(() -> {
-                    m_shooter.setFlywheelVelocity(ShooterUtils.getPolynomialVelocityRoot(
-                        ShotCalculator.getFuelVelocity()
-                    ));
-                    // This is really hacky but it should allow us to just override the flywheel
-                    // while allowing the rest of the shooter control loop to run. The subsystem
-                    // should probably be split up into its individual components instead of this.
-                }, m_shooter.getFlywheel()).withInterruptBehavior(InterruptionBehavior.kCancelIncoming),
-
-                Commands.sequence(
-                    // TODO: Check velocity with timeout.
-                    Commands.waitSeconds(0.925),
-                    Commands.runOnce(() -> {
-                        m_indexer.setRunning(true);
-                        m_shooter.setKickerRunning(true);
-                    })
-                )
-            ).until(m_driverController.rightTrigger().negate()).finallyDo(() -> {
-                m_shooter.stopFlywheel();
-                m_shooter.setKickerRunning(false);
-                m_indexer.setRunning(false);
-            })
-        );
 
         if (!RobotConstants.isCompetition()) {
             m_programmerController.rightTrigger().whileTrue(new ControllerDriveCommand(m_programmerController, m_drivetrain));
@@ -361,85 +394,25 @@ public final class RobotContainer {
             poses -> m_field.getObject("path").setPoses(poses)
         );
 
-        // TODO: Clean up auto commands.
+        NamedCommands.registerCommand("StopDriving", Commands.runOnce(() -> m_drivetrain.drive(new ChassisSpeeds(), false, false, null), m_drivetrain));
         NamedCommands.registerCommand("StartIntaking", Commands.runOnce(() -> {
             m_intake.setExtended(true);
             m_intake.setRunning(true);
         }));
-
-        NamedCommands.registerCommand("StopDriving", Commands.runOnce(() -> m_drivetrain.drive(new ChassisSpeeds(), false, false)));
-
-        NamedCommands.registerCommand("StopIntaking", Commands.runOnce(() -> m_intake.setRunning(false)));
-
-        NamedCommands.registerCommand("ShootQuick", Commands.parallel(
-            Commands.run(() -> {
-                m_shooter.setFlywheelVelocity(ShooterUtils.getPolynomialVelocityRoot(
-                    ShotCalculator.getFuelVelocity()
-                ));
-            }),
-
-            Commands.sequence(
-                Commands.waitSeconds(0.925),
-                Commands.runOnce(() -> {
-                    m_indexer.setRunning(true);
-                    m_shooter.setKickerRunning(true);
-                })
-            )
-        ).until(() -> !DriverStation.isAutonomousEnabled()).finallyDo(() -> {
-            m_shooter.stopFlywheel();
-            m_indexer.setRunning(false);
-            m_intake.setRunning(false);
-            m_shooter.setKickerRunning(false);
+        NamedCommands.registerCommand("StartFlywheel", Commands.runOnce(() -> {
+            m_shooter.setFlywheelVelocity(RadiansPerSecond.of(460.0));
         }));
-
-        NamedCommands.registerCommand("Shoot", Commands.parallel(
-            Commands.run(() -> {
-                m_shooter.setFlywheelVelocity(ShooterUtils.getPolynomialVelocityRoot(
-                    ShotCalculator.getFuelVelocity()
-                ));
-            }),
-
-            Commands.sequence(
-                Commands.waitSeconds(3.5),
-                Commands.runOnce(() -> {
-                    m_indexer.setRunning(true);
-                    m_shooter.setKickerRunning(true);
-                })
-            )
-        ).until(() -> !DriverStation.isAutonomousEnabled()).finallyDo(() -> {
-            m_shooter.stopFlywheel();
-            m_indexer.setRunning(false);
-            m_intake.setRunning(false);
-            m_shooter.setKickerRunning(false);
+        NamedCommands.registerCommand("StartShooting", Commands.runOnce(() -> {
+            m_shooter.setKickerRunning(true, false);
+            m_indexer.setRunning(true, false, false);
         }));
-
-        NamedCommands.registerCommand("AutoFinish", Commands.runOnce(() -> {
-            m_shooter.stopFlywheel();
-            m_shooter.setKickerRunning(false);
-            m_indexer.setRunning(false);
-            m_intake.setRunning(false);
+        NamedCommands.registerCommand("StopShooting", Commands.runOnce(() -> {
+            m_shooter.setKickerRunning(false, false);
+            m_indexer.setRunning(false, false, false);
         }));
-
-        NamedCommands.registerCommand("AutoFinished", Commands.runOnce(() -> {
-            m_shooter.stopFlywheel();
-            m_shooter.setKickerRunning(false);
-            m_indexer.setRunning(false);
-            m_intake.setRunning(false);
-        }));
-
-        // TODO: Clean up autos.
-        m_autoChooser.addDefaultOption("None", Commands.none());
-        m_autoChooser.addOption("Alliance Side", new PathPlannerAuto("Alliance Side", false));
-        m_autoChooser.addOption("Left Self Pass", new PathPlannerAuto("self_pass", false));
-        m_autoChooser.addOption("Right Self Pass", new PathPlannerAuto("self_pass", true));
-        m_autoChooser.addOption("Shallow Self Pass Left", new PathPlannerAuto("shallow self pass", false));
-        m_autoChooser.addOption("Shallow Self Pass Right", new PathPlannerAuto("shallow self pass", true));
-        m_autoChooser.addOption("Alliance Side Full", new PathPlannerAuto("alliance side front"));
-        m_autoChooser.addOption("Alliance Side Half", new PathPlannerAuto("alliance side half"));
-        m_autoChooser.addOption("Broken Turret Left", new PathPlannerAuto("broken turret", false));
-        m_autoChooser.addOption("Broken Turret Right", new PathPlannerAuto("broken turret", true));
-        m_autoChooser.addOption("2.5swipe", new PathPlannerAuto("2.5swipe"));
-        m_autoChooser.addOption("right_trench_3x", new PathPlannerAuto("right_trench_3x"));
+        NamedCommands.registerCommand("WaitDashboardDelay", Commands.defer(() -> {
+            return Commands.waitSeconds(SmartDashboard.getNumber("DashboardDelay", 0.0));
+        }, Set.of()));
     }
 
     private final void configureDashboard() {
@@ -447,6 +420,11 @@ public final class RobotContainer {
         m_autoChooser.getSendableChooser().onChange(
             key ->  m_autoChooserAlert.set(key.equals("None"))
         );
+
+        m_autoChooser.addOption("center_trench_o1s", new PathPlannerAuto("center_trench_o1s"));
+        m_autoChooser.addOption("center_bump_o1s", new PathPlannerAuto("center_bump_o1s"));
+        m_autoChooser.addOption("left_trench_2so", new PathPlannerAuto("left_trench_2so"));
+        m_autoChooser.addOption("right_trench_2si", new PathPlannerAuto("right_trench_2si"));
 
         SmartDashboard.putData("Field", m_field);
         SmartDashboard.putData("CommandScheduler", CommandScheduler.getInstance());

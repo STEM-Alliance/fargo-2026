@@ -17,6 +17,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
@@ -129,11 +130,11 @@ public final class DrivetrainSubsystem implements Subsystem {
         Logger.recordOutput("DrivetrainSubsystem/DesiredStates", desiredStates);
 
         for (int i = 0; i < m_swerveModules.length; i++) {
-            if (gain.length > 0) {
-                m_swerveModules[i].setDriveFFAccel(gain[i]);
-            } else {
-                m_swerveModules[i].setDriveFFAccel(0.0);
-            }
+            // if (gain.length > 0) {
+            //     m_swerveModules[i].setDriveFFAccel(gain[i]);
+            // } else {
+            //     m_swerveModules[i].setDriveFFAccel(0.0);
+            // }
 
             m_swerveModules[i].setDesiredState(desiredStates[i]);
         }
@@ -141,6 +142,10 @@ public final class DrivetrainSubsystem implements Subsystem {
 
     public final void zeroYaw() {
         m_gyro.zero();
+    }
+
+    public final AngularVelocity getGyroAngularVelocity() {
+        return m_gyro.getAngularVelocity();
     }
 
     public final void setSwerveModulesWheelVelocity(LinearVelocity velocity) {

@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.indexer.IndexerSubsystem;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.subsystems.shooter.ShotCalculator;
+import frc.robot.utils.ShooterUtils;
 
 public final class ShooterControlCommand extends Command {
     private final ShooterSubsystem m_shooter;
@@ -44,9 +45,10 @@ public final class ShooterControlCommand extends Command {
             SmartDashboard.putBoolean("AutoShootEnabled", m_autoShootEnabled);
         }));
 
+        SmartDashboard.putNumber("HoodTargetAngle", 63.0);
         SmartDashboard.putBoolean("AutoShootEnabled", m_autoShootEnabled);
 
-        addRequirements(m_shooter);
+        addRequirements(m_shooter, m_shooter.getTurret());
     }
 
     @Override
@@ -60,19 +62,19 @@ public final class ShooterControlCommand extends Command {
                 // TODO: Check velocity with the same timeout.
                 Commands.waitSeconds(0.925),
                 Commands.runOnce(() -> {
-                    m_indexer.setRunning(true);
-                    m_shooter.setKickerRunning(true);
+                    m_indexer.setRunning(true, false, false);
+                    m_shooter.setKickerRunning(true, false);
                 })
             )
         ).finallyDo(() -> {
             // We always stop indexing to stop shooting
-            m_indexer.setRunning(false);
+            m_indexer.setRunning(false, false, false);
 
             // If we stopped because our shift ended, then we spin down the flywheel
             // We leave the kicker running as well to avoid jamming the shooter.
             if (!ShotCalculator.shouldStartShooting() || !m_autoShootEnabled || !isScheduled()) {
-                m_shooter.stopFlywheel();
-                m_shooter.setKickerRunning(false);
+                m_shooter.setFlywheelVelocity(RadiansPerSecond.zero());
+                m_shooter.setKickerRunning(false, false);
             }
         }));
     }
@@ -90,10 +92,10 @@ public final class ShooterControlCommand extends Command {
         );
 
         Angle hoodElevation;
-        if (m_shooter.isShooting()) {
-            hoodElevation = ShotCalculator.getLaunchAngle();
+        if (!m_shooter.isFlywheelRunning()) {
+            hoodElevation = Degrees.of(86.0);
         } else {
-            hoodElevation = Degrees.of(90.0);
+            hoodElevation = ShooterUtils.getTableAngle(Meters.of(ShotCalculator.getTargetTurretRelative().getNorm()));
         }
 
         m_shooter.setTurretAzimuth(turretAzimuth);

@@ -5,14 +5,16 @@ import static frc.robot.subsystems.shooter.ShooterConfiguration.TurretConfigurat
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 
 import frc.robot.subsystems.shooter.turret.io.TurretIO;
 import frc.robot.subsystems.shooter.turret.io.TurretInputsAutoLogged;
 
-public final class Turret {
+public final class Turret implements Subsystem {
     private final TurretIO m_turretIO;
     private final TurretInputsAutoLogged m_turretInputs;
 
@@ -27,18 +29,35 @@ public final class Turret {
     }
 
     public final void setTurretAzimuth(Angle azimuth) {
-        // We want to be able to wrap this to +-270.
-        double azimuthDegrees = azimuth.in(Degrees);
+        // -0.261719 rotations from zero means use slow shooting speed (75 degrees)
+        double azimuthDegrees = (azimuth.in(Degrees) % 360.0 + 360.0) % 360.0;
 
-        if (Math.abs(azimuthDegrees) > 190.0) {
-            if (azimuthDegrees >= 0.0) {
-                azimuth = Degrees.of(azimuthDegrees - 360.0);
-            } else {
-                azimuth = Degrees.of(360.0 - azimuthDegrees);
+        double currentAzimuthDegrees = m_turretInputs.turretMotorPosition.div(
+            kTurretMotorRatio * kTurretRingRatio
+        ).in(Rotations) * 360.0;
+
+        double[] possibleAngles = new double[]{
+            azimuthDegrees,
+            azimuthDegrees + 360.0,
+            azimuthDegrees - 360.0,
+            azimuthDegrees - 360.0 - 360.0
+        };
+
+        int closestIndex = 0;
+        double closestError = Double.MAX_VALUE;
+
+        for (int i = 0; i < possibleAngles.length; i++) {
+            if ((-536.0 <= possibleAngles[i]) && (possibleAngles[i] <= 78.0)) {
+                double error = Math.abs(possibleAngles[i] - currentAzimuthDegrees);
+
+                if (error < closestError) {
+                    closestIndex = i;
+                    closestError = error;
+                }
             }
         }
 
-        m_turretIO.setTurretAzimuth(azimuth);
+        m_turretIO.setTurretAzimuth(Degrees.of(possibleAngles[closestIndex]));
     }
 
     public final void setHoodAngle(Angle angle) {
@@ -53,12 +72,12 @@ public final class Turret {
         m_turretIO.setHoodMotorVoltage(voltage);
     }
 
-    public final void syncTurretMotorEncoder() {
-        Angle rotations = m_turretInputs.turretEncoderPosition;
-        Angle offset = kTurretEncoderZero.minus(rotations);
+    // public final void syncTurretMotorEncoder() {
+    //     Angle rotations = m_turretInputs.turretEncoderPosition;
+    //     Angle offset = kTurretEncoderZero.minus(rotations);
 
-        m_turretIO.setTurretMotorPosition(offset.times(kTurretMotorRatio));
-    }
+    //     m_turretIO.setTurretMotorPosition(offset.times(kTurretMotorRatio));
+    // }
 
     public final Command getTurretZeroRoutine() {
         return Commands.none();
@@ -74,15 +93,15 @@ public final class Turret {
         //     .andThen(Commands.runOnce(this::syncTurretMotorEncoder));
     }
 
-    public final Command getHoodZeroRoutine() {
-        return Commands.sequence(
-            Commands.startEnd(
-                () -> m_turretIO.setHoodMotorVoltage(Volts.of(0.75)),
-                () -> m_turretIO.setHoodMotorVoltage(Volts.zero())
-            ).until(() -> m_turretInputs.hoodMotorStatorCurrent.abs(Amps) >= 7.5),
+    // public final Command getHoodZeroRoutine() {
+    //     return Commands.sequence(
+    //         Commands.startEnd(
+    //             () -> m_turretIO.setHoodMotorVoltage(Volts.of(0.75)),
+    //             () -> m_turretIO.setHoodMotorVoltage(Volts.zero())
+    //         ).until(() -> m_turretInputs.hoodMotorStatorCurrent.abs(Amps) >= 7.5),
 
-            Commands.waitUntil(() -> m_turretInputs.hoodMotorVelocity.abs(RotationsPerSecond) < 1e-6),
-            Commands.runOnce(() -> m_turretIO.setHoodMotorPosition(kHoodMotorZero))
-        );
-    }
+    //         Commands.waitUntil(() -> m_turretInputs.hoodMotorVelocity.abs(RotationsPerSecond) < 1e-6),
+    //         Commands.runOnce(() -> m_turretIO.setHoodMotorPosition(kHoodMotorZero))
+    //     );
+    // }
 }

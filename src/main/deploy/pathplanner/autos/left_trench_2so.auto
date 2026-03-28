@@ -5,9 +5,21 @@
     "data": {
       "commands": [
         {
+          "type": "named",
+          "data": {
+            "name": "StartIntaking"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "StartFlywheel"
+          }
+        },
+        {
           "type": "path",
           "data": {
-            "pathName": "right_trench_3x.0"
+            "pathName": "left_trench_2so.0"
           }
         },
         {
@@ -17,33 +29,39 @@
           }
         },
         {
-          "type": "wait",
+          "type": "named",
           "data": {
-            "waitTime": 3.0
+            "name": "StartShooting"
           }
         },
         {
-          "type": "path",
+          "type": "wait",
           "data": {
-            "pathName": "right_trench_3x.1"
+            "waitTime": 4.0
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "StopDriving"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 3.0
+            "name": "StopShooting"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "right_trench_3x.2"
+            "pathName": "left_trench_2so.1"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "StartShooting"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "left_trench_2so.2"
           }
         }
       ]

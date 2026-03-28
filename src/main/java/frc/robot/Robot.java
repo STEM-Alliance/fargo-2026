@@ -89,7 +89,7 @@ public final class Robot extends LoggedRobot {
     @Override
     public final void robotPeriodic() {
         CommandScheduler.getInstance().run();
-        m_robotContainer.periodic();
+        m_robotContainer.robotPeriodic();
     }
 
     @Override
@@ -116,6 +116,7 @@ public final class Robot extends LoggedRobot {
     @Override
     public final void teleopInit() {
         CommandScheduler.getInstance().cancel(m_autonomousCommand);
+        m_robotContainer.teleopInit();
     }
 
     @Override
@@ -152,5 +153,7 @@ public final class Robot extends LoggedRobot {
                 SimulatedArena.getInstance().getGamePiecesArrayByType("Fuel")
             );
         }
+
+        m_robotContainer.simulationPeriodic();
     }
 }

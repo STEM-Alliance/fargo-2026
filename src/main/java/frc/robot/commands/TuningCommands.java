@@ -80,7 +80,6 @@ public final class TuningCommands {
 
             Commands.run(
                 () -> {
-                    ChassisSpeeds currentSpeeds = drivetrain.getChassisSpeeds();
                     double driveMotorVelocities = 0.0;
 
                     for (SwerveModule module : swerveModules) {
@@ -88,7 +87,7 @@ public final class TuningCommands {
                     }
 
                     // temp
-                    Logger.recordOutput("WheelDiameterMeters", ((currentSpeeds.omegaRadiansPerSecond * 6.12 * Math.hypot(0.22225, 0.29845)) / (driveMotorVelocities / 4.0)));
+                    Logger.recordOutput("WheelDiameterMeters", ((drivetrain.getGyroAngularVelocity().in(RadiansPerSecond) * 6.12 * Math.hypot(0.22225, 0.29845)) / (driveMotorVelocities / 4.0)));
                 },
                 drivetrain
             )

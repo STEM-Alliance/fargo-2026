@@ -3,6 +3,7 @@ package frc.robot.utils;
 import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.units.measure.*;
 
 public final class ShooterUtils {
@@ -15,9 +16,29 @@ public final class ShooterUtils {
         {    -6.489619195975671,     0.000000000000000,     0.0000000000000000,     0.000000000000000,     0.00000000000000,   0.000000000000000}
     };
 
+    private static final InterpolatingDoubleTreeMap m_hoodAngleTable = new InterpolatingDoubleTreeMap();
+
+    static {
+        m_hoodAngleTable.put(Double.MAX_VALUE, 63.0);
+        m_hoodAngleTable.put(5.52308, 63.0);
+        m_hoodAngleTable.put(3.7955, 68.5);
+        m_hoodAngleTable.put(3.37, 71.5);
+        m_hoodAngleTable.put(3.2038, 72.0);
+        m_hoodAngleTable.put(2.76, 74.0);
+        m_hoodAngleTable.put(2.45, 75.0);
+        m_hoodAngleTable.put(1.9888, 77.5);
+        m_hoodAngleTable.put(1.9023, 78.0);
+        m_hoodAngleTable.put(1.0860, 84.0);
+        m_hoodAngleTable.put(0.0, 84.0);
+    }
+
     private static final double[] m_velocityCoefficients = {
         1.5324306535, 0.012682714, 0.0000120326
     };
+
+    public static Angle getTableAngle(Distance distance) {
+        return Degrees.of(m_hoodAngleTable.get(distance.in(Meters)));
+    }
 
     public static Angle getPolynomialAngle(Distance distance, LinearVelocity velocity) {
         return Degrees.of(PolynomialUtils.evaluateBivariate(

@@ -112,21 +112,22 @@ public final class FieldUtils {
 
     public static Translation2d getPassingTarget(Pose2d robotPose, Distance expansion, Distance directTolerance) {
         if (!inlineWithHubs(robotPose, directTolerance.in(Meters))) {
-            return new Translation2d(isBlueAlliance() ? 0.0 : kFieldLength.in(Meters), kFieldWidthCenter.in(Meters));
+            return new Translation2d(isBlueAlliance() ? 2.75 : kFieldLength.in(Meters) - 2.75, kFieldWidthCenter.in(Meters));
         } else {
             double hubSideLengths = kHubWidth.plus(expansion).in(Meters) / 2.0;
             Translation2d hubRelative = robotPose.getTranslation().minus(getAllianceHub());
 
             double relativeX = hubRelative.getX();
             double relativeY = hubRelative.getY();
-            double targetX = (Math.abs(relativeY) > hubSideLengths) ? -hubSideLengths : hubSideLengths;
+            double localTargetX = (Math.abs(relativeY) > hubSideLengths) ? -hubSideLengths : hubSideLengths;
             double targetY = (relativeY > 0) ? hubSideLengths : -hubSideLengths;
 
-            double theta = Math.atan2(relativeY - targetY, relativeX - targetX);
+            double tanTheta = Math.tan(Math.atan2(relativeY - targetY, relativeX - localTargetX));
+            double fieldTargetX = isBlueAlliance() ? 2.75 : kFieldLength.in(Meters) - 2.75;
 
             return new Translation2d(
-                isBlueAlliance() ? 0.0 : kFieldLength.in(Meters),
-                robotPose.getTranslation().getY() - robotPose.getTranslation().getX() * Math.tan(theta)
+                isBlueAlliance() ? 2.75 : kFieldLength.in(Meters) - 2.75,
+                robotPose.getTranslation().getY() - robotPose.getTranslation().getX() * tanTheta + fieldTargetX * tanTheta
             );
         }
     }
