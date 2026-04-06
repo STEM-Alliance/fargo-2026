@@ -29,34 +29,40 @@ public final class Turret implements Subsystem {
     }
 
     public final void setTurretAzimuth(Angle azimuth) {
-        double azimuthDegrees = (azimuth.in(Degrees) % 360.0 + 360.0) % 360.0;
+        // 1. Normalize target azimuth to [0, 360)
+        double targetDegreesNormalized = (azimuth.in(Degrees) % 360.0 + 360.0) % 360.0;
 
-        double currentAzimuthDegrees = m_turretInputs.turretMotorPosition.div(
-            kTurretMotorRatio * kTurretRingRatio
-        ).in(Degrees);
+        // 2. Get current azimuth position from motor position
+        double currentDegrees = m_turretInputs.turretMotorPosition.div(kTurretMotorRatio * kTurretRingRatio).in(Degrees);
 
-        double[] possibleAngles = new double[]{
-            azimuthDegrees,
-            azimuthDegrees + 360.0,
-            azimuthDegrees - 360.0
-        };
+        // 3. Define the actual turret range (from ShooterConfiguration)
+        double minDegreeLimit = kTurretReverseLimit.in(Degrees);
+        double maxDegreeLimit = kTurretForwardLimit.in(Degrees);
 
-        int closestIndex = 0;
-        double closestError = Double.MAX_VALUE;
+        // 4. Find all reachable wraps of the target azimuth (e.g. target, target + 360, target - 360)
+        double bestTarget = Double.NaN;
+        double bestDistance = Double.MAX_VALUE;
 
-        for (int i = 0; i < possibleAngles.length; i++) {
-            double possibleAngle = possibleAngles[i];
-            if (Math.abs(possibleAngle) > 360.0) continue;
-
-            double error = Math.abs(possibleAngle - currentAzimuthDegrees);
-
-            if (error < closestError) {
-                closestError = error;
-                closestIndex = i;
+        // Check wraps from n=-2 to 2 to cover a range up to ~720+ degrees.
+        for (int n = -2; n <= 2; n++) {
+            double candidate = targetDegreesNormalized + (n * 360.0);
+            
+            // Only consider angles within the mechanical limits
+            if (candidate >= minDegreeLimit && candidate <= maxDegreeLimit) {
+                double distance = Math.abs(candidate - currentDegrees);
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    bestTarget = candidate;
+                }
             }
         }
 
-        m_turretIO.setTurretAzimuth(Degrees.of(possibleAngles[closestIndex]));
+        // 5. Fallback: if no wrap is within limits, clamp the normalized target to stay safe
+        if (Double.isNaN(bestTarget)) {
+            bestTarget = edu.wpi.first.math.MathUtil.clamp(targetDegreesNormalized, minDegreeLimit, maxDegreeLimit);
+        }
+
+        m_turretIO.setTurretAzimuth(Degrees.of(bestTarget));
     }
 
     public final void setHoodAngle(Angle angle) {

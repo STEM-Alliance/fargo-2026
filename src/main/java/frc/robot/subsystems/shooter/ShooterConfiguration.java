@@ -47,6 +47,9 @@ public final class ShooterConfiguration {
             21, 5, 24
         );
 
+        public static final Angle kTurretForwardLimit = Degrees.of(210.0 - 8);
+        public static final Angle kTurretReverseLimit = Degrees.of(-290.0 - 8);
+
         public static final TalonFXSConfiguration kTurretMotorConfiguration = new TalonFXSConfiguration()
         //-278, +200
             .withSlot0(new Slot0Configs()
@@ -57,9 +60,9 @@ public final class ShooterConfiguration {
                 .withMotionMagicCruiseVelocity(RotationsPerSecond.of(50.0)) // 500
                 .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(150.0)) //350
             ).withSoftwareLimitSwitch(new SoftwareLimitSwitchConfigs()
-                .withForwardSoftLimitThreshold(Radians.of(210.0 - 8))
+                .withForwardSoftLimitThreshold(kTurretForwardLimit.in(Rotations) * (kTurretMotorRatio * kTurretRingRatio))
                 .withForwardSoftLimitEnable(true)
-                .withReverseSoftLimitThreshold(Radians.of(-290.0 - 8))
+                .withReverseSoftLimitThreshold(kTurretReverseLimit.in(Rotations) * (kTurretMotorRatio * kTurretRingRatio))
                 .withReverseSoftLimitEnable(true)
             ).withClosedLoopGeneral(new ClosedLoopGeneralConfigs()
                 .withGainSchedErrorThreshold(Rotations.of(0.1))
