@@ -11,12 +11,6 @@
           }
         },
         {
-          "type": "named",
-          "data": {
-            "name": "StartFlywheel"
-          }
-        },
-        {
           "type": "path",
           "data": {
             "pathName": "right_trench_2si.0"
@@ -26,6 +20,12 @@
           "type": "named",
           "data": {
             "name": "StopDriving"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "StartFlywheel"
           }
         },
         {
@@ -56,6 +56,12 @@
           "type": "named",
           "data": {
             "name": "StopDriving"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "StartFlywheel"
           }
         },
         {

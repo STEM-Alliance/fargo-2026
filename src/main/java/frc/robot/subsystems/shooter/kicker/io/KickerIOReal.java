@@ -22,7 +22,7 @@ public class KickerIOReal implements KickerIO {
         m_kickerMotor = new TalonFX(kickerMotorID);
 
         m_kickerMotorSetpoint = new VoltageOut(0.0)
-            .withUpdateFreqHz(0.0)
+            .withUpdateFreqHz(50.0)
             .withEnableFOC(true);
 
         m_kickerMotorPosition = m_kickerMotor.getPosition(false);

@@ -49,7 +49,7 @@ public final class ShooterConfiguration {
 
         public static final TalonFXSConfiguration kTurretMotorConfiguration = new TalonFXSConfiguration()
             .withSlot0(new Slot0Configs()
-                .withKP(1.000).withKI(0.000).withKD(0.000)
+                .withKP(1.500).withKI(0.000).withKD(0.000)
                 .withKS(0.000).withKV(0.100).withKA(0.000) // TODO: Add KS, tune KV, up accel.
                 .withGainSchedBehavior(GainSchedBehaviorValue.ZeroOutput)
             ).withMotionMagic(new MotionMagicConfigs()

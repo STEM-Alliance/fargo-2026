@@ -335,16 +335,7 @@ public final class RobotContainer {
         }));
 
         m_driverController.rightTrigger().whileTrue(
-            m_shooter.getShootCommand(m_indexer).alongWith(
-                Commands.sequence(
-                    Commands.waitSeconds(0.925),
-                    Commands.run(() -> {
-                        m_shooter.setKickerRunning(true, false);
-                    }).finallyDo(() -> {
-                        m_shooter.setKickerRunning(false, false);
-                    })
-                )
-            )
+            m_shooter.getShootCommand(m_indexer)
         );
 
         m_driverController.leftBumper().whileTrue(Commands.run(() -> {
@@ -409,7 +400,8 @@ public final class RobotContainer {
         NamedCommands.registerCommand("StopShooting", Commands.runOnce(() -> {
             m_shooter.setKickerRunning(false, false);
             m_indexer.setRunning(false, false, false);
-        }));
+            m_shooter.setFlywheelVelocity(RadiansPerSecond.zero());
+        }, m_shooter.getKicker(), m_indexer));
         NamedCommands.registerCommand("WaitDashboardDelay", Commands.defer(() -> {
             return Commands.waitSeconds(SmartDashboard.getNumber("DashboardDelay", 0.0));
         }, Set.of()));
@@ -424,6 +416,8 @@ public final class RobotContainer {
         m_autoChooser.addOption("center_trench_o1s", new PathPlannerAuto("center_trench_o1s"));
         m_autoChooser.addOption("center_bump_o1s", new PathPlannerAuto("center_bump_o1s"));
         m_autoChooser.addOption("left_trench_2so", new PathPlannerAuto("left_trench_2so"));
+        m_autoChooser.addOption("left_trench_2si", new PathPlannerAuto("right_trench_2si", true));
+
         m_autoChooser.addOption("right_trench_2si", new PathPlannerAuto("right_trench_2si"));
 
         SmartDashboard.putData("Field", m_field);

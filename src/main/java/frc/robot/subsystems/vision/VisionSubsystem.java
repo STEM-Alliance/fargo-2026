@@ -13,6 +13,7 @@ import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.estimator.PoseEstimator;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 
 import frc.robot.subsystems.vision.io.VisionIO;
@@ -54,9 +55,7 @@ public final class VisionSubsystem implements Subsystem {
     }
 
     public final void recordCaptures(boolean recording) {
-        for (var camera : m_cameras) {
-            camera.getFirst().setRecording(recording);
-        }
+        SmartDashboard.putBoolean("photonvision/recordingRequest", recording);
     }
 
     private static final Matrix<N3, N1> getPoseStdDevs(LoggableAprilTagDetection[] aprilTags) {

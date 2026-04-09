@@ -74,6 +74,7 @@ public final class ShooterSubsystem implements Subsystem {
 
             Commands.repeatingSequence(
                 // TODO: Check velocity with timeout.
+                // TODO: this (or what makes it necessary) is where all of our problems are
                 Commands.waitSeconds(0.925),
                 Commands.runOnce(() -> {
                     indexer.setRunning(true, false, true);
