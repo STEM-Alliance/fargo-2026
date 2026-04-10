@@ -7,7 +7,7 @@ import edu.wpi.first.units.measure.*;
 public final class RobotConstants {
     // There are some small tweaks that may want to be made between development
     // and during a competition, like disabling some NetworkTables information.
-    public static final RobotBehavior kRealBehavior = RobotBehavior.DEVELOPMENT;
+    public static final RobotBehavior kRealBehavior = RobotBehavior.COMPETITION;
     public static final RobotBehavior kSimulationBehavior = RobotBehavior.SIMULATION;
 
     public static final Time kLoopPeriod = Seconds.of(0.02);

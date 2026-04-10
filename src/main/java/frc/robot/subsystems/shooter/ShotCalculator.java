@@ -38,6 +38,7 @@ public final class ShotCalculator {
     ) {
         Pose2d futureRobotPose = getFutureRobotPose(robotPose, robotSpeeds, kLookAheadTime);
 
+        // TODO: add passing, make the y coordinate equal to robot y (constant) and x to alliance wall - 1.5
         boolean isPassing = false;//!FieldUtils.inFriendlyAllianceZone(futureRobotPose);
         Translation2d inducedSpeeds = getInducedSpeeds(futureRobotPose, robotSpeeds);
         Translation2d targetTurretOffset = getTargetTurretOffset(futureRobotPose, isPassing);
@@ -67,9 +68,11 @@ public final class ShotCalculator {
                     Inches.of(71.5 - 21.5),
                     MetersPerSecond.of(fuelVelocity)
                 ).getSecond().in(Degrees);
+                // hoodAngle = ShooterUtils.getTableAngle(Meters.of(distance)).in(Degrees);
             }
 
             timeOfFlight = distance / (fuelVelocity * Math.cos(Math.toRadians(hoodAngle)));
+            //inducedSpeeds = new Translation2d(inducedSpeeds.getX(), -inducedSpeeds.getY());
             Translation2d nextLeadedOffset = targetTurretOffset.minus(inducedSpeeds.times(timeOfFlight));
             double delta = nextLeadedOffset.getDistance(leadedOffset);
 

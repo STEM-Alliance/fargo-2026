@@ -11,12 +11,6 @@
           }
         },
         {
-          "type": "named",
-          "data": {
-            "name": "StartFlywheel"
-          }
-        },
-        {
           "type": "path",
           "data": {
             "pathName": "left_trench_2so.0"

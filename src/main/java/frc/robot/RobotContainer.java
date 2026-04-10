@@ -390,10 +390,11 @@ public final class RobotContainer {
             m_intake.setExtended(true);
             m_intake.setRunning(true);
         }));
-        NamedCommands.registerCommand("StartFlywheel", Commands.runOnce(() -> {
-            m_shooter.setFlywheelVelocity(RadiansPerSecond.of(460.0));
+        NamedCommands.registerCommand("StopIntaking", Commands.runOnce(() -> {
+            m_intake.setRunning(false);
         }));
         NamedCommands.registerCommand("StartShooting", Commands.runOnce(() -> {
+            m_shooter.setFlywheelVelocity(RadiansPerSecond.of(460.0));
             m_shooter.setKickerRunning(true, false);
             m_indexer.setRunning(true, false, false);
         }));

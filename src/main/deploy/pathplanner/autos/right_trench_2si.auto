@@ -25,7 +25,7 @@
         {
           "type": "named",
           "data": {
-            "name": "StartFlywheel"
+            "name": "StopIntaking"
           }
         },
         {
@@ -44,6 +44,12 @@
           "type": "named",
           "data": {
             "name": "StopShooting"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "StartIntaking"
           }
         },
         {
@@ -61,7 +67,7 @@
         {
           "type": "named",
           "data": {
-            "name": "StartFlywheel"
+            "name": "StopIntaking"
           }
         },
         {
@@ -83,6 +89,12 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "StartIntaking"
+          }
+        },
+        {
           "type": "path",
           "data": {
             "pathName": "right_trench_2si.2"
@@ -91,7 +103,7 @@
       ]
     }
   },
-  "resetOdom": false,
+  "resetOdom": true,
   "folder": null,
   "choreoAuto": true
 }

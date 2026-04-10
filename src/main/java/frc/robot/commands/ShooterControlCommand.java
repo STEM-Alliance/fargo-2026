@@ -55,28 +55,7 @@ public final class ShooterControlCommand extends Command {
     public final void initialize() {
         // new Trigger(() -> m_autoShootEnabled && isScheduled() && ShotCalculator.shouldStartShooting() &&
         //     m_autoShootDebouncer.calculate(ShotCalculator.isShotPossible(m_robotPoseSupplier.get())
-        // )).whileTrue(Commands.parallel(
-        //     // TODO: get shooting velocity like in new shotcalculator
-        //     Commands.runOnce(() -> m_shooter.setFlywheelVelocity(null)),
-        //     Commands.sequence(
-        //         // TODO: Check velocity with the same timeout.
-        //         Commands.waitSeconds(0.925),
-        //         Commands.runOnce(() -> {
-        //             m_indexer.setRunning(true, false, false);
-        //             m_shooter.setKickerRunning(true, false);
-        //         })
-        //     )
-        // ).finallyDo(() -> {
-        //     // We always stop indexing to stop shooting
-        //     m_indexer.setRunning(false, false, false);
-
-        //     // If we stopped because our shift ended, then we spin down the flywheel
-        //     // We leave the kicker running as well to avoid jamming the shooter.
-        //     if (!ShotCalculator.shouldStartShooting() || !m_autoShootEnabled || !isScheduled()) {
-        //         m_shooter.setFlywheelVelocity(RadiansPerSecond.zero());
-        //         m_shooter.setKickerRunning(false, false);
-        //     }
-        // }));
+        // )).whileTrue(m_shooter.getShootCommand(m_indexer));
     }
 
     @Override
