@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -17,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.indexer.IndexerSubsystem;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.subsystems.shooter.ShotCalculator;
+import frc.robot.utils.FieldUtils;
 import frc.robot.utils.ShooterUtils;
 
 public final class ShooterControlCommand extends Command {
@@ -47,6 +49,7 @@ public final class ShooterControlCommand extends Command {
 
         SmartDashboard.putNumber("HoodTargetAngle", 63.0);
         SmartDashboard.putBoolean("AutoShootEnabled", m_autoShootEnabled);
+        SmartDashboard.putNumber("OffsetDegrees", 0.0);
 
         addRequirements(m_shooter, m_shooter.getTurret());
     }
@@ -65,9 +68,26 @@ public final class ShooterControlCommand extends Command {
             m_robotSpeedsSupplier.get()
         );
 
+        // Pose2d bluePose = m_robotPoseSupplier.get();
+
+        // if (!FieldUtils.isBlueAlliance()) {
+        //     bluePose = new Pose2d(
+        //         FieldUtils.kFieldLength.in(Meters) - bluePose.getX(),
+        //         FieldUtils.kFieldWidth.in(Meters) - bluePose.getY(),
+        //         bluePose.getRotation().plus(Rotation2d.kPi)
+        //     );
+        // }
+
+        // double widthinterpolated = 4.0 * (bluePose.getY() - FieldUtils.kFieldLength.in(Meters) * 0.5);
+        // double rotationinterpolated = 1.0 * Math.abs(bluePose.getRotation().getRadians() - Math.PI);
+
         Angle turretAzimuth = Degrees.of(
             ShotCalculator.getTargetTurretRelative().getAngle().unaryMinus()
-            .plus(m_robotPoseSupplier.get().getRotation()).getDegrees()
+            .plus(m_robotPoseSupplier.get().getRotation()).getDegrees() +
+            // depending on field x, interpolate between 4 and -4 for min (0.0) and max
+            // also for rotation from 180 away from dirver station
+            SmartDashboard.getNumber("OffsetDegrees", 0.0)
+            // widthinterpolated + rotationinterpolated
         );
 
         Angle hoodElevation;

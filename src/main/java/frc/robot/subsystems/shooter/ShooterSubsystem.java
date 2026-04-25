@@ -66,7 +66,8 @@ public final class ShooterSubsystem implements Subsystem {
     public final Command getShootCommand(IndexerSubsystem indexer) {
         return Commands.parallel(
             Commands.run(() -> {
-                setFlywheelVelocity(RadiansPerSecond.of(SmartDashboard.getNumber("ShootingRPS", 460.0)));
+                //setFlywheelVelocity(RadiansPerSecond.of(SmartDashboard.getNumber("ShootingRPS", 460.0)));
+                setFlywheelVelocity(RadiansPerSecond.of(460.0));
                 // setFlywheelVelocity(ShooterUtils.getPolynomialVelocityRoot(
                 //     ShotCalculator.getFuelVelocity()
                 // ));

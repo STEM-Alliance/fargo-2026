@@ -25,6 +25,12 @@
         {
           "type": "named",
           "data": {
+            "name": "StopIntaking"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
             "name": "StartShooting"
           }
         },
@@ -38,6 +44,12 @@
           "type": "named",
           "data": {
             "name": "StopShooting"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "StartIntaking"
           }
         },
         {

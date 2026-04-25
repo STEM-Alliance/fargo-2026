@@ -38,7 +38,7 @@ public final class ShooterConfiguration {
         public static final double kTurretRingRatio = 3.5;
         public static final double kTurretMotorRatio = 25.0;
         public static final double kHoodDegToMotorRad = -3.88 / (84.0 - 64.0);
-        public static final Translation2d kTurretOffset = new Translation2d(Units.inchesToMeters(-5.5), Units.inchesToMeters(-3.0));
+        public static final Translation2d kTurretOffset = new Translation2d(Units.inchesToMeters(3.0), Units.inchesToMeters(-5.5));
 
         public static final Angle kTurretZeroOffset = Radians.of(-Math.PI * kTurretMotorRatio * kTurretRingRatio);
         public static final Angle kHoodMotorZero = Radians.of(84.0 * kHoodDegToMotorRad);
@@ -49,8 +49,8 @@ public final class ShooterConfiguration {
 
         public static final TalonFXSConfiguration kTurretMotorConfiguration = new TalonFXSConfiguration()
             .withSlot0(new Slot0Configs()
-                .withKP(1.500).withKI(0.000).withKD(0.000)
-                .withKS(0.000).withKV(0.100).withKA(0.000) // TODO: Add KS, tune KV, up accel.
+                .withKP(1.250).withKI(0.000).withKD(0.000)
+                .withKS(1.250).withKV(0.100).withKA(0.000) // TODO: Add KS, tune KV, up accel.
                 .withGainSchedBehavior(GainSchedBehaviorValue.ZeroOutput)
             ).withMotionMagic(new MotionMagicConfigs()
                 .withMotionMagicCruiseVelocity(RotationsPerSecond.of(kTurretMotorRatio * kTurretRingRatio * 2))
