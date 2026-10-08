@@ -40,7 +40,7 @@ public final class DrivetrainConfiguration {
     // This speed is used to calculate both a translation velocity from controller inputs and to
     // desaturate the calculated module states; it can only be exceeded by directly setting a voltage.
     public static final LinearVelocity kMaxLinearSpeed = MetersPerSecond.of(4.0);
-    public static final AngularVelocity kMaxAngularSpeed = RotationsPerSecond.of(0.5);
+    public static final AngularVelocity kMaxAngularSpeed = RotationsPerSecond.of(2.0);
 
     public static final PPHolonomicDriveController kPathplannerController = new PPHolonomicDriveController(
         new PIDConstants(3.0, 0.0, 0.0, 0.0),

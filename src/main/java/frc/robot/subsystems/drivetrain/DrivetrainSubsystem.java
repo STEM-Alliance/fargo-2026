@@ -1,6 +1,5 @@
 package frc.robot.subsystems.drivetrain;
 
-import static edu.wpi.first.units.Units.Amps;
 import static frc.robot.subsystems.drivetrain.DrivetrainConfiguration.*;
 
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
@@ -12,13 +11,13 @@ import com.pathplanner.lib.config.RobotConfig;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -86,7 +85,7 @@ public final class DrivetrainSubsystem implements Subsystem {
             this::getEstimatedPose,
             this::resetEstimatedPose,
             this::getChassisSpeeds,
-            (speeds, feedforwards) -> drive(speeds, false, false, feedforwards.accelerationsMPSSq()),
+            (speeds, feedforwards) -> drive(speeds, false, false),
             kPathplannerController,
             robotConfig,
             () -> !FieldUtils.isBlueAlliance(),
@@ -114,7 +113,7 @@ public final class DrivetrainSubsystem implements Subsystem {
         Logger.recordOutput("DrivetrainSubsystem/SimulationPose", getSimulationPose());
     }
 
-    public final void drive(ChassisSpeeds chassisSpeeds, boolean fieldRelative, boolean blueRelative, double... gain) {
+    public final void drive(ChassisSpeeds chassisSpeeds, boolean fieldRelative, boolean blueRelative, Translation2d rotateAround) {
         Rotation2d estimatedRotation = getEstimatedPose().getRotation();
 
         if (fieldRelative) {
@@ -125,19 +124,17 @@ public final class DrivetrainSubsystem implements Subsystem {
         }
 
         chassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, Robot.defaultPeriodSecs);
-        SwerveModuleState[] desiredStates = m_kinematics.toSwerveModuleStates(chassisSpeeds);
+        SwerveModuleState[] desiredStates = m_kinematics.toSwerveModuleStates(chassisSpeeds, rotateAround);
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, 4.0);
         Logger.recordOutput("DrivetrainSubsystem/DesiredStates", desiredStates);
 
         for (int i = 0; i < m_swerveModules.length; i++) {
-            // if (gain.length > 0) {
-            //     m_swerveModules[i].setDriveFFAccel(gain[i]);
-            // } else {
-            //     m_swerveModules[i].setDriveFFAccel(0.0);
-            // }
-
             m_swerveModules[i].setDesiredState(desiredStates[i]);
         }
+    }
+
+    public final void drive (ChassisSpeeds chassisSpeeds, boolean fieldRelative, boolean blueRelative) {
+        drive(chassisSpeeds, fieldRelative, blueRelative, Translation2d.kZero);
     }
 
     public final void zeroYaw() {

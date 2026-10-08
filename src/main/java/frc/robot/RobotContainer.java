@@ -385,7 +385,7 @@ public final class RobotContainer {
             poses -> m_field.getObject("path").setPoses(poses)
         );
 
-        NamedCommands.registerCommand("StopDriving", Commands.runOnce(() -> m_drivetrain.drive(new ChassisSpeeds(), false, false, null), m_drivetrain));
+        NamedCommands.registerCommand("StopDriving", Commands.runOnce(() -> m_drivetrain.drive(new ChassisSpeeds(), false, false), m_drivetrain));
         NamedCommands.registerCommand("StartIntaking", Commands.runOnce(() -> {
             m_intake.setExtended(true);
             m_intake.setRunning(true);

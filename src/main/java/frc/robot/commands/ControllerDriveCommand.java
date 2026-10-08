@@ -6,8 +6,9 @@ import static frc.robot.subsystems.drivetrain.DrivetrainConfiguration.kMaxLinear
 import static frc.robot.subsystems.drivetrain.DrivetrainConfiguration.kMaxAngularSpeed;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -43,11 +44,24 @@ public final class ControllerDriveCommand extends Command {
         addRequirements(m_drivetrain);
     }
 
+    private boolean m_spinMode = false;
+    private Rotation2d m_initialRotation = Rotation2d.kZero;
+
     @Override
     public final void execute() {
         double leftX = m_controller.getLeftX();
         double leftY = m_controller.getLeftY();
         double rightX = MathUtil.applyDeadband(m_controller.getRightX(), 0.1);
+
+        if (m_controller.leftStick().getAsBoolean()) {
+            if (m_spinMode == false) {
+                m_initialRotation = m_drivetrain.getEstimatedPose().getRotation();
+            }
+
+            m_spinMode = true;
+        } else {
+            m_spinMode = false;
+        }
 
         // For the left stick (translation), filtering is done to the input magnitude instead of each input indivually.
         // This means that the deadband and exponential scaling are applied circularly instead of on a square. Most jo-
@@ -65,15 +79,21 @@ public final class ControllerDriveCommand extends Command {
             leftY = leftY / leftMagnitude * scaledLeftMagnitude;
         }
 
-        rightX = getScaledInput(rightX);
+        rightX = m_spinMode ? (Math.signum(-leftX) == Math.signum(-leftY) ? 1.0 : -1.0) : getScaledInput(rightX);
 
         // In the WPILib coordinate system, +X is forward and +Y is left (relative to
         // the blue driver station), so the controller X and Y are flipped and inverted.
         // This assumes that the drive function is also using blue origin coordinates.
-        m_desiredSpeeds.vxMetersPerSecond = -leftY * kMaxLinearSpeed.in(MetersPerSecond);
-        m_desiredSpeeds.vyMetersPerSecond = -leftX * kMaxLinearSpeed.in(MetersPerSecond);
+        m_desiredSpeeds.vxMetersPerSecond = -leftY * kMaxLinearSpeed.in(MetersPerSecond) * (m_spinMode ? 0.0 : 1.0);
+        m_desiredSpeeds.vyMetersPerSecond = -leftX * kMaxLinearSpeed.in(MetersPerSecond) * (m_spinMode ? 0.0 : 1.0);
         m_desiredSpeeds.omegaRadiansPerSecond = -rightX * kMaxAngularSpeed.in(RadiansPerSecond);
-        m_drivetrain.drive(m_desiredSpeeds, true, FieldUtils.getAlliance() == Alliance.Blue);
+
+        // this doesnt really work, only up and left works but in all directions.
+        Translation2d rotateAround = m_spinMode ? new Translation2d(
+            0.235 * Math.signum(-leftX), 0.2 * Math.signum(-leftY)
+        ).rotateBy(m_initialRotation.unaryMinus()) : Translation2d.kZero;
+
+        m_drivetrain.drive(m_desiredSpeeds, true, FieldUtils.getAlliance() == Alliance.Blue, rotateAround);
     }
 
     /**
