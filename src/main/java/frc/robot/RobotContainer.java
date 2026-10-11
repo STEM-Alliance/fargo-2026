@@ -323,8 +323,7 @@ public final class RobotContainer {
             m_shooter,
             m_indexer,
             m_drivetrain::getEstimatedPose,
-            m_drivetrain::getChassisSpeeds,
-            m_driverController.rightBumper()
+            m_drivetrain::getChassisSpeeds
         ));
 
         m_driverController.leftTrigger().onTrue(Commands.runOnce(() -> {

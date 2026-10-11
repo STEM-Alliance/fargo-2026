@@ -1,10 +1,17 @@
 package frc.robot.utils;
 
-import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.Seconds;
 
 import edu.wpi.first.math.Pair;
-import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
-import edu.wpi.first.units.measure.*;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.Time;
 
 public final class ShooterUtils {
     private static final double[][] m_angleCoefficients = {
@@ -16,33 +23,30 @@ public final class ShooterUtils {
         {   -0.0308469048,     0.0000000000,     0.0000000000,     0.0000000000,     0.0000000000,     0.0000000000}
     };
 
-    private static final InterpolatingDoubleTreeMap m_hoodAngleTable = new InterpolatingDoubleTreeMap();
-
-    static {
-        m_hoodAngleTable.put(Double.MAX_VALUE, 63.0);
-        m_hoodAngleTable.put(5.52308, 63.0);
-        m_hoodAngleTable.put(3.7955, 68.5);
-        m_hoodAngleTable.put(3.37, 71.5);
-        m_hoodAngleTable.put(3.2038, 72.0);
-        m_hoodAngleTable.put(2.76, 74.0);
-        m_hoodAngleTable.put(2.45, 75.0);
-        m_hoodAngleTable.put(1.9888, 77.5);
-        m_hoodAngleTable.put(1.9023, 78.0);
-        m_hoodAngleTable.put(1.0860, 84.0);
-        m_hoodAngleTable.put(0.0, 84.0);
-    }
+    private static final double[][] m_timeCoefficients = {
+        {  -16.9516768572,    11.0639204437,    -2.8540190586,     0.3762502212,    -0.0248311545,     0.0006533102},
+        {   -8.6317676794,     4.8013289550,    -0.9896838279,     0.0898222975,    -0.0030270886,     0.0000000000},
+        {   -2.4998634237,     1.0079434905,    -0.1364285724,     0.0061238234,     0.0000000000,     0.0000000000},
+        {   -0.3225448535,     0.0902326712,    -0.0061517259,     0.0000000000,     0.0000000000,     0.0000000000},
+        {   -0.0240440501,     0.0031899095,     0.0000000000,     0.0000000000,     0.0000000000,     0.0000000000},
+        {   -0.0006295401,     0.0000000000,     0.0000000000,     0.0000000000,     0.0000000000,     0.0000000000}
+    };
 
     private static final double[] m_velocityCoefficients = {
         1.5324306535, 0.012682714, 0.0000120326
     };
 
-    public static Angle getTableAngle(Distance distance) {
-        return Degrees.of(m_hoodAngleTable.get(distance.in(Meters)));
-    }
-
     public static Angle getPolynomialAngle(Distance distance, LinearVelocity velocity) {
         return Degrees.of(PolynomialUtils.evaluateBivariate(
             m_angleCoefficients,
+            distance.in(Meters),
+            velocity.in(MetersPerSecond)
+        ));
+    }
+
+    public static Time getPolynomialTime(Distance distance, LinearVelocity velocity) {
+        return Seconds.of(PolynomialUtils.evaluateBivariate(
+            m_timeCoefficients,
             distance.in(Meters),
             velocity.in(MetersPerSecond)
         ));

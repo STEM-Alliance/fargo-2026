@@ -66,26 +66,17 @@ public final class ShooterSubsystem implements Subsystem {
     public final Command getShootCommand(IndexerSubsystem indexer) {
         return Commands.parallel(
             Commands.run(() -> {
-                //setFlywheelVelocity(RadiansPerSecond.of(SmartDashboard.getNumber("ShootingRPS", 460.0)));
-                setFlywheelVelocity(RadiansPerSecond.of(460.0));
-                // setFlywheelVelocity(ShooterUtils.getPolynomialVelocityRoot(
-                //     ShotCalculator.getFuelVelocity()
-                // ));
+                setFlywheelVelocity(ShooterUtils.getPolynomialVelocityRoot(
+                    ShotCalculator.getFuelVelocity()
+                ));
             }, m_flywheel),
 
             Commands.repeatingSequence(
-                // TODO: Check velocity with timeout.
-                // TODO: this (or what makes it necessary) is where all of our problems are
                 Commands.waitSeconds(0.925),
                 Commands.runOnce(() -> {
                     indexer.setRunning(true, false, true);
                     setKickerRunning(true, false);
                 })
-                // Commands.run(() -> {}, indexer, m_kicker)
-                // Commands.run(() -> {
-                //     indexer.setRunning(true, false);
-                //     setKickerRunning(true, false);
-                // }, indexer, m_kicker)
             ).finallyDo(() -> {
                 setFlywheelVelocity(RadiansPerSecond.zero());
                 setKickerRunning(false, false);

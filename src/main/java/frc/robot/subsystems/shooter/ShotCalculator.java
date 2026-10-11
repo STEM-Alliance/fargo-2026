@@ -21,7 +21,6 @@ public final class ShotCalculator {
     private static final Distance kSolutionTolerance = Meters.of(0.01);
 
     private static final double kLookAheadTime = 0.03;
-    private static final Angle kPassingAngle = Degrees.of(40.0);
     private static final Distance kHubExpansion = Meters.of(0.75);
     private static final Distance kHubTolerance = Meters.of(1.25);
 
@@ -38,7 +37,6 @@ public final class ShotCalculator {
     ) {
         Pose2d futureRobotPose = getFutureRobotPose(robotPose, robotSpeeds, kLookAheadTime);
 
-        // TODO: add passing, make the y coordinate equal to robot y (constant) and x to alliance wall - 1.5
         boolean isPassing = !FieldUtils.inFriendlyAllianceZone(futureRobotPose);
         Translation2d inducedSpeeds = getInducedSpeeds(futureRobotPose, robotSpeeds);
         Translation2d targetTurretOffset = getTargetTurretOffset(futureRobotPose, isPassing);
@@ -52,21 +50,17 @@ public final class ShotCalculator {
             double distance = leadedOffset.getNorm();
 
             if (isPassing) {
-                // I think what we want to do is set a fuelVelocity through our dashboard
-                // and then step through values of the shooter velocity until it matches,
-                // instead of trying to map actual shots to actual velocities. then those
-                // values can be used instead of the camera measurements.
-                fuelVelocity = 8.0; // TODO: shoot first and then pass.// ShooterUtils.getPassingVelocity(Meters.of(distance));
+                // No iteration or solving for passing, just a fixed angle and velocity.
+                fuelVelocity = 8.0;
                 hoodAngle = 64.0;
+                timeOfFlight = distance / (fuelVelocity * Math.cos(Math.toRadians(hoodAngle)));
+                break;
             } else {
-                // put the velocity on the dashboard to adjust, plus a shooter rpm
-                // and then the distance. adjust velocity to reach a good angle and then get rpm to hit target.
-                fuelVelocity = 9.5;
-
-                hoodAngle = ShooterUtils.getTableAngle(Meters.of(distance)).in(Degrees);
+                fuelVelocity = ShooterUtils.getOptimalVelocity(Meters.of(distance)).in(MetersPerSecond);
+                hoodAngle = ShooterUtils.getPolynomialAngle(Meters.of(distance), MetersPerSecond.of(fuelVelocity)).in(Degrees);
             }
 
-            timeOfFlight = distance / (fuelVelocity * Math.cos(Math.toRadians(hoodAngle)));
+            timeOfFlight = ShooterUtils.getPolynomialTime(Meters.of(distance), MetersPerSecond.of(fuelVelocity)).in(Seconds);
             inducedSpeeds = new Translation2d(inducedSpeeds.getX(), inducedSpeeds.getY());
             Translation2d nextLeadedOffset = targetTurretOffset.minus(inducedSpeeds.times(timeOfFlight));
             double delta = nextLeadedOffset.getDistance(leadedOffset);

@@ -3,13 +3,18 @@ package frc.robot.commands;
 import static edu.wpi.first.units.Units.*;
 
 import static frc.robot.subsystems.drivetrain.DrivetrainConfiguration.kMaxLinearSpeed;
+
+import org.littletonrobotics.junction.Logger;
+
 import static frc.robot.subsystems.drivetrain.DrivetrainConfiguration.kMaxAngularSpeed;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
@@ -88,10 +93,17 @@ public final class ControllerDriveCommand extends Command {
         m_desiredSpeeds.vyMetersPerSecond = -leftX * kMaxLinearSpeed.in(MetersPerSecond) * (m_spinMode ? 0.0 : 1.0);
         m_desiredSpeeds.omegaRadiansPerSecond = -rightX * kMaxAngularSpeed.in(RadiansPerSecond);
 
+        var temp = new Translation2d(leftX, leftY).rotateBy(m_initialRotation.unaryMinus());
+
         // this doesnt really work, only up and left works but in all directions.
         Translation2d rotateAround = m_spinMode ? new Translation2d(
-            0.235 * Math.signum(-leftX), 0.2 * Math.signum(-leftY)
-        ).rotateBy(m_initialRotation.unaryMinus()) : Translation2d.kZero;
+            0.235 * Math.signum(-temp.getY()), 0.2 * Math.signum(-temp.getX())
+        ) : Translation2d.kZero;
+
+        Logger.recordOutput("RotationPoint", new Pose2d(
+            m_drivetrain.getEstimatedPose().getTranslation().plus(rotateAround),
+            Rotation2d.kZero
+        ));
 
         m_drivetrain.drive(m_desiredSpeeds, true, FieldUtils.getAlliance() == Alliance.Blue, rotateAround);
     }

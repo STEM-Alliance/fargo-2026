@@ -38,7 +38,7 @@ public final class ShooterConfiguration {
         public static final double kTurretRingRatio = 3.5;
         public static final double kTurretMotorRatio = 25.0;
         public static final double kHoodDegToMotorRad = -3.88 / (84.0 - 64.0);
-        public static final Translation2d kTurretOffset = new Translation2d(Units.inchesToMeters(3.0), Units.inchesToMeters(-5.5));
+        public static final Translation2d kTurretOffset = new Translation2d(Units.inchesToMeters(-3.0), Units.inchesToMeters(-5.5));
 
         public static final Angle kTurretZeroOffset = Radians.of(-Math.PI * kTurretMotorRatio * kTurretRingRatio);
         public static final Angle kHoodMotorZero = Radians.of(84.0 * kHoodDegToMotorRad);

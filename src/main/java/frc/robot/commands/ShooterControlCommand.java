@@ -23,43 +23,24 @@ import frc.robot.utils.ShooterUtils;
 
 public final class ShooterControlCommand extends Command {
     private final ShooterSubsystem m_shooter;
-    private final IndexerSubsystem m_indexer;
     private final Supplier<Pose2d> m_robotPoseSupplier;
     private final Supplier<ChassisSpeeds> m_robotSpeedsSupplier;
-    private final Debouncer m_autoShootDebouncer = new Debouncer(0.5, DebounceType.kRising);
-
-    private boolean m_autoShootEnabled = false;
 
     public ShooterControlCommand(
         ShooterSubsystem shooter,
         IndexerSubsystem indexer,
         Supplier<Pose2d> robotPoseSupplier,
-        Supplier<ChassisSpeeds> robotSpeedsSupplier,
-        Trigger toggleAutoShootTrigger
+        Supplier<ChassisSpeeds> robotSpeedsSupplier
     ) {
         m_shooter = shooter;
-        m_indexer = indexer;
         m_robotPoseSupplier = robotPoseSupplier;
         m_robotSpeedsSupplier = robotSpeedsSupplier;
-
-        toggleAutoShootTrigger.onTrue(Commands.runOnce(() -> {
-            m_autoShootEnabled = !m_autoShootEnabled;
-            SmartDashboard.putBoolean("AutoShootEnabled", m_autoShootEnabled);
-        }));
-
-        SmartDashboard.putNumber("HoodTargetAngle", 63.0);
-        SmartDashboard.putBoolean("AutoShootEnabled", m_autoShootEnabled);
-        SmartDashboard.putNumber("OffsetDegrees", 0.0);
 
         addRequirements(m_shooter, m_shooter.getTurret());
     }
 
     @Override
-    public final void initialize() {
-        // new Trigger(() -> m_autoShootEnabled && isScheduled() && ShotCalculator.shouldStartShooting() &&
-        //     m_autoShootDebouncer.calculate(ShotCalculator.isShotPossible(m_robotPoseSupplier.get())
-        // )).whileTrue(m_shooter.getShootCommand(m_indexer));
-    }
+    public final void initialize() {}
 
     @Override
     public final void execute() {
@@ -68,34 +49,13 @@ public final class ShooterControlCommand extends Command {
             m_robotSpeedsSupplier.get()
         );
 
-        // Pose2d bluePose = m_robotPoseSupplier.get();
-
-        // if (!FieldUtils.isBlueAlliance()) {
-        //     bluePose = new Pose2d(
-        //         FieldUtils.kFieldLength.in(Meters) - bluePose.getX(),
-        //         FieldUtils.kFieldWidth.in(Meters) - bluePose.getY(),
-        //         bluePose.getRotation().plus(Rotation2d.kPi)
-        //     );
-        // }
-
-        // double widthinterpolated = 4.0 * (bluePose.getY() - FieldUtils.kFieldLength.in(Meters) * 0.5);
-        // double rotationinterpolated = 1.0 * Math.abs(bluePose.getRotation().getRadians() - Math.PI);
-
         Angle turretAzimuth = Degrees.of(
             ShotCalculator.getTargetTurretRelative().getAngle().unaryMinus()
-            .plus(m_robotPoseSupplier.get().getRotation()).getDegrees() +
-            // depending on field x, interpolate between 4 and -4 for min (0.0) and max
-            // also for rotation from 180 away from dirver station
-            SmartDashboard.getNumber("OffsetDegrees", 0.0)
-            // widthinterpolated + rotationinterpolated
+            .plus(m_robotPoseSupplier.get().getRotation()).getDegrees()
         );
 
-        Angle hoodElevation;
-        if (!m_shooter.isFlywheelRunning()) {
-            hoodElevation = Degrees.of(86.0);
-        } else {
-            hoodElevation = ShooterUtils.getTableAngle(Meters.of(ShotCalculator.getTargetTurretRelative().getNorm()));
-        }
+        Angle hoodElevation = m_shooter.isFlywheelRunning() ?
+            ShotCalculator.getLaunchAngle() : Degrees.of(86.0);
 
         m_shooter.setTurretAzimuth(turretAzimuth);
         m_shooter.setHoodElevation(hoodElevation);
