@@ -337,6 +337,10 @@ public final class RobotContainer {
             m_shooter.getShootCommand(m_indexer)
         );
 
+        m_driverController.b().onTrue(
+            Commands.runOnce(() -> m_shooter.setFlywheelVelocity(RotationsPerSecond.zero()))
+        );
+
         m_driverController.leftBumper().whileTrue(Commands.run(() -> {
             m_indexer.setRunning(true, true, false);
             m_shooter.setKickerRunning(true, true);

@@ -11,6 +11,7 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXSConfiguration;
+import com.ctre.phoenix6.configs.TorqueCurrentConfigs;
 import com.ctre.phoenix6.configs.VoltageConfigs;
 import com.ctre.phoenix6.signals.GainSchedBehaviorValue;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -109,6 +110,8 @@ public final class ShooterConfiguration {
             ).withVoltage(new VoltageConfigs()
                 .withPeakForwardVoltage(Volts.of(10.0))
                 .withPeakReverseVoltage(Volts.of(-10.0))
+            ).withTorqueCurrent(new TorqueCurrentConfigs()
+                .withPeakReverseTorqueCurrent(Amps.of(-10.0))
             ).withMotorOutput(new MotorOutputConfigs()
                 .withInverted(InvertedValue.Clockwise_Positive)
             );

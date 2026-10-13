@@ -1,6 +1,7 @@
 package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -78,7 +79,7 @@ public final class ShooterSubsystem implements Subsystem {
                     setKickerRunning(true, false);
                 })
             ).finallyDo(() -> {
-                setFlywheelVelocity(RadiansPerSecond.zero());
+                setFlywheelVelocity(RotationsPerSecond.of(1.75));
                 setKickerRunning(false, false);
                 indexer.setRunning(false, false, false);
             })

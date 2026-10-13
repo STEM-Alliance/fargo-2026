@@ -15,9 +15,10 @@ public final class IntakeConfiguration {
 
     public static final TalonFXSConfiguration kIntakeMotorConfiguration = new TalonFXSConfiguration()
         .withCurrentLimits(new CurrentLimitsConfigs()
-            .withStatorCurrentLimit(Amps.of(60.0))
-            .withSupplyCurrentLimit(Amps.of(40.0))
-            .withSupplyCurrentLowerTime(Seconds.zero())
+            .withStatorCurrentLimit(Amps.of(80.0))
+            .withSupplyCurrentLimit(Amps.of(60.0))
+            .withSupplyCurrentLowerLimit(Amps.of(40.0))
+            .withSupplyCurrentLowerTime(Seconds.of(1.0))
         ).withMotorOutput(new MotorOutputConfigs()
             .withInverted(InvertedValue.Clockwise_Positive)
         );
