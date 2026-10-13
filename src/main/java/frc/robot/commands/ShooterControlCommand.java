@@ -57,6 +57,11 @@ public final class ShooterControlCommand extends Command {
         Angle hoodElevation = m_shooter.isFlywheelRunning() ?
             ShotCalculator.getLaunchAngle() : Degrees.of(86.0);
 
+        // Correction to turret angle based on sine of "actual" target, this is
+        // probably because of backspin from our kicker (software fixing mechanical).
+        // double turretAzimuthCos = Math.sin(turretAzimuth.in(Radians));
+        // turretAzimuth = turretAzimuth.plus(Degrees.of(-5.0 * turretAzimuthCos));
+
         m_shooter.setTurretAzimuth(turretAzimuth);
         m_shooter.setHoodElevation(hoodElevation);
     }
