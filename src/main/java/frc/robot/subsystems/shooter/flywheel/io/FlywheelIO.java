@@ -44,6 +44,16 @@ public abstract interface FlywheelIO {
     public default void setMotorVelocities(AngularVelocity velocity) {}
 
     /**
+     * Enables or disables ball-load torque-current feedforward compensation.
+     * <p> When active, a tunable bias of extra torque current is added to the
+     * onboard velocity loop output while a ball is being fed into the rollers,
+     * pre-loading the momentum the ball steals at engagement.
+     * 
+     * @param active Whether ball-load compensation should be applied.
+    */
+    public default void setBallLoadAssist(boolean active) {}
+
+    /**
      * Directly sets the applied voltage to the flywheel motors.
      * <p> This will cancel any onboard closed-loop control.
      * 

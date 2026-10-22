@@ -38,7 +38,7 @@ public final class ShooterConfiguration {
         public static final double kTurretRingRatio = 3.5;
         public static final double kTurretMotorRatio = 25.0;
         public static final double kHoodDegToMotorRad = -3.88 / (84.0 - 64.0);
-        public static final Translation2d kTurretOffset = new Translation2d(Units.inchesToMeters(-5.5), Units.inchesToMeters(-3.0));
+        public static final Translation2d kTurretOffset = new Translation2d(Units.inchesToMeters(5.5), Units.inchesToMeters(3.0));
 
         public static final Angle kTurretZeroOffset = Radians.of(-Math.PI * kTurretMotorRatio * kTurretRingRatio);
         public static final Angle kHoodMotorZero = Radians.of(84.0 * kHoodDegToMotorRad);
@@ -96,10 +96,14 @@ public final class ShooterConfiguration {
 
         public static final TalonFXConfiguration kLeftFlywheelMotorConfiguration = new TalonFXConfiguration()
             .withSlot0(new Slot0Configs()
-                // Tune kS for stationary motion.
-                // Set flywheel to setpoint, tune kV and then kP until no oscillation.
-                // Then lower and adjust kP down again for oscillation.
-                .withKP(9.000).withKI(0.000).withKD(0.000)
+                // VelocityTorqueCurrentFOC: kS/kV/kA are in Amps (torque current), not Volts.
+                // Output = kS*sign(refV) + kV*refV + kA*d(refV)/dt + kP*err + kI*integral(err)
+                //
+                // Tune order: kV (at speed), then kS (friction), then kP (until oscillation,
+                // then back off ~30%), then kI (start ~kP/20, raise until ball-load droop
+                // recovers in under ~0.25s without overshoot). kI is what removes the
+                // persistent droop while a ball is pressing on the rollers.
+                .withKP(9.000).withKI(0.500).withKD(0.000)
                 .withKS(1.900).withKV(0.042).withKA(0.000) // 0.035 and 10 for p
             ).withCurrentLimits(new CurrentLimitsConfigs()
                 .withStatorCurrentLimit(Amps.of(120.0))
@@ -107,8 +111,11 @@ public final class ShooterConfiguration {
                 .withSupplyCurrentLowerLimit(Amps.of(40.0))
                 .withSupplyCurrentLowerTime(Seconds.of(2.5))
             ).withVoltage(new VoltageConfigs()
-                .withPeakForwardVoltage(Volts.of(10.0))
-                .withPeakReverseVoltage(Volts.of(-10.0))
+                // Full headroom so the loop can overdrive the motors to recover wheel
+                // speed while a ball is in the throat. The supply current limit still
+                // protects the breaker.
+                .withPeakForwardVoltage(Volts.of(12.0))
+                .withPeakReverseVoltage(Volts.of(-12.0))
             ).withMotorOutput(new MotorOutputConfigs()
                 .withInverted(InvertedValue.Clockwise_Positive)
             );

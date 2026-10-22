@@ -18,8 +18,18 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.subsystems.shooter.flywheel.FlywheelHardware;
 
 public class FlywheelIOReal implements FlywheelIO {
+    // Ball-load feedforward bias, in torque-current Amps per motor.
+    // Identified from 2026-04-10 logs: each ball steals ~0.1-0.2 N*m*s of momentum
+    // on engagement (velocity dips 20-30% of setpoint), and the P term alone
+    // cannot replace it before the ball exits. At Kraken X60 kT ~= 9.7 mN*m/A,
+    // 10 A ~= 0.1 N*m of recovery torque per motor. Tune live on the dashboard.
+    private static final double kBallLoadAssistAmpsDefault = 10.0;
+
     private final TalonFX m_leftMotor;
     private final TalonFX m_rightMotor;
+
+    private boolean m_ballLoadAssistActive = false;
+    private double m_ballLoadAssistAmps = kBallLoadAssistAmpsDefault;
 
     private final VelocityTorqueCurrentFOC m_leftMotorSetpoint;
     private final VelocityTorqueCurrentFOC m_rightMotorSetpoint;
@@ -57,19 +67,27 @@ public class FlywheelIOReal implements FlywheelIO {
         BaseStatusSignal.setUpdateFrequencyForAll(
             50.0,
             m_leftMotorPosition,
-            m_leftMotorVelocity,
             m_leftMotorAppliedVoltage,
             m_leftMotorStatorCurrent,
 
             m_rightMotorPosition,
-            m_rightMotorVelocity,
             m_rightMotorAppliedVoltage,
             m_rightMotorStatorCurrent
         );
 
+        // Log velocity at the full control rate so ball-load velocity dips are visible
+        // in the logs instead of being hidden between 50 Hz samples.
+        BaseStatusSignal.setUpdateFrequencyForAll(
+            250.0,
+            m_leftMotorVelocity,
+            m_rightMotorVelocity
+        );
+
         SmartDashboard.putNumber("Flywheel/KP", kLeftFlywheelMotorConfiguration.Slot0.kP);
+        SmartDashboard.putNumber("Flywheel/KI", kLeftFlywheelMotorConfiguration.Slot0.kI);
         SmartDashboard.putNumber("Flywheel/KS", kLeftFlywheelMotorConfiguration.Slot0.kS);
         SmartDashboard.putNumber("Flywheel/KV", kLeftFlywheelMotorConfiguration.Slot0.kV);
+        SmartDashboard.putNumber("Flywheel/BallLoadAmps", kBallLoadAssistAmpsDefault);
 
         ParentDevice.optimizeBusUtilizationForAll(0.0, m_leftMotor, m_rightMotor);
     }
@@ -77,6 +95,14 @@ public class FlywheelIOReal implements FlywheelIO {
     private final void setKP(double kP) {
         kLeftFlywheelMotorConfiguration.Slot0.kP = kP;
         kRightFlywheelMotorConfiguration.Slot0.kP = kP;
+
+        m_leftMotor.getConfigurator().apply(kLeftFlywheelMotorConfiguration);
+        m_rightMotor.getConfigurator().apply(kRightFlywheelMotorConfiguration);
+    }
+
+    private final void setKI(double kI) {
+        kLeftFlywheelMotorConfiguration.Slot0.kI = kI;
+        kRightFlywheelMotorConfiguration.Slot0.kI = kI;
 
         m_leftMotor.getConfigurator().apply(kLeftFlywheelMotorConfiguration);
         m_rightMotor.getConfigurator().apply(kRightFlywheelMotorConfiguration);
@@ -100,8 +126,14 @@ public class FlywheelIOReal implements FlywheelIO {
 
     @Override
     public final void updateInputs(Flywheelinputs loggableInputs) {
+        m_ballLoadAssistAmps = SmartDashboard.getNumber("Flywheel/BallLoadAmps", kBallLoadAssistAmpsDefault);
+
         if (kLeftFlywheelMotorConfiguration.Slot0.kP != SmartDashboard.getNumber("Flywheel/KP", 0.0)) {
             setKP(SmartDashboard.getNumber("Flywheel/KP", 0.0));
+        }
+
+        if (kLeftFlywheelMotorConfiguration.Slot0.kI != SmartDashboard.getNumber("Flywheel/KI", 0.0)) {
+            setKI(SmartDashboard.getNumber("Flywheel/KI", 0.0));
         }
 
         if (kLeftFlywheelMotorConfiguration.Slot0.kS != SmartDashboard.getNumber("Flywheel/KS", 0.0)) {
@@ -139,8 +171,15 @@ public class FlywheelIOReal implements FlywheelIO {
 
     @Override
     public final void setMotorVelocities(AngularVelocity velocity) {
-        m_leftMotor.setControl(m_leftMotorSetpoint.withVelocity(velocity));
-        m_rightMotor.setControl(m_rightMotorSetpoint.withVelocity(velocity));
+        double feedForwardAmps = m_ballLoadAssistActive ? m_ballLoadAssistAmps : 0.0;
+
+        m_leftMotor.setControl(m_leftMotorSetpoint.withVelocity(velocity).withFeedForward(Amps.of(feedForwardAmps)));
+        m_rightMotor.setControl(m_rightMotorSetpoint.withVelocity(velocity).withFeedForward(Amps.of(feedForwardAmps)));
+    }
+
+    @Override
+    public final void setBallLoadAssist(boolean active) {
+        m_ballLoadAssistActive = active;
     }
 
     @Override

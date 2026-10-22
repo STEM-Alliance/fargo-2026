@@ -228,7 +228,9 @@ public final class RobotContainer {
             m_drivetrain,
             m_intake,
             m_indexer,
-            m_shooter
+            m_shooter,
+            m_shooter.getKicker(),
+            m_shooter.getFlywheel()
         );
 
         configureBindings();
@@ -405,11 +407,11 @@ public final class RobotContainer {
         NamedCommands.registerCommand("StartShooting", Commands.runOnce(() -> {
             m_shooter.setKickerRunning(true, false);
             m_indexer.setRunning(true, false, false);
-        }));
+        }, m_shooter.getKicker(), m_indexer));
         NamedCommands.registerCommand("StopShooting", Commands.runOnce(() -> {
             m_shooter.setKickerRunning(false, false);
             m_indexer.setRunning(false, false, false);
-        }));
+        }, m_shooter.getKicker(), m_indexer));
         NamedCommands.registerCommand("WaitDashboardDelay", Commands.defer(() -> {
             return Commands.waitSeconds(SmartDashboard.getNumber("DashboardDelay", 0.0));
         }, Set.of()));

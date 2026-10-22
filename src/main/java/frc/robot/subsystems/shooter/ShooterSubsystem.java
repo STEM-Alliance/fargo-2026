@@ -43,7 +43,13 @@ public final class ShooterSubsystem implements Subsystem {
     }
 
     public final void setKickerRunning(boolean running, boolean reverse) {
+        org.littletonrobotics.junction.Logger.recordOutput("ShooterSubsystem/KickerRunningRequested", running);
         m_kicker.setRunning(running, reverse);
+
+        // Forward kicking means a ball is about to hit the rollers: pre-load the
+        // momentum it will steal so the velocity loop starts with extra torque
+        // instead of waiting for the dip to appear.
+        m_flywheel.setBallLoadAssist(running && !reverse);
     }
 
     public final void setTurretAzimuth(Angle azimuth) {

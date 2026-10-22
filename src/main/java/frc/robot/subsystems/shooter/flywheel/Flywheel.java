@@ -25,6 +25,8 @@ public class Flywheel implements Subsystem {
     }
 
     public final void setMotorVelocities(AngularVelocity velocity) {
+        Logger.recordOutput("ShooterSubsystem/Flywheel/VelocitySetpoint", velocity);
+
         if (velocity.abs(RotationsPerSecond) > 1e-6) {
             m_flywheelIO.setMotorVelocities(velocity);
         } else {
@@ -34,6 +36,11 @@ public class Flywheel implements Subsystem {
 
     public final void setMotorVoltages(Voltage voltage) {
         m_flywheelIO.setMotorVoltages(voltage);
+    }
+
+    public final void setBallLoadAssist(boolean active) {
+        Logger.recordOutput("ShooterSubsystem/Flywheel/BallLoadAssistActive", active);
+        m_flywheelIO.setBallLoadAssist(active);
     }
 
     public final void stopMotors() {
