@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inside the Robot — How Our FRC Robot Works</title>
+<style>
+:root{
+  --bg:#0b1020; --bg2:#0f1630; --card:#141c38; --card2:#1a2347;
+  --ink:#e8ecf8; --dim:#9aa7c7; --cyan:#38e1ff; --amber:#ffb454;
+  --pink:#ff6b9d; --green:#5df2a0; --red:#ff5d5d; --violet:#b48cff;
+  --mono:'Cascadia Code','JetBrains Mono',Consolas,'SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(1200px 700px at 70% -10%,#182456 0%,var(--bg) 55%);color:var(--ink);
+  font-family:-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;line-height:1.55}
+a{color:var(--cyan);text-decoration:none}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+
+/* ---------- nav ---------- */
+nav{position:sticky;top:0;z-index:50;background:rgba(11,16,32,.85);backdrop-filter:blur(10px);
+  border-bottom:1px solid #23306080}
+nav .wrap{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:10px 20px}
+nav .logo{font-weight:800;font-size:1.02rem;margin-right:10px;letter-spacing:.3px}
+nav .logo span{color:var(--cyan)}
+nav a.t{color:var(--dim);font-size:.85rem;padding:5px 10px;border-radius:999px;transition:.15s;white-space:nowrap}
+nav a.t:hover{color:var(--ink);background:#1e2a55}
+nav a.t.active{color:#04121c;background:var(--cyan);font-weight:700}
+
+/* ---------- pages ---------- */
+.page{display:none;animation:fadein .35s ease}
+.page.active{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+h1{font-size:2.2rem;margin:.6em 0 .2em;line-height:1.15}
+h2{font-size:1.35rem;margin:2.2em 0 .6em}
+h3{font-size:1.05rem;margin:1.4em 0 .4em;color:var(--cyan)}
+p.lead{font-size:1.12rem;color:var(--dim);max-width:62ch}
+.kicker{display:inline-block;font-size:.78rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:#04121c;background:linear-gradient(90deg,var(--cyan),var(--violet));border-radius:999px;padding:4px 12px;margin-top:26px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.chip{background:var(--card2);border:1px solid #2b3a75;border-radius:10px;padding:8px 14px;font-size:.85rem;color:var(--dim)}
+.chip b{color:var(--amber);font-size:1rem}
+
+/* ---------- cards ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin:20px 0}
+.card{background:var(--card);border:1px solid #24305f;border-radius:16px;padding:18px;cursor:pointer;
+  transition:.18s;position:relative;overflow:hidden}
+.card:hover{transform:translateY(-4px);border-color:var(--cyan);box-shadow:0 10px 30px -12px #38e1ff40}
+.card .ico{font-size:1.7rem}
+.card b{display:block;margin:8px 0 4px;font-size:1.02rem}
+.card p{margin:0;font-size:.85rem;color:var(--dim)}
+.card .go{position:absolute;top:14px;right:14px;color:var(--cyan);opacity:0;transition:.18s}
+.card:hover .go{opacity:1}
+
+/* ---------- demo boxes ---------- */
+.demo{background:linear-gradient(180deg,#121a3a,#0e1530);border:1px solid #2b3a75;border-radius:18px;
+  padding:18px;margin:22px 0}
+.demo .dt{display:flex;align-items:center;gap:10px;font-weight:800;margin-bottom:4px}
+.demo .dt .badge{font-size:.68rem;background:var(--pink);color:#20040c;border-radius:6px;padding:2px 8px;letter-spacing:.08em}
+.demo .hint{font-size:.83rem;color:var(--dim);margin-bottom:12px}
+canvas{display:block;width:100%;border-radius:12px;background:#0a0f24;border:1px solid #22306a;touch-action:none}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+button{font:inherit;font-weight:700;border:none;border-radius:10px;padding:9px 16px;cursor:pointer;
+  background:var(--cyan);color:#04121c;transition:.15s}
+button:hover{filter:brightness(1.15);transform:translateY(-1px)}
+button.alt{background:var(--card2);color:var(--ink);border:1px solid #34448a}
+button.amber{background:var(--amber)}
+button:disabled{opacity:.45;cursor:default;transform:none}
+label.tg{display:inline-flex;gap:8px;align-items:center;font-size:.85rem;color:var(--dim);cursor:pointer}
+input[type=range]{accent-color:var(--cyan);width:100%;max-width:320px}
+.readout{font-family:var(--mono);font-size:.85rem;color:var(--green);background:#0a0f24;border:1px solid #22306a;
+  border-radius:10px;padding:8px 12px;display:inline-block;margin-top:10px}
+.badge-inline{display:inline-block;border-radius:6px;padding:2px 8px;font-size:.75rem;font-weight:800}
+
+/* ---------- code ---------- */
+.codeblock{background:#0a0e20;border:1px solid #26336a;border-radius:14px;margin:14px 0;overflow:hidden}
+.codeblock .fn{font-family:var(--mono);font-size:.72rem;color:var(--dim);padding:8px 16px;border-bottom:1px solid #1c2851;
+  background:#0d1329;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codeblock .fn .src{color:var(--violet)}
+pre{margin:0;padding:14px 8px;overflow-x:auto;font-family:var(--mono);font-size:.8rem;line-height:1.6}
+.cl{display:block;padding:0 12px;border-left:3px solid transparent}
+.cl.lit{background:rgba(56,225,255,.13);border-left-color:var(--cyan)}
+.kw{color:#ff7edb}.cm{color:#5d7396;font-style:italic}.st{color:#9ce878}.nu{color:#ffb454}.an{color:#6fd8ff}.ty{color:#7ecbff}
+.expl{list-style:none;padding:0;margin:10px 0 4px}
+.expl li{background:var(--card);border:1px solid #24305f;border-radius:12px;padding:10px 14px;margin:8px 0;
+  font-size:.9rem;color:var(--dim);cursor:pointer;transition:.15s;display:flex;gap:10px}
+.expl li:hover{border-color:var(--cyan);color:var(--ink);transform:translateX(4px)}
+.expl li .n{flex:0 0 22px;height:22px;border-radius:50%;background:var(--cyan);color:#04121c;font-weight:800;
+  font-size:.72rem;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.expl li code{font-family:var(--mono);font-size:.8rem;color:var(--amber)}
+.callout{border-left:4px solid var(--amber);background:#1c1a10;border-radius:0 12px 12px 0;padding:12px 16px;
+  margin:16px 0;font-size:.92rem;color:#f4dfb6}
+.callout.pink{border-color:var(--pink);background:#241019;color:#f8cfdc}
+.callout.green{border-color:var(--green);background:#0e2018;color:#c6f2d9}
+
+/* ---------- overview robot svg ---------- */
+.robotsvg,#journeySvg{background:#0a0f24;border:1px solid #22306a;border-radius:18px}
+.hot{cursor:pointer}
+.hot .z{transition:.2s}
+.hot:hover .z{filter:drop-shadow(0 0 10px var(--cyan)) brightness(1.4)}
+.robotsvg text,.journey text{font-family:inherit}
+.hotlbl{font-size:11px;fill:var(--dim);font-weight:700;pointer-events:none}
+@keyframes pulse{0%,100%{opacity:.55}50%{opacity:1}}
+.pul{animation:pulse 1.6s infinite}
+
+/* ---------- loop diagram ---------- */
+.looprow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;justify-content:center;margin:20px 0}
+.loopbox{background:var(--card2);border:1px solid #34448a;border-radius:14px;padding:14px 18px;min-width:150px;max-width:210px;text-align:center}
+.loopbox b{display:block;font-size:.92rem}
+.loopbox span{font-size:.78rem;color:var(--dim)}
+.arrow{display:flex;align-items:center;color:var(--cyan);font-size:1.4rem;padding:0 10px}
+@media(max-width:700px){.looprow{flex-direction:column;align-items:center}.arrow{transform:rotate(90deg);padding:4px 0}}
+
+/* ---------- controller ---------- */
+.ctrl-wrap{position:relative;max-width:640px;margin:0 auto}
+.ctrl-wrap svg{width:100%;display:block}
+.cbtn{cursor:pointer}
+.cbtn .z{transition:.15s}
+.cbtn:hover .z,.cbtn.sel .z{fill:var(--cyan);filter:drop-shadow(0 0 8px var(--cyan))}
+#ctrlInfo{min-height:88px}
+#ctrlInfo b{color:var(--cyan)}
+
+/* ---------- timeline ---------- */
+.tl{margin:8px 0}
+.tl .row{display:flex;align-items:center;gap:10px;margin:8px 0}
+.tl .lbl{flex:0 0 130px;font-size:.8rem;font-weight:700;color:var(--dim);text-align:right}
+.tl .track{flex:1;height:18px;background:#0a0f24;border:1px solid #22306a;border-radius:9px;overflow:hidden;position:relative}
+.tl .fill{height:100%;width:0%;border-radius:9px;background:linear-gradient(90deg,#1e6f8f,var(--cyan));transition:none}
+.tl .fill.amberf{background:linear-gradient(90deg,#8f6a1e,var(--amber))}
+.tl .fill.pinkf{background:linear-gradient(90deg,#8f1e4a,var(--pink))}
+.tl .status{flex:0 0 66px;font-family:var(--mono);font-size:.72rem;color:var(--green)}
+
+footer{margin:60px 0 30px;color:var(--dim);font-size:.8rem;border-top:1px solid #1c2851;padding-top:18px}
+.navbtns{display:flex;justify-content:space-between;gap:10px;margin:44px 0 10px;flex-wrap:wrap}
+.pill{font-size:.8rem;background:var(--card2);border:1px solid #34448a;border-radius:999px;padding:6px 14px;color:var(--dim);cursor:pointer}
+.pill:hover{border-color:var(--cyan);color:var(--ink)}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <span class="logo">🤖 Inside the <span>Robot</span></span>
+  <a class="t" href="#/">Overview</a>
+  <a class="t" href="#/drivetrain">Drivetrain</a>
+  <a class="t" href="#/shooter">Shooter</a>
+  <a class="t" href="#/autoaim">Auto-Aim</a>
+  <a class="t" href="#/intake">Intake</a>
+  <a class="t" href="#/indexer">Indexer</a>
+  <a class="t" href="#/vision">Vision</a>
+  <a class="t" href="#/architecture">Code Structure</a>
+  <a class="t" href="#/controls">Driver Controls</a>
+</div></nav>
+
+<div class="wrap">
+
+<!-- ============================================================ OVERVIEW -->
+<section class="page" id="page-overview">
+  <span class="kicker">FRC Team 7048 · Red River Rage · 2026 Season</span>
+  <h1>How does a robot like <em>this</em> actually work?</h1>
+  <p class="lead">On the field it looks like magic — zooming around, scooping up <b>fuel</b>, and flinging it into a giant spinning hub. But it's all <b>code + motors + sensors</b>. Click any part of the robot (or any card below) to explore how each system works, with the <em>real code</em> from the robot program.</p>
+
+  <div class="demo">
+    <div class="dt">🗺️ Interactive robot map <span class="badge">CLICK THINGS</span></div>
+    <div class="hint">Hover and click the glowing parts of the robot. Top-down view: the intake faces right (toward the field), the turret aims out the back.</div>
+    <svg id="robotSvg" class="robotsvg" viewBox="0 0 460 270">
+      <defs>
+        <radialGradient id="hubg" cx="50%" cy="50%"><stop offset="0%" stop-color="#ffb454"/><stop offset="100%" stop-color="#7a4d10"/></radialGradient>
+      </defs>
+      <!-- field decorations -->
+      <rect x="0" y="0" width="460" height="270" fill="none"/>
+      <circle cx="392" cy="58" r="30" fill="none" stroke="#3a4c8f" stroke-width="2" stroke-dasharray="5 5"/>
+      <circle cx="392" cy="58" r="16" fill="url(#hubg)" opacity=".85"/>
+      <text x="392" y="105" text-anchor="middle" class="hotlbl">THE HUB (target)</text>
+      <!-- robot body -->
+      <g id="rbody">
+        <rect x="92" y="98" width="168" height="104" rx="14" fill="#1b2750" stroke="#43579f" stroke-width="2"/>
+        <text x="176" y="228" text-anchor="middle" class="hotlbl">chassis (the frame + electronics + battery)</text>
+      </g>
+      <!-- gyro -->
+      <g class="hot" data-link="#/drivetrain">
+        <rect class="z pul" x="164" y="140" width="24" height="24" rx="5" fill="#b48cff"/>
+        <text x="176" y="157" text-anchor="middle" font-size="10" font-weight="800" fill="#1a0836">G</text>
+        <text x="176" y="128" text-anchor="middle" class="hotlbl">gyro</text>
+      </g>
+      <!-- swerve modules -->
+      <g class="hot" data-link="#/drivetrain"><circle class="z pul" cx="112" cy="106" r="14" fill="#38e1ff"/></g>
+      <g class="hot" data-link="#/drivetrain"><circle class="z pul" cx="240" cy="106" r="14" fill="#38e1ff"/></g>
+      <g class="hot" data-link="#/drivetrain"><circle class="z pul" cx="112" cy="194" r="14" fill="#38e1ff"/></g>
+      <g class="hot" data-link="#/drivetrain"><circle class="z pul" cx="240" cy="194" r="14" fill="#38e1ff"/></g>
+      <text x="86" y="80" class="hotlbl">4 swerve modules (wheels)</text>
+      <!-- cameras -->
+      <g class="hot" data-link="#/vision">
+        <polygon class="z pul" points="262,104 280,96 280,112"/>
+        <polygon class="z pul" points="262,196 280,188 280,204"/>
+        <text x="296" y="94" class="hotlbl">cameras (vision)</text>
+      </g>
+      <!-- intake -->
+      <g class="hot" data-link="#/intake">
+        <rect id="intakeArm" class="z" x="262" y="128" width="52" height="44" rx="10" fill="#ff6b9d"/>
+        <text x="288" y="190" class="hotlbl">intake</text>
+      </g>
+      <!-- indexer path -->
+      <g class="hot" data-link="#/indexer">
+        <rect class="z pul" x="206" y="140" width="48" height="20" rx="6" fill="#5df2a0"/>
+        <text x="230" y="132" text-anchor="middle" class="hotlbl">indexer</text>
+      </g>
+      <!-- turret/shooter -->
+      <g class="hot" data-link="#/shooter">
+        <circle class="z pul" cx="122" cy="150" r="24" fill="#ffb454"/>
+        <rect class="z" x="82" y="143" width="26" height="14" rx="4" fill="#ffb454"/>
+        <text x="118" y="192" text-anchor="middle" class="hotlbl">turret + flywheel shooter</text>
+      </g>
+    </svg>
+    <div class="btnrow"><button id="journeyBtn">🎬 Run a full scoring play</button>
+      <span id="journeyCap" style="font-size:.85rem;color:var(--dim)"></span></div>
+    <svg id="journeySvg" viewBox="0 0 460 120" style="margin-top:10px">
+      <path id="fuelPath" d="M430 88 C 350 88, 300 88, 240 86 C 190 84, 150 84, 110 82 C 70 80, 55 66, 40 30" fill="none" stroke="#22306a" stroke-width="2" stroke-dasharray="4 6"/>
+      <g font-size="11" fill="#9aa7c7" font-weight="700">
+        <text x="438" y="70" text-anchor="end">1 · intake scoops fuel</text>
+        <text x="250" y="70" text-anchor="middle">2 · indexer holds it</text>
+        <text x="112" y="70">3 · kicker + flywheel launch</text>
+      </g>
+      <circle cx="428" cy="88" r="6" fill="#ffb454"/>
+      <rect x="418" y="96" width="36" height="10" rx="3" fill="#ff6b9d"/>
+      <rect x="232" y="92" width="26" height="14" rx="4" fill="#5df2a0"/>
+      <circle cx="96" cy="96" r="13" fill="none" stroke="#ffb454" stroke-width="3"/>
+      <circle id="fuelDot" cx="-20" cy="-20" r="8" fill="#ffd479" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="38" cy="26" r="20" fill="none" stroke="#38e1ff" stroke-width="2"/>
+      <text x="38" y="60" text-anchor="middle" font-size="10" fill="#9aa7c7" font-weight="700">HUB</text>
+    </svg>
+  </div>
+
+  <h2>The big picture: a robot is a really fast loop</h2>
+  <p>Everything the robot does comes from one heartbeat. <b>50 times every second</b> (every 20&nbsp;milliseconds), the robot reads its sensors, runs its code, and commands its motors. This loop never stops — not while driving, not while scoring, not even while the robot is just sitting there disabled.</p>
+
+  <div class="looprow">
+    <div class="loopbox"><b>🎮 Inputs</b><span>driver sticks, cameras, gyro, encoders</span></div>
+    <div class="arrow">➜</div>
+    <div class="loopbox"><b>🧠 The Code</b><span>commands + subsystems decide what to do</span></div>
+    <div class="arrow">➜</div>
+    <div class="loopbox"><b>⚙️ Motors</b><span>voltage to wheels, flywheel, pistons…</span></div>
+    <div class="arrow">⟲</div>
+    <div class="loopbox"><b>📡 Sensors</b><span>measure what actually happened, report back</span></div>
+  </div>
+
+  <div class="codeblock"><div class="fn"><span>The heartbeat — this runs 50× per second</span><span class="src">src/main/java/frc/robot/Robot.java</span></div>
+<pre><code id="code-loop">@Override
+public final void robotPeriodic() {
+    CommandScheduler.getInstance().run();
+    m_robotContainer.robotPeriodic();
+}</code></pre></div>
+  <ul class="expl">
+    <li data-code="code-loop" data-lines="3"><span class="n">1</span><span><code>CommandScheduler.run()</code> is the "conductor of the orchestra" — it runs every command that's currently active (drive, aim, shoot…) and updates every subsystem's sensors.</span></li>
+    <li data-code="code-loop" data-lines="4"><span class="n">2</span><span>Then the robot updates the field display, checks the alliance color, and monitors the battery voltage.</span></li>
+  </ul>
+
+  <h2>Pick a system to explore</h2>
+  <div class="grid">
+    <div class="card" onclick="location.hash='#/drivetrain'"><div class="go">→</div><div class="ico">🛞</div><b>Swerve Drivetrain</b><p>Four wheels that each spin <em>and</em> steer — the robot can drive sideways, spin in place, and change direction instantly.</p></div>
+    <div class="card" onclick="location.hash='#/shooter'"><div class="go">→</div><div class="ico">🎯</div><b>Shooter</b><p>A flywheel spinning at ~4,400 RPM flings fuel at 9.5&nbsp;m/s into a hub over 2&nbsp;m up in the air.</p></div>
+    <div class="card" onclick="location.hash='#/autoaim'"><div class="go">→</div><div class="ico">🧮</div><b>Auto-Aim Math</b><p>The robot solves projectile physics 50×/second to lead a target it can't even see yet.</p></div>
+    <div class="card" onclick="location.hash='#/intake'"><div class="go">→</div><div class="ico">🌀</div><b>Intake</b><p>Compressed air (pneumatics!) punches the intake down, and a roller vacuum-scoops the fuel.</p></div>
+    <div class="card" onclick="location.hash='#/indexer'"><div class="go">→</div><div class="ico">🚦</div><b>Indexer</b><p>The traffic cop between intake and shooter — it even slows itself down when the shot gets steep.</p></div>
+    <div class="card" onclick="location.hash='#/vision'"><div class="go">→</div><div class="ico">📷</div><b>Vision</b><p>Three cameras read "AprilTag" barcodes to figure out exactly where the robot is on the field.</p></div>
+    <div class="card" onclick="location.hash='#/architecture'"><div class="go">→</div><div class="ico">🏗️</div><b>Code Structure</b><p>One brain, three bodies: the same code runs on the real robot, in a video-game simulation, or from a replay.</p></div>
+    <div class="card" onclick="location.hash='#/controls'"><div class="go">→</div><div class="ico">🎮</div><b>Driver Controls</b><p>What every button on the controller does — and the code that wires them up.</p></div>
+  </div>
+
+  <div class="callout">💡 <b>Fun scale fact:</b> the loop that runs this whole robot refreshes every 20&nbsp;ms. A blink of an eye takes about 200-300&nbsp;ms — the robot cycles its entire brain ~10 times before you finish blinking.</div>
+</section>
+
+<!-- ============================================================ DRIVETRAIN -->
+<section class="page" id="page-drivetrain">
+  <span class="kicker">System 1 of 6</span>
+  <h1>🛞 The Swerve Drivetrain</h1>
+  <p class="lead">Most robots turn like a car. This one doesn't. Each of its four wheels can <b>point in any direction</b> while spinning — like shopping-cart wheels that you can also steer. That means the robot can drive sideways, diagonally, or pirouette without moving an inch.</p>
+  <div class="chips">
+    <div class="chip">top speed <b>4.0 m/s</b> (~9 mph)</div>
+    <div class="chip">robot mass <b>~61 kg</b> (135 lb!)</div>
+    <div class="chip">turn rate <b>0.5 rot/s</b></div>
+    <div class="chip">wheel steering gears <b>12.8:1</b></div>
+    <div class="chip">modules <b>4× MK4i</b></div>
+  </div>
+
+  <div class="demo">
+    <div class="dt">🕹️ Drive the swerve yourself <span class="badge">KEYBOARD</span></div>
+    <div class="hint">WASD or arrow keys = move · Q / E = rotate · hold SPACE = "X-brake" (locks wheels in an X so nobody pushes you around). Watch which way each wheel points while you drive — <b>sideways motion (A/D) is where swerve shows off.</b></div>
+    <canvas id="swerveCanvas" width="760" height="330"></canvas>
+    <div class="btnrow">
+      <label class="tg"><input type="checkbox" id="fieldRel" checked> Field-relative (drive like the driver does)</label>
+      <button class="alt" id="swerveReset">Reset</button>
+    </div>
+    <div class="readout" id="swerveOut">vx: 0.00 m/s · vy: 0.00 m/s · ω: 0.00 rot/s</div>
+    <div class="hint" style="margin-top:8px">With field-relative ON, pressing "up" always drives toward the far end of the field, no matter which way the robot faces — just like the real driver's left stick.</div>
+  </div>
+
+  <h3>The command that makes it all happen</h3>
+  <p>The drive team's stick input arrives as a <code>ChassisSpeeds</code> — "go this fast forward, this fast sideways, spin this fast." The <code>drive()</code> function converts that single order into four separate wheel settings.</p>
+  <div class="codeblock"><div class="fn"><span>One order in, four wheels out</span><span class="src">subsystems/drivetrain/DrivetrainSubsystem.java</span></div>
+<pre><code id="code-drive">public final void drive(ChassisSpeeds chassisSpeeds, boolean fieldRelative, boolean blueRelative, double... gain) {
+    Rotation2d estimatedRotation = getEstimatedPose().getRotation();
+
+    if (fieldRelative) {
+        chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+            chassisSpeeds,
+            blueRelative ? estimatedRotation : estimatedRotation.plus(Rotation2d.kPi)
+        );
+    }
+
+    chassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, Robot.defaultPeriodSecs);
+    SwerveModuleState[] desiredStates = m_kinematics.toSwerveModuleStates(chassisSpeeds);
+    SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, 4.0);
+
+    for (int i = 0; i &lt; m_swerveModules.length; i++) {
+        m_swerveModules[i].setDesiredState(desiredStates[i]);
+    }
+}</code></pre></div>
+  <ul class="expl">
+    <li data-code="code-drive" data-lines="4-9"><span class="n">1</span><span><b>Field-relative math.</b> The driver says "toward the hub," but the motors only understand "relative to the robot." This uses the gyro heading to translate. The <code>kPi</code> (180°) flip handles the red alliance, where the robot starts facing the other way.</span></li>
+    <li data-code="code-drive" data-lines="11"><span class="n">2</span><span><b>Discretize</b> — the loop only ticks every 20&nbsp;ms, so the code converts a smooth continuous wish into "how far to actually move this one tick."</span></li>
+    <li data-code="code-drive" data-lines="12"><span class="n">3</span><span><b>The kinematics magic.</b> <code>toSwerveModuleStates</code> is a matrix calculation that solves: "to move + spin like this, each of the 4 wheels needs <em>this angle</em> and <em>this speed</em>." (It's the same math your swerve demo above is doing.)</span></li>
+    <li data-code="code-drive" data-lines="13"><span class="n">4</span><span><b>Speed limit.</b> If the math asks a wheel for 6&nbsp;m/s but the motors top out at 4, clamp it — otherwise the wheel just spins at max and the robot's actual motion stops matching its math.</span></li>
+    <li data-code="code-drive" data-lines="15-17"><span class="n">5</span><span>Finally, send every module its personal orders. 50 times a second. Forever.</span></li>
+  </ul>
+
+  <h3>Speed hack: the wheel flip</h3>
+  <div class="demo">
+    <div class="dt">🔄 Try the wheel-flip optimizer <span class="badge">CLICK CANVAS</span></div>
+    <div class="hint">The wheel (blue bar) currently points somewhere. <b>Click anywhere on the circle</b> to demand a new direction. If turning would take more than 90°, the robot instead rotates the wheel the <em>short</em> way and drives <span class="badge-inline" style="background:#5c1010;color:#ff8a8a">BACKWARDS</span> — a wheel rolling backwards at the flipped angle goes the same direction with a faster, smaller turn.</div>
+    <canvas id="flipCanvas" width="760" height="300"></canvas>
+    <div class="readout" id="flipOut"></div>
+  </div>
+
+  <div class="codeblock"><div class="fn"><span>The 90° rule, in code</span><span class="src">subsystems/drivetrain/swervemodule/SwerveModule.java</span></div>
+<pre><code id="code-flip">public final void setDesiredState(SwerveModuleState desiredState) {
+    Rotation2d currentWheelAzimuth = getWheelAzimuthAsRotation();
+
+    desiredState.optimize(currentWheelAzimuth);
+    desiredState.cosineScale(currentWheelAzimuth);
+
+    m_swerveModuleIO.setWheelVelocity(MetersPerSecond.of(desiredState.speedMetersPerSecond));
+    m_swerveModuleIO.setWheelAzimuth(Radians.of(desiredState.angle.getRadians()));
+}
+
+public final boolean shouldOptimize(SwerveModuleState desiredState) {
+    Rotation2d delta = desiredState.angle.minus(getWheelAzimuthAsRotation());
+    return Math.abs(delta.getDegrees()) &gt; 90.0;
+}</code></pre></div>
+  <ul class="expl">
+    <li data-code="code-flip" data-lines="4"><span class="n">1</span><span><code>optimize()</code> is WPILib's built-in version of the trick you just played with: if the turn is &gt;90°, flip the angle 180° and negate the speed.</span></li>
+    <li data-code="code-flip" data-lines="5"><span class="n">2</span><span><code>cosineScale()</code> handles an honest physics problem: a wheel pointed 60° off from where it wants to go only contributes cos(60°) = half its speed in the right direction. Scale the command so the <em>effective</em> speed stays correct.</span></li>
+    <li data-code="code-flip" data-lines="11-13"><span class="n">3</span><span>This helper shows the raw rule: measure the difference between target and current wheel angle; if it's more than 90°, optimize. (One line of math can be a whole speed hack!)</span></li>
+  </ul>
+
+  <h3>How does the robot know where it is? Dead reckoning + a gyro</h3>
+  <p>The wheels have encoders that measure how far they've rolled, and the <b>Pigeon2 gyro</b> measures every rotation of the robot. A <i>pose estimator</i> constantly fuses those signals — like navigating by counting your steps while a compass tells which way you turned. The camera system (see <a href="#/vision">Vision</a>) keeps it honest by occasionally saying "excuse me, you're actually <em>here</em>."</p>
+  <div class="callout green">🧠 <b>Pose</b> = position + heading, written (x, y, θ). "Pose estimation" = combining noisy measurements from several sensors into the single best guess of where you are. It's the same family of math that powers your phone's location (GPS + wifi + motion sensors).</div>
+</section>
+
+<!-- ============================================================ SHOOTER -->
+<section class="page" id="page-shooter">
+  <span class="kicker">System 2 of 6</span>
+  <h1>🎯 The Shooter: Flywheel · Turret · Hood · Kicker</h1>
+  <p class="lead">Scoring means launching a foam "fuel" ball ~2&nbsp;meters <b>up</b> into a spinning hub. The shooter is actually four mechanisms cooperating: a <b>flywheel</b> (the slingshot), a <b>turret</b> (rotates to aim left/right), a <b>hood</b> (tilts to set launch height angle), and a <b>kicker</b> (the pusher that feeds fuel into the spinning wheel at exactly the right moment).</p>
+  <div class="chips">
+    <div class="chip">flywheel speed <b>460 rad/s</b> ≈ 4,400 RPM</div>
+    <div class="chip">fuel leaves at <b>9.5 m/s</b></div>
+    <div class="chip">spin-up wait <b>0.925 s</b></div>
+    <div class="chip">flywheel current limit <b>120 A</b></div>
+  </div>
+
+  <div class="demo">
+    <div class="dt">🔥 The shoot sequence <span class="badge">PRESS FIRE</span></div>
+    <div class="hint">You can't just dump fuel into a stopped flywheel — the wheel has to be up to speed <em>first</em>. This timeline shows the real choreography the code runs when the driver holds the right trigger.</div>
+    <div class="tl">
+      <div class="row"><span class="lbl">Flywheel</span><div class="track"><div class="fill" id="tlFly"></div></div><span class="status" id="stFly">idle</span></div>
+      <div class="row"><span class="lbl">⏳ spin-up wait</span><div class="track"><div class="fill amberf" id="tlWait"></div></div><span class="status" id="stWait">—</span></div>
+      <div class="row"><span class="lbl">Kicker + Indexer</span><div class="track"><div class="fill pinkf" id="tlKick"></div></div><span class="status" id="stKick">idle</span></div>
+    </div>
+    <div class="btnrow"><button class="amber" id="fireBtn">🔥 HOLD TO SHOOT</button><span id="fireNote" style="font-size:.85rem;color:var(--dim)"></span></div>
+  </div>
+
+  <div class="codeblock"><div class="fn"><span>The choreography as Java</span><span class="src">subsystems/shooter/ShooterSubsystem.java</span></div>
+<pre><code id="code-shoot">public final Command getShootCommand(IndexerSubsystem indexer) {
+    return Commands.parallel(
+        Commands.run(() -> {
+            setFlywheelVelocity(RadiansPerSecond.of(SmartDashboard.getNumber("ShootingRPS", 460.0)));
+        }, m_flywheel),
+
+        Commands.repeatingSequence(
+            Commands.waitSeconds(0.925),
+            Commands.runOnce(() -> {
+                indexer.setRunning(true, false, true);
+                setKickerRunning(true, false);
+            })
+        ).finallyDo(() -> {
+            setFlywheelVelocity(RadiansPerSecond.zero());
+            setKickerRunning(false, false);
+            indexer.setRunning(false, false, false);
+        })
+    );
+}</code></pre></div>
+  <ul class="expl">
+    <li data-code="code-shoot" data-lines="2"><span class="n">1</span><span><code>Commands.parallel(...)</code> means "run both of these <b>at the same time</b>." Commands are how FRC code describes activities with a start, a middle, and a stop.</span></li>
+    <li data-code="code-shoot" data-lines="4"><span class="n">2</span><span>Spin the flywheel to its target speed — and notice it reads the speed from the <b>dashboard</b>. Coaches can type a new RPM <em>during a match</em> without recompiling.</span></li>
+    <li data-code="code-shoot" data-lines="8"><span class="n">3</span><span><code>waitSeconds(0.925)</code> — measured on the real robot: that's exactly how long the heavy flywheel needs to reach full speed. Physics has a speed limit (inertia!), so the code waits it out.</span></li>
+    <li data-code="code-shoot" data-lines="9-12"><span class="n">4</span><span>Only <em>then</em> does the kicker push fuel into the spinning wheel and the indexer feed more from behind.</span></li>
+    <li data-code="code-shoot" data-lines="13-17"><span class="n">5</span><span><code>finallyDo</code> is a safety net: <b>no matter how the command ends</b> — driver lets go, robot disabled, emergency — everything stops. Clean shutdown, every time.</span></li>
+  </ul>
+
+  <h3>The kicker: two directions solve two problems</h3>
+  <div class="codeblock"><div class="fn"><span>Same motor, both directions</span><span class="src">subsystems/shooter/kicker/Kicker.java</span></div>
+<pre><code id="code-kicker">public final void setRunning(boolean running, boolean reverse) {
+    m_kickerIO.setKickerMotorVoltage(
+        running ? Volts.of(reverse ? 12.0 : -12.0) : Volts.zero()
+    );
+}</code></pre></div>
+  <ul class="expl">
+    <li data-code="code-kicker" data-lines="3"><span class="n">1</span><span>Electric motors spin backwards with <b>negative voltage</b>. Forward: feed fuel into the flywheel. Reverse (driver holds the left bumper): spit fuel back out. When 5 balls jam in a pipe, being able to say "puke in reverse" saves matches.</span></li>
+  </ul>
+
+  <h3>How steep should the shot be? (Real physics, solved live)</h3>
+  <p>Fire a ball at 9.5&nbsp;m/s at a hub that's ~1.3&nbsp;m above the launcher, and there are <b>exactly two launch angles</b> that hit it — a flat, fast one and a high, lobbing one (try it with a basketball: same spot reachable at two arcs). The robot solves the projectile equation and picks the <b>high arc</b>, which drops fuel in from above like a basketball swish instead of a line drive that clangs off the rim.</p>
+
+  <div class="demo">
+    <div class="dt">🏹 Launch-angle solver <span class="badge">SLIDE IT</span></div>
+    <div class="hint">Drag the distance slider. The code computes both possible angles and picks the higher one. Near the hub the shot is almost vertical (84°!); far away it flattens out (~63°). Push past max range to see the math break — the square root goes negative and there's simply <em>no angle</em> that reaches.</div>
+    <canvas id="projCanvas" width="760" height="330"></canvas>
+    <div class="btnrow"><input type="range" id="projDist" min="1.5" max="7.6" step="0.05" value="3.2">
+      <span style="font-family:var(--mono);font-size:.85rem" id="projDistLbl">3.20 m</span></div>
+    <div class="readout" id="projOut"></div>
+  </div>
+
+  <div class="codeblock"><div class="fn"><span>The quadratic formula shows up in real life</span><span class="src">utils/ShooterUtils.java</span></div>
+<pre><code id="code-quad">public static Pair&lt;Angle, Angle&gt; getQuadraticAngles(
+    Distance horizontalDistance,
+    Distance verticalDistance,
+    LinearVelocity velocity
+) {
+    double v2 = Math.pow(velocity.in(MetersPerSecond), 2);
+    double x = horizontalDistance.in(Meters);
+    double y = verticalDistance.in(Meters);
+
+    double principalRoot = Math.sqrt(Math.pow(v2, 2) - 9.8 * (9.8 * Math.pow(x, 2) + 2.0 * y * v2));
+    double positiveRootAngle = Math.toDegrees(Math.atan((v2 + principalRoot) / (9.8 * x)));
+    double negativeRootAngle = Math.toDegrees(Math.atan((v2 - principalRoot) / (9.8 * x)));
+
+    return Pair.of(
+        Degrees.of((positiveRootAngle &lt; negativeRootAngle) ? positiveRootAngle : negativeRootAngle),
+        Degrees.of((positiveRootAngle &gt; negativeRootAngle) ? positiveRootAngle : negativeRootAngle)
+    );
+}</code></pre></div>
+  <ul class="expl">
+    <li data-code="code-quad" data-lines="10"><span class="n">1</span><span>That's the <b>discriminant</b> from the quadratic formula — and that <code>9.8</code>? Gravitational acceleration, m/s². Your physics class is literally running this robot. If the inside of the square root goes negative, no angle works (the shot is out of range).</span></li>
+    <li data-code="code-quad" data-lines="11-12"><span class="n">2</span><span><code>+ principalRoot</code> and <code>- principalRoot</code> = the two angles (high arc / low arc). <code>atan</code> converts the math ratio back into a real-world angle.</span></li>
+    <li data-code="code-quad" data-lines="14-17"><span class="n">3</span><span>Returns both angles, sorted low then high. <a href="#/autoaim">ShotCalculator</a> then grabs <code>.getSecond()</code> — the high, swish-friendly arc.</span></li>
+  </ul>
+</section>
+
+<!-- ============================================================ AUTOAIM -->
+<section class="page" id="page-autoaim">
+  <span class="kicker">System 3 of 6 · the brains</span>
+  <h1>🧮 Auto-Aim: Leading a Moving Target</h1>
+  <p class="lead">Here's a hard problem: by the time fuel reaches the hub (~0.4 s of flight), a <em>moving robot</em> will be somewhere else — and the shot was fired from where the robot <em>used to be</em>. The robot must aim where it <b>will be</b>, not where it is. Like throwing a ball to a friend while both of you are running.</p>
+  <p>There's no clean single formula for this (aim angle depends on distance, distance depends on lead, lead depends on flight time, flight time depends on angle…). So the code does something very computer-y: <b>guess, check, improve, repeat</b> — up to 10 times, stopping when the answer stops changing by more than 1&nbsp;centimeter.</p>
+
+  <div class="demo">
+    <div class="dt">🎯 Watch the algorithm converge <span class="badge">STEP THROUGH IT</span></div>
+    <div class="hint">The robot (bottom) moves with the arrow's velocity. The hub is up and to the right. Each iteration: measure distance to the current guess → physics gives hood angle + flight time → subtract robot's motion during that time → new guess. Press <b>Step</b> until the error falls below 1&nbsp;cm.</div>
+    <canvas id="leadCanvas" width="760" height="360"></canvas>
+    <div class="btnrow">
+      <button id="leadStep">Step ➜</button>
+      <button class="alt" id="leadAuto">Auto-play</button>
+      <button class="alt" id="leadReset">Reset</button>
+    </div>
+    <div class="readout" id="leadOut"></div>
+  </div>
+
+  <div class="codeblock"><div class="fn"><span>Guess → check → improve. 50 times a second.</span><span class="src">subsystems/shooter/ShotCalculator.java</span></div>
+<pre><code id="code-lead">for (int i = 0; i &lt; kMaxIterations; i++) {
+    double distance = leadedOffset.getNorm();
+    fuelVelocity = 9.5;
+
+    hoodAngle = ShooterUtils.getQuadraticAngles(
+        Meters.of(distance),
+        Inches.of(71.5 - 21.5),
+        MetersPerSecond.of(fuelVelocity)
+    ).getSecond().in(Degrees);
+
+    timeOfFlight = distance / (fuelVelocity * Math.cos(Math.toRadians(hoodAngle)));
+    Translation2d nextLeadedOffset = targetTurretOffset.minus(inducedSpeeds.times(timeOfFlight));
+    double delta = nextLeadedOffset.getDistance(leadedOffset);
+
+    leadedOffset = nextLeadedOffset;
+
+    if ((i &gt;= (kMaxIterations - 1)) || (delta &lt;= kSolutionTolerance.in(Meters))) {
+        Logger.recordOutput("ShotCalculator/Iterations", i + 1);
+        break;
+    }
+}</code></pre></div>
+  <ul class="expl">
+    <li data-code="code-lead" data-lines="2-3"><span class="n">1</span><span>How far is the hub from my <em>current guess</em>? Fuel speed is a measured constant of the real robot.</span></li>
+    <li data-code="code-lead" data-lines="5-9"><span class="n">2</span><span>Given that distance (and the hub being 50&nbsp;inches above the launch point — <code>71.5 - 21.5</code>), the projectile math spits back the hood angle for the <b>high arc</b>.</span></li>
+    <li data-code="code-lead" data-lines="11"><span class="n">3</span><span>Horizontal speed × time = distance, so time = distance ÷ horizontal speed. Now we know how long the robot gets to wander during the shot.</span></li>
+    <li data-code="code-lead" data-lines="12"><span class="n">4</span><span><b>The lead itself:</b> shift the target backwards by however far the robot (and turret!) will travel during flight. Note <code>inducedSpeeds</code> cleverly includes the sideways speed from the robot <em>rotating</em>, since a turret mounted off-center swings through an arc.</span></li>
+    <li data-code="code-lead" data-lines="17-20"><span class="n">5</span><span>If the answer barely moved (≤ 1&nbsp;cm), we're done — usually in ~3 iterations. Otherwise loop again. This "iterate until it stops changing" trick is called <b>fixed-point iteration</b>, and it's how real engineering software solves impossible-looking equations.</span></li>
+  </ul>
+
+  <div class="callout">🧠 <b>Why not solve it exactly?</b> Because the equation is circular — the variable you're solving for hides inside itself. Iteration is the honest way: a computer can check 3-10 candidates in a microsecond, and "accurate to 1&nbsp;cm" is more precise than a 20&nbsp;kg robot on a bumpy field ever needs.</div>
+  <p>Two more rules wrap the aiming: <b>isShotPossible()</b> geometry-checks the field map so the robot never tries to fire through the tower blocking part of the hub, and <b>shouldStartShooting()</b> checks the game's hub schedule so fuel isn't fired into a hub that's about to go inactive (wasted fuel = no points).</p>
+</section>
+
+<!-- ============================================================ INTAKE -->
+<section class="page" id="page-intake">
+  <span class="kicker">System 4 of 6</span>
+  <h1>🌀 The Intake: Air-Powered Grabbing</h1>
+  <p class="lead">The intake has two jobs: <b>get down there</b> and <b>vacuum up fuel</b>. Getting down there isn't done with a motor — it's done with <em>compressed air</em>. A piston punches the whole intake from tucked-up to deployed in a fraction of a second, faster and stronger than a motor could.</p>
+  <div class="chips">
+    <div class="chip">pneumatic piston + <b>double solenoid</b> (air valve)</div>
+    <div class="chip">roller motor <b>12.0 V</b> (full send)</div>
+    <div class="chip">compressor keeps the tank at ~<b>120 psi</b></div>
+  </div>
+
+  <div class="demo">
+    <div class="dt">💨 Pneumatics playground <span class="badge">PRESS THE BUTTONS</span></div>
+    <div class="hint"><b>B</b> toggles the piston up/down (like on the controller). <b>Hold LT</b> to deploy + run the roller at once — that's the real "collect!" binding. Watch the air valve route air to either side of the piston.</div>
+    <canvas id="pneuCanvas" width="760" height="260"></canvas>
+    <div class="btnrow">
+      <button class="alt" id="pneuToggle">B — toggle piston</button>
+      <button class="alt" id="pneuLT" style="user-select:none">LT — hold to collect</button>
+    </div>
+    <div class="readout" id="pneuOut"></div>
+  </div>
+
+  <div class="codeblock"><div class="fn"><span>Two verbs: run, and toggle</span><span class="src">subsystems/intake/IntakeSubsystem.java</span></div>
+<pre><code id="code-intake">public final void setRunning(boolean running) {
+    if (running) {
+        m_intakeIO.setIntakeMotorVoltage(Volts.of(12.0));
+    } else {
+        m_intakeIO.setIntakeMotorVoltage(Volts.zero());
+    }
+}
+
+public final void toggleIntakeExtended() {
+    m_intakeIO.setIntakeExtended(!m_intakeInputs.isIntakeSolenoidForward);
+}</code></pre></div>
+  <ul class="expl">
+    <li data-code="code-intake" data-lines="1-7"><span class="n">1</span><span>There's no fancy controller here — the intake's job is simple, so it gets <b>all 12 volts, or zero.</b> Good code isn't fancy code; it's enough code.</span></li>
+    <li data-code="code-intake" data-lines="9-11"><span class="n">2</span><span>The toggle reads the solenoid's <em>current state</em> from the sensor inputs and flips it with <code>!</code> (NOT). The piston doesn't have an "up" sensor position to home to — a valve is either switched one way or the other. Notice subsystems always read their own <em>logged inputs</em> rather than trusting a remembered boolean — sensors beat memory.</span></li>
+  </ul>
+  <div class="callout pink">💨 <b>How pneumatics work:</b> a compressor stuffs air into a tank. A <b>solenoid</b> is an electrically-controlled valve — send current one way, air pushes the piston out; the other way, air pushes it back in. It's the same tech in excavators, dump-truck beds, and bus door openers. Fast, strong, and a very satisfying <em>THWACK</em>.</div>
+</section>
+
+<!-- ============================================================ INDEXER -->
+<section class="page" id="page-indexer">
+  <span class="kicker">System 5 of 6</span>
+  <h1>🚦 The Indexer: A Motorized Traffic Cop</h1>
+  <p class="lead">Between the intake and the shooter sits a short storage tube with a small motor called the <b>indexer</b>. Its job: hold collected fuel in a neat train, and feed it into the shooter <em>one ball at a time, exactly when asked</em>. Too fast → jams. Too slow → the flywheel spins empty.</p>
+
+  <div class="demo">
+    <div class="dt">🐌 The indexer that slows itself down <span class="badge">SLIDE THE HOOD ANGLE</span></div>
+    <div class="hint">Here's a gem from the real code: when the shot is steep (hood angle ≥ 75°, nearly straight up), the indexer <b>ignores whatever speed it was asked for</b> and runs at half voltage, because gravity already does most of the work feeding a vertical shot — pushing hard just packs fuel too fast and jams the shooter. Slide past 75° and watch it self-limit.</div>
+    <canvas id="idxCanvas" width="760" height="180"></canvas>
+    <div class="btnrow"><input type="range" id="idxAngle" min="60" max="85" step="1" value="70">
+      <span style="font-family:var(--mono);font-size:.85rem" id="idxAngleLbl">launch angle 70°</span></div>
+    <div class="readout" id="idxOut"></div>
+  </div>
+
+  <div class="codeblock"><div class="fn"><span>The whole subsystem is 10 lines</span><span class="src">subsystems/indexer/IndexerSubsystem.java</span></div>
+<pre><code id="code-idx">public final void setRunning(boolean running, boolean reverse, boolean slow) {
+    // TODO: Make indexder speed distance dependant.
+    var angle = ShotCalculator.getLaunchAngle().in(Degrees);
+    slow = (Double.isFinite(angle)) &amp;&amp; (angle &gt;= 75.0);
+    var voltage = slow ? 1.5 : 3.0;
+    m_indexerIO.setIndexerMotorVoltage(
+        running ? Volts.of(reverse ? voltage : -voltage) : Volts.zero()
+    );
+}</code></pre></div>
+  <ul class="expl">
+    <li data-code="code-idx" data-lines="2"><span class="n">1</span><span>Yes, that's a real typo ("indexder") from the real source. Every programmer's code has these. Ship the robot anyway; fix it later.</span></li>
+    <li data-code="code-idx" data-lines="3-4"><span class="n">2</span><span>It looks up the <a href="#/autoaim">ShotCalculator's</a> current launch angle and overrides <code>slow</code> itself. <code>isFinite</code> guards against "no valid shot computed yet" — garbage input can't crash the motor.</span></li>
+    <li data-code="code-idx" data-lines="5"><span class="n">3</span><span>3 volts forward, 1.5 volts when steep. Tiny numbers, because this motor just <em>nudges</em> fuel — the flywheel does the violent part.</span></li>
+    <li data-code="code-idx" data-lines="6-8"><span class="n">4</span><span>Running <code>reverse</code> with <b>positive</b> voltage (while the shooter uses negative) — this motor's "forward" is wired to point fuel <em>backward</em> out of the robot, so spitting a jam means… running it forward. Wiring direction is a real, funny gotcha of hardware.</span></li>
+  </ul>
+</section>
+
+<!-- ============================================================ VISION -->
+<section class="page" id="page-vision">
+  <span class="kicker">System 6 of 6</span>
+  <h1>📷 Vision: Reading the Field's Barcodes</h1>
+  <p class="lead">Dead reckoning (counting wheel turns) drifts — a small bump throws off every calculation after it. So the robot has three cameras scanning for <b>AprilTags</b>: square barcode-like stickers at known positions around the field. Spot one, and geometry tells you exactly where you are, like a lighthouse fix at sea.</p>
+  <div class="chips">
+    <div class="chip">cameras <b>3×</b> (front-right, back-left, back-right)</div>
+    <div class="chip">single tags trusted only within <b>3.0 m</b></div>
+    <div class="chip">runs on <b>PhotonVision</b> coprocessors</div>
+  </div>
+
+  <p>But camera "fixes" can be wrong: a tag seen edge-on or far away gives a fuzzy position. The robot therefore doesn't just believe its cameras — it grades each measurement and only trusts it as much as it deserves. This grading function decides how much the pose estimator listens:</p>
+
+  <div class="demo">
+    <div class="dt">🤔 How much does the robot trust its camera? <span class="badge">CHANGE THE SCENARIO</span></div>
+    <div class="hint">Zero tags → completely ignored. One tag far away → ignored (a distant barcode is too fuzzy). One nearby tag → listened to carefully, more if it appears large. Multiple tags → the best possible fix, and the size + count combine into the trust score. Adjust the sliders and see what the code concludes.</div>
+    <canvas id="visCanvas" width="760" height="240"></canvas>
+    <div class="btnrow" style="gap:20px">
+      <label class="tg" style="flex-direction:column;align-items:flex-start">tags visible: <b id="visTagsLbl" style="color:var(--cyan)">1</b>
+        <input type="range" id="visTags" min="0" max="3" step="1" value="1"></label>
+      <label class="tg" style="flex-direction:column;align-items:flex-start">nearest tag distance: <b id="visDistLbl" style="color:var(--cyan)">1.8 m</b>
+        <input type="range" id="visDist" min="0.5" max="6" step="0.1" value="1.8"></label>
+      <label class="tg" style="flex-direction:column;align-items:flex-start">tag area on screen: <b id="visAreaLbl" style="color:var(--cyan)">0.05</b>
+        <input type="range" id="visArea" min="0.01" max="0.3" step="0.01" value="0.05"></label>
+    </div>
+    <div class="readout" id="visOut"></div>
+  </div>
+
+  <div class="codeblock"><div class="fn"><span>Grading the camera's homework</span><span class="src">subsystems/vision/VisionSubsystem.java</span></div>
+<pre><code id="code-vis">private static final Matrix&lt;N3, N1&gt; getPoseStdDevs(LoggableAprilTagDetection[] aprilTags) {
+    double totalArea = 0.0;
+
+    for (var aprilTag : aprilTags) {
+        totalArea += aprilTag.area();
+    }
+
+    if (aprilTags.length &lt;= 1) {
+        if ((aprilTags.length == 0) || (aprilTags[0].distance() &gt; kMaxSingleTagDistance.in(Meters))) {
+            return kIgnoredStdDevs;
+        } else {
+            return kSingleTagStdDevs.div(totalArea);
+        }
+    }
+
+    return kMultiTagStdDevs.div(totalArea / (1.0 + Math.log(aprilTags.length) / Math.log(2.0)));
+}</code></pre></div>
+  <ul class="expl">
+    <li data-code="code-vis" data-lines="1-2"><span class="n">1</span><span><b>Standard deviation</b> ("std devs") = "how much wiggle-room I think this measurement has." Small = believe it. Huge = ignore it. The pose estimator weighs every sensor by its wiggle-room.</span></li>
+    <li data-code="code-vis" data-lines="4-6"><span class="n">2</span><span>A tag that looks <em>big</em> in the camera is close, and close tags give sharper position fixes — so total visible area is a direct proxy for measurement quality.</span></li>
+    <li data-code="code-vis" data-lines="8-11"><span class="n">3</span><span>No tags, or only one lonely tag farther than 3&nbsp;m? Return "infinite uncertainty" — the vision measurement is politely thrown in the trash. Bad data in, bad driving out.</span></li>
+    <li data-code="code-vis" data-lines="16"><span class="n">4</span><span>Multiple tags: divide by area <em>and</em> a logarithmic bonus for tag count (that <code>log₂</code> — doubling the tags adds +1 bonus, with diminishing returns, just like real information theory).</span></li>
+  </ul>
+  <div class="callout green">🛰️ This "combine noisy sensors with confidence weights" idea is called <b>sensor fusion</b> — the same core idea in self-driving cars and the phone in your pocket. Your robot does it on a tiny computer, 50 times a second.</div>
+</section>
+
+<!-- ============================================================ ARCHITECTURE -->
+<section class="page" id="page-architecture">
+  <span class="kicker">Under the hood</span>
+  <h1>🏗️ One Brain, Three Bodies</h1>
+  <p class="lead">Building a robot is risky — what if the code shorts a motor at 2 AM the night before a competition? This team's secret weapon: <b>every line of robot code is written against fake hardware</b> (an "IO interface"). Real motors, a video-game physics simulation, or a recorded match replay can all plug into the same brain.</p>
+
+  <div class="demo">
+    <div class="dt">🔀 Swap the body, keep the brain <span class="badge">CLICK TO SWITCH</span></div>
+    <div class="hint">The subsystems (the brain) never know which body they're driving. Pick one:</div>
+    <div class="btnrow">
+      <button class="alt" id="ioReal">🤖 Real robot</button>
+      <button class="alt" id="ioSim">🎮 Simulation</button>
+      <button class="alt" id="ioLog">📼 Log replay</button>
+    </div>
+    <svg viewBox="0 0 760 190" style="width:100%;margin-top:14px;background:#0a0f24;border:1px solid #22306a;border-radius:12px">
+      <rect x="20" y="60" width="180" height="70" rx="12" id="ioBox" fill="#1a2347" stroke="#38e1ff" stroke-width="2"/>
+      <text x="110" y="90" text-anchor="middle" fill="#e8ecf8" font-size="13" font-weight="700" id="ioBoxT">FlywheelIOReal</text>
+      <text x="110" y="110" text-anchor="middle" fill="#9aa7c7" font-size="11" id="ioBoxS">talks to physical motors</text>
+      <path d="M210 95 L300 95" stroke="#38e1ff" stroke-width="2" marker-end="url(#arrw)"/>
+      <defs><marker id="arrw" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="#38e1ff" stroke-width="1.5"/></marker></defs>
+      <rect x="305" y="60" width="180" height="70" rx="12" fill="#241d43" stroke="#b48cff" stroke-width="2"/>
+      <text x="395" y="90" text-anchor="middle" fill="#e8ecf8" font-size="13" font-weight="700">Flywheel</text>
+      <text x="395" y="110" text-anchor="middle" fill="#9aa7c7" font-size="11">the brain: control logic only</text>
+      <path d="M495 95 L585 95" stroke="#b48cff" stroke-width="2" marker-end="url(#arrw)"/>
+      <rect x="590" y="60" width="150" height="70" rx="12" fill="#12293a" stroke="#5df2a0" stroke-width="2"/>
+      <text x="665" y="90" text-anchor="middle" fill="#e8ecf8" font-size="13" font-weight="700">AdvantageKit</text>
+      <text x="665" y="110" text-anchor="middle" fill="#9aa7c7" font-size="11">records everything</text>
+    </svg>
+    <div id="ioDesc" class="callout" style="margin-bottom:0"></div>
+  </div>
+
+  <p>The "plug" is tiny — an interface declares only <em>what</em> a flywheel can do, never <em>how</em>:</p>
+  <div class="codeblock"><div class="fn"><span>What a flywheel <em>is</em>, as Java (trimmed)</span><span class="src">subsystems/shooter/flywheel/io/FlywheelIO.java</span></div>
+<pre><code id="code-io">public abstract interface FlywheelIO {
+    public default void updateInputs(Flywheelinputs loggableInputs) {}
+    public default void setMotorVelocities(AngularVelocity velocity) {}
+    public default void setMotorVoltages(Voltage voltage) {}
+}</code></pre></div>
+  <ul class="expl">
+    <li data-code="code-io" data-lines="2"><span class="n">1</span><span><b>Read sensors:</b> "tell me where the motors are and how fast they're spinning." On the real robot this reads the motor controllers over a network cable; in sim it reads the physics engine.</span></li>
+    <li data-code="code-io" data-lines="3-4"><span class="n">2</span><span><b>Write motors:</b> "spin at this rate" or "receive this voltage." The brain calls these verbs; three different bodies answer.</span></li>
+    <li data-code="code-io" data-lines="1"><span class="n">3</span><span>Because <code>Flywheel</code> only imports this interface (not real hardware classes), <b>a bug can't energize real motors from your couch</b> — you can develop all season with the robot in its box, then plug in and it just works.</span></li>
+  </ul>
+
+  <div class="chips">
+    <div class="chip">framework <b>AdvantageKit</b> (Team 254's open source)</div>
+    <div class="chip">every sensor logged at <b>50 Hz</b> for later replay</div>
+    <div class="chip">sim includes physics, ramps, even the robot tipping over</div>
+  </div>
+
+  <h3>Why log everything?</h3>
+  <p>Every input — every motor velocity, every current spike, every shot computation — is written to a file during every run, tagged with the exact code version (git SHA) that produced it. After a match, engineers replay the robot's entire memory and scrub through the timeline like a DVR. When the flywheel was 30&nbsp;RPM slow at 1:47… the log shows the battery sagging to 5&nbsp;volts at 1:46.9. Debugging becomes detective work instead of guessing.</p>
+
+  <div class="callout">🧪 This whole pattern is called <b>dependency injection</b> (scary name, simple idea: you hand a machine the parts it needs instead of the machine grabbing them itself). You just used it on this page — the same demo brain ran on three different bodies. It's how professional software is built, and it made this team's season possible.</div>
+</section>
+
+<!-- ============================================================ CONTROLS -->
+<section class="page" id="page-controls">
+  <span class="kicker">Human ⇄ robot interface</span>
+  <h1>🎮 The Driver's Controller</h1>
+  <p class="lead">An ordinary Xbox controller commands a 60&nbsp;kg machine. In the code, bindings read like sentences: <em>"when the left trigger is pressed, extend and run the intake."</em> Hover or tap the buttons to see each one.</p>
+
+  <div class="demo">
+    <div class="dt">🕹️ Button map <span class="badge">HOVER / TAP</span></div>
+    <div class="ctrl-wrap">
+      <svg viewBox="0 0 640 380">
+        <rect x="80" y="90" width="480" height="220" rx="90" fill="#1b2750" stroke="#43579f" stroke-width="2"/>
+        <rect x="150" y="70" width="340" height="90" rx="40" fill="#1b2750" stroke="#43579f" stroke-width="2"/>
+        <!-- sticks -->
+        <g class="cbtn" data-info="<b>Left stick</b> — drive! Push direction = drive direction (field-relative), distance pushed = speed, using a semicircle scaling curve so tiny stick moves are ultra precise. Never let go: this is the drivetrain's default command."><circle class="z" cx="215" cy="200" r="34" fill="#2a3a70" stroke="#38e1ff" stroke-width="2"/><text x="215" y="205" text-anchor="middle" fill="#9aa7c7" font-size="12" font-weight="700">L-stick</text></g>
+        <g class="cbtn" data-info="<b>Right stick (left/right)</b> — rotation. Twist it and the robot pirouettes, max 0.5 rotations/sec. Pushing forward still drives wherever the stick points — full strafing freedom."><circle class="z" cx="380" cy="230" r="34" fill="#2a3a70" stroke="#38e1ff" stroke-width="2"/><text x="380" y="235" text-anchor="middle" fill="#9aa7c7" font-size="12" font-weight="700">R-stick</text></g>
+        <!-- triggers -->
+        <g class="cbtn" data-info="<b>Left trigger (hold)</b> — COLLECT. Fires once on press: piston slams intake down + roller runs. On release, the roller stops (the intake stays down until you tell it otherwise). One trigger pull = one continuous scoop."><rect class="z" x="120" y="40" width="110" height="34" rx="12" fill="#2a3a70" stroke="#ff6b9d" stroke-width="2"/><text x="175" y="62" text-anchor="middle" fill="#ff6b9d" font-size="13" font-weight="800">LT</text></g>
+        <g class="cbtn" data-info="<b>Right trigger (hold)</b> — SHOOT. Runs the shoot command: flywheel spins up, code waits exactly 0.925 s, then the kicker feeds fuel. Release = everything stops. Hold = keep firing."><rect class="z" x="410" y="40" width="110" height="34" rx="12" fill="#2a3a70" stroke="#ffb454" stroke-width="2"/><text x="465" y="62" text-anchor="middle" fill="#ffb454" font-size="13" font-weight="800">RT</text></g>
+        <!-- bumpers -->
+        <g class="cbtn" data-info="<b>Left bumper (hold)</b> — UNJAM. Runs the indexer and kicker in eject mode and kills the flywheel. Fuel comes back out the intake. Every robot needs a reverse."><rect class="z" x="120" y="80" width="110" height="26" rx="10" fill="#2a3a70" stroke="#9aa7c7" stroke-width="2"/><text x="175" y="97" text-anchor="middle" fill="#9aa7c7" font-size="12" font-weight="800">LB</text></g>
+        <g class="cbtn" data-info="<b>Right bumper (toggle)</b> — AUTOSHOOT. The robot takes over: aims the turret with the auto-aim math and fires by itself whenever a shot is possible and the hub is active. The driver just drives (and panics a little)."><rect class="z" x="410" y="80" width="110" height="26" rx="10" fill="#2a3a70" stroke="#5df2a0" stroke-width="2"/><text x="465" y="97" text-anchor="middle" fill="#5df2a0" font-size="12" font-weight="800">RB</text></g>
+        <!-- face buttons -->
+        <g class="cbtn" data-info="<b>B</b> — toggle the intake piston up or down without running the motor. Useful to stow it for driving, or deploy and aim manually."><circle class="z" cx="483" cy="180" r="21" fill="#2a3a70" stroke="#5df2a0" stroke-width="2"/><text x="483" y="186" text-anchor="middle" fill="#5df2a0" font-size="14" font-weight="800">B</text></g>
+        <g class="cbtn" data-info="<b>X (hold)</b> — X-MODE BRAKE. All four wheels are commanded to ±45° forming an X and zero speed. Geometrically the robot can't be pushed anywhere. Slam it while being rammed by an opponent."><circle class="z" cx="440" cy="222" r="21" fill="#2a3a70" stroke="#38e1ff" stroke-width="2"/><text x="440" y="228" text-anchor="middle" fill="#38e1ff" font-size="14" font-weight="800">X</text></g>
+        <g class="cbtn" data-info="<b>The rumble motors 📳</b> — the code talks back through vibration! The controller buzzes when the hub shifts inactive, warns when a shooting window approaches, and triple-buzzes at the 35-second endgame warning. The driver literally feels the game state."><circle class="z" cx="320" cy="300" r="24" fill="#2a3a70" stroke="#b48cff" stroke-width="2"/><text x="320" y="305" text-anchor="middle" fill="#b48cff" font-size="16">📳</text></g>
+        <circle cx="320" cy="160" r="12" fill="#2a3a70" stroke="#43579f"/>
+      </svg>
+      <div class="readout" id="ctrlInfo" style="width:100%;display:block">Hover over a control…</div>
+    </div>
+  </div>
+
+  <h3>How a binding becomes code</h3>
+  <div class="codeblock"><div class="fn"><span>Sentences made of Java (trimmed)</span><span class="src">RobotContainer.java → configureBindings()</span></div>
+<pre><code id="code-bind">m_driverController.leftTrigger().onTrue(Commands.runOnce(() -> {
+    m_intake.setExtended(true);
+    m_intake.setRunning(true);
+})).onFalse(Commands.runOnce(() -> {
+    m_intake.setRunning(false);
+}));
+
+m_driverController.rightTrigger().whileTrue(
+    m_shooter.getShootCommand(m_indexer)
+);
+
+m_driverController.x().whileTrue(Commands.run(
+    () -> {
+        modules[0].setDesiredState(new SwerveModuleState(0.0, Rotation2d.fromDegrees(-45.0)));
+        modules[1].setDesiredState(new SwerveModuleState(0.0, Rotation2d.fromDegrees(45.0)));
+        modules[2].setDesiredState(new SwerveModuleState(0.0, Rotation2d.fromDegrees(45.0)));
+        modules[3].setDesiredState(new SwerveModuleState(0.0, Rotation2d.fromDegrees(-45.0)));
+    },
+    m_drivetrain
+));</code></pre></div>
+  <ul class="expl">
+    <li data-code="code-bind" data-lines="1-6"><span class="n">1</span><span>Read it like English: <code>onTrue</code> = "the instant it becomes pressed, do…" and <code>onFalse</code> = "the instant it's released, do…" That's the whole left-trigger behavior.</span></li>
+    <li data-code="code-bind" data-lines="8-10"><span class="n">2</span><span><code>whileTrue</code> = "run this command <b>for as long as the button is held</b>, then end it." The shoot command's own <code>finallyDo</code> guarantees a clean stop the moment it's interrupted.</span></li>
+    <li data-code="code-bind" data-lines="12-20"><span class="n">3</span><span>X-mode: speed 0.0 at ±45° angles — four wheels bracing against each other. The <code>whileTrue</code> pattern means the driver holds X while ramming and just… releases it to drive away.</span></li>
+  </ul>
+  <div class="callout">🤖 During <b>autonomous</b>, the same commands run with no driver at all — PathPlanner follows recorded paths and named commands ("StartIntaking", "StartFlywheel", "StartShooting") trigger the exact mechanisms described on this page. Driving is the only part that changes; the machinery is identical.</div>
+</section>
+
+<footer>
+  Built from the real source of FRC Team 7048's 2026 robot (<code>fargo-2026</code>). Code snippets are quoted from <code>src/main/java/frc/robot/…</code> — click into the repo to see them in context. Powered by WPILib · AdvantageKit · PathPlanner · PhotonVision.
+</footer>
+
+</div><!-- /wrap -->
+
+<script>
+/* ============================================================ core */
+const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ---- java highlighter + line wrapping ---- */
+function hlJava(src){
+  const kws='public|private|protected|static|final|void|boolean|double|int|return|if|else|for|new|true|false|this|var|class|interface|implements|extends|import|package|break|default|null|abstract';
+  const re=new RegExp('(\\/\\/[^\\n]*)|("(?:[^"\\\\]|\\\\.)*")|(@\\w+)|\\b(?:'+kws+')\\b|\\b(\\d+(?:\\.\\d+)?)\\b','g');
+  let out='',last=0,m;
+  while((m=re.exec(src))){
+    out+=esc(src.slice(last,m.index));
+    const t=m[0];
+    let c='nu';
+    if(m[1])c='cm'; else if(m[2])c='st'; else if(m[3])c='an';
+    else if(/^[a-z]/i.test(t)&&!/^[\d.]/.test(t))c='kw';
+    out+='<span class="'+c+'">'+esc(t)+'</span>';
+    last=m.index+t.length;
+  }
+  out+=esc(src.slice(last));
+  return out;
+}
+$$('pre code').forEach(el=>{
+  el.innerHTML=hlJava(el.textContent);
+  el.innerHTML=el.innerHTML.split('\n').map((l,i)=>'<span class="cl" data-l="'+(i+1)+'">'+(l||'&nbsp;')+'</span>').join('');
+});
+/* annotation hover -> light up code lines */
+$$('.expl li').forEach(li=>{
+  const block=document.getElementById(li.dataset.code); if(!block)return;
+  const nums=(li.dataset.lines||'').split(',').flatMap(r=>{
+    r=r.trim(); if(!r)return [];
+    if(r.includes('-')){const[a,b]=r.split('-').map(Number);return Array.from({length:b-a+1},(_,k)=>a+k);}
+    return [Number(r)];
+  });
+  const on=()=>nums.forEach(n=>{const s=block.querySelector('.cl[data-l="'+n+'"]');if(s)s.classList.add('lit');});
+  const off=()=>block.querySelectorAll('.cl.lit').forEach(s=>s.classList.remove('lit'));
+  li.addEventListener('mouseenter',on); li.addEventListener('mouseleave',off);
+  li.addEventListener('click',()=>{const lit=block.querySelector('.cl.lit');on();
+    if(window.innerWidth<800)block.scrollIntoView({behavior:'smooth',block:'center'});});
+});
+
+/* ---- router ---- */
+const routes={overview:0,drivetrain:0,shooter:0,autoaim:0,intake:0,indexer:0,vision:0,architecture:0,controls:0};
+const tickers={};
+function route(){
+  const id=(location.hash||'#/').replace(/^#\/?/,'')||'overview';
+  $$('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+id));
+  $$('nav a.t').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#/'+id||(id==='overview'&&a.getAttribute('href')==='#/')));
+  if(routes[id]===0){routes[id]=1;const fn=inits[id];if(fn)fn();}
+  if(!tickers[id]&&pageTicks[id])tickers[id]=startTicker(pageTicks[id]);
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange',route);
+const inits={};
+let tickHandle=null;
+function startTicker(fn){return fn;}
+const pageTicks={};
+/* a single rAF loop asks the active page for its tick */
+function loop(ts){
+  const id=(location.hash||'#/').replace(/^#\/?/,'')||'overview';
+  const t=pageTicks[id]; if(t)t(ts/1000);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+const dpr=Math.min(window.devicePixelRatio||1,2);
+function ctx2d(cv){ if(!cv._setup){cv._setup=1;const w=cv.width,h=cv.height;cv.width=w*dpr;cv.height=h*dpr;cv.style.aspectRatio=w+'/'+h;} const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);return c;}
+function W(cv){return cv.width/dpr;} function Hh(cv){return cv.height/dpr;}
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function arrowHead(c,x,y,ang,s,col){c.save();c.translate(x,y);c.rotate(ang);c.fillStyle=col;c.beginPath();c.moveTo(0,0);c.lineTo(-s,-s*0.5);c.lineTo(-s,s*0.5);c.closePath();c.fill();c.restore();}
+
+/* ============================================================ OVERVIEW */
+const jState={running:false,t0:0};
+$('#journeyBtn').addEventListener('click',()=>{jState.running=true;jState.t0=performance.now()/1000;});
+const fuelPath=$('#fuelPath'), fuelDot=$('#fuelDot'), fuelLen=fuelPath.getTotalLength();
+const capEls=[];
+function setCap(t){$('#journeyCap').textContent=t;}
+inits.overview=()=>{};
+pageTicks.overview=(ts)=>{
+  if(!jState.running)return;
+  const t=ts-jState.t0, T=9;
+  if(t>T){jState.running=false;setCap('');fuelDot.setAttribute('cx',-20);return;}
+  // phases: 0-2 extend+scoop, 2-4.5 travel through robot, 4.5-6 spin-up, 6-7.2 wait, 7.2-9 flight
+  let f=0,cap='';
+  if(t<2){f=0;setIntakePose(Math.min(1,t/0.6));cap=t<1.2?'🌀 Intake punches down, roller at full 12 V…':'🌀 Scoop! fuel enters the intake mouth.';
+    fuelDot.setAttribute('cx',430);fuelDot.setAttribute('cy',88);
+    if(t>1.3){fuelDot.setAttribute('cx',428);fuelDot.setAttribute('cy',88);} return void drawJourneyState(cap,f,t);
+  }
+  if(t<4.5){f=(t-2)/2.5;const p=fuelPath.getPointAtLength(f*fuelLen*0.55);fuelDot.setAttribute('cx',p.x);fuelDot.setAttribute('cy',p.y);
+    cap='🚦 Indexer holds the fuel in storage, waiting for a valid shot…';drawJourneyState(cap,f,t);return;}
+  if(t<6){f=0.55;const p=fuelPath.getPointAtLength(f*fuelLen);fuelDot.setAttribute('cx',p.x);fuelDot.setAttribute('cy',p.y);
+    cap='🎯 Turret rotates to the auto-aim angle… flywheel spins to 4,400 RPM.';drawJourneyState(cap,f,t);return;}
+  if(t<7.2){cap='⏳ The code waits exactly 0.925 s for the flywheel to reach full speed.';drawJourneyState(cap,f,t);return;}
+  f=0.55+0.45*Math.min(1,(t-7.2)/1.5);
+  const p=fuelPath.getPointAtLength(f*fuelLen);fuelDot.setAttribute('cx',p.x);fuelDot.setAttribute('cy',p.y);
+  cap=t<8.9?'🚀 Kicker pushes fuel into the flywheel — it lobs 2 m up into the hub!':'✅ SCORE!';
+  drawJourneyState(cap,f,t);
+};
+function drawJourneyState(cap,f,t){setCap(cap);}
+function setIntakePose(x){const el=$('#intakeArm');if(el)el.setAttribute('transform','translate('+(x*36)+',0)');}
+
+$$('.hot').forEach(g=>g.addEventListener('click',()=>{location.hash=g.dataset.link;}));
+
+/* ============================================================ DRIVETRAIN: swerve sim */
+(()=>{
+  const cv=$('#swerveCanvas'); if(!cv)return; const c=ctx2d(cv);
+  const Wd=W(cv),Ht=Hh(cv);
+  const S={x:Wd*0.5,y:Ht*0.55,th:0,wheels:[0,0,0,0]};
+  const keys={};
+  addEventListener('keydown',e=>{if(document.hidden)return;const k=e.key.toLowerCase();
+    if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)&&$('#page-drivetrain').classList.contains('active'))e.preventDefault();keys[k]=1;});
+  addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=0;});
+  $('#swerveReset').addEventListener('click',()=>{S.x=Wd*0.5;S.y=Ht*0.55;S.th=0;});
+  const HALF_W=44, HALF_L=56; // robot px; forward = local +x
+  // module positions [forward, sideways], order FL, FR, RL, RR
+  const pts=[[46,-30],[46,30],[-46,-30],[-46,30]];
+  pageTicks.drivetrain=(ts)=>{
+    // input
+    let fx=0,fy=0,om=0;
+    if(keys['w']||keys['arrowup'])fx+=1; if(keys['s']||keys['arrowdown'])fx-=1;
+    if(keys['a']||keys['arrowleft'])fy+=1; if(keys['d']||keys['arrowright'])fy-=1;
+    if(keys['q'])om+=1; if(keys['e'])om-=1;
+    const brake=keys[' '];
+    const VMAX=150, OMAX=1.6; // px/s, rad/s (visual)
+    const mag=Math.hypot(fx,fy);
+    const vx = mag? fy/mag*Math.min(1,mag)*VMAX : 0;
+    const vxff = mag? fx/mag*Math.min(1,mag)*VMAX : 0;
+    om=Math.min(1,Math.abs(om))*Math.sign(om)*OMAX;
+    const fieldRel=$('#fieldRel').checked;
+    // world velocity (screen coords: +x right, +y down; heading 0 = facing right, clockwise+)
+    let wvx,wvy;
+    if(fieldRel){ wvx=vx; wvy=-vxff; }
+    else {
+      wvx=vxff*Math.cos(S.th)-vx*Math.sin(S.th);
+      wvy=vxff*Math.sin(S.th)+vx*Math.cos(S.th);
+    }
+    const omStep=om*0.016;
+    S.x+=wvx*0.016; S.y+=wvy*0.016; S.th+=omStep;
+    S.x=Math.max(70,Math.min(Wd-70,S.x)); S.y=Math.max(70,Math.min(Ht-60,S.y));
+    // wheel angles: v_module = V + omega x r
+    const angles=[];
+    for(const[px,py]of pts){
+      const cs=Math.cos(S.th),sn=Math.sin(S.th);
+      const rx=px*cs-py*sn, ry=px*sn+py*cs; // module's world offset from center
+      const mvx=wvx-omStep*ry, mvy=wvy+omStep*rx;
+      const fwd = mvx*cs+mvy*sn;  // component along robot forward
+      const rgt = -mvx*sn+mvy*cs; // component along robot right
+      angles.push(Math.atan2(rgt,fwd));
+    }
+    // draw
+    c.clearRect(0,0,Wd,Ht);
+    c.strokeStyle='#141d40';c.lineWidth=1;
+    for(let x=20;x<Wd;x+=38){c.beginPath();c.moveTo(x,0);c.lineTo(x,Ht);c.stroke();}
+    for(let y=20;y<Ht;y+=38){c.beginPath();c.moveTo(0,y);c.lineTo(Wd,y);c.stroke();}
+    c.fillStyle='#3a4c8f';c.fillRect(Wd-90,14,76,10);c.font='700 11px sans-serif';c.fillText('far end of field',Wd-158,23);
+    c.save();c.translate(S.x,S.y);c.rotate(S.th);
+    rr(c,-HALF_L,-HALF_W,HALF_L*2,HALF_W*2,10); c.fillStyle='#1b2750';c.fill();c.strokeStyle='#43579f';c.lineWidth=2;c.stroke();
+    // intake (front = local +x)
+    rr(c,HALF_L-8,-HALF_W*0.6,14,HALF_W*1.2,5);c.fillStyle=brake?'#39507f':'#ff6b9d';c.fill();
+    // turret circle at rear
+    c.beginPath();c.arc(-HALF_L+22,0,15,0,7);c.fillStyle='#ffb454';c.fill();
+    // wheels (local positions: +x = robot forward)
+    pts.forEach((p,i)=>{
+      const a=brake?[-Math.PI/4,Math.PI/4,Math.PI/4,-Math.PI/4][i]:angles[i];
+      c.save();c.translate(p[0],p[1]);c.rotate(a);
+      rr(c,-16,-8,32,16,7);c.fillStyle='#0d1530';c.fill();c.strokeStyle='#38e1ff';c.lineWidth=2;c.stroke();
+      c.beginPath();c.moveTo(10,0);c.lineTo(17,0);c.strokeStyle='#38e1ff';c.stroke();
+      arrowHead(c,19,0,0,5,'#38e1ff');
+      c.restore();
+    });
+    c.restore();
+    // heading arrow
+    const hx=S.x+Math.cos(S.th)*80, hy=S.y+Math.sin(S.th)*80;
+    c.strokeStyle='#ffb45466';c.setLineDash([4,5]);c.beginPath();c.moveTo(S.x,S.y);c.lineTo(hx,hy);c.stroke();c.setLineDash([]);
+    arrowHead(c,hx,hy,Math.atan2(hy-S.y,hx-S.x),8,'#ffb454');
+    if(fieldRel){c.strokeStyle='#5df2a055';c.setLineDash([3,6]);c.beginPath();c.moveTo(S.x,S.y);c.lineTo(S.x,10);c.stroke();c.setLineDash([]);}
+    $('#swerveOut').textContent='vx: '+(vxff/VMAX*4).toFixed(2)+' m/s · vy: '+(vx/VMAX*4).toFixed(2)+' m/s · ω: '+(om/6.283).toFixed(2)+' rot/s · heading: '+(S.th*180/Math.PI).toFixed(0)+'°';
+  };
+})();
+
+/* ============================================================ DRIVETRAIN: flip optimizer */
+(()=>{
+  const cv=$('#flipCanvas'); if(!cv)return; const c=ctx2d(cv);
+  const Wd=W(cv),Ht=Hh(cv);
+  const S={cur:Math.PI*0.75, target:Math.PI*0.1, shown:Math.PI*0.75, flipped:false, chosen:0, tAnim:0};
+  const CX=Wd/2, CY=Ht/2, R=115;
+  function norm(a){while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a;}
+  function solve(){
+    let d=norm(S.target-S.cur);
+    if(Math.abs(d)>Math.PI/2){S.flipped=true;S.chosen=S.target+Math.PI;}
+    else{S.flipped=false;S.chosen=S.target;}
+    S.tAnim=performance.now()/1000;
+  }
+  cv.addEventListener('pointerdown',e=>{
+    const r=cv.getBoundingClientRect();
+    const x=(e.clientX-r.left)*(Wd/r.width)-CX, y=(e.clientY-r.top)*(Ht/r.height)-CY;
+    S.target=Math.atan2(y,x); solve();
+  });
+  solve(); S.shown=S.chosen;
+  pageTicks.drivetrainFlip=null;
+  const baseTick=pageTicks.drivetrain;
+  pageTicks.drivetrain=(ts)=>{
+    baseTick&&baseTick(ts);
+    // only draw when drivetrain page active; router only ticks active page so fine.
+    let d=norm(S.chosen-S.shown); S.shown+=d*0.15;
+    c.clearRect(0,0,Wd,Ht);
+    c.strokeStyle='#22306a';c.beginPath();c.arc(CX,CY,R,0,7);c.stroke();
+    for(let i=0;i<12;i++){const a=i*Math.PI/6;c.strokeStyle='#1b2750';c.beginPath();c.moveTo(CX+Math.cos(a)*(R-6),CY+Math.sin(a)*(R-6));c.lineTo(CX+Math.cos(a)*R,CY+Math.sin(a)*R);c.stroke();}
+    // current wheel angle
+    const wa=S.shown;
+    c.save();c.translate(CX,CY);c.rotate(wa);
+    rr(c,-58,-16,116,32,14);c.fillStyle='#0d1530';c.fill();c.strokeStyle='#38e1ff';c.lineWidth=2.5;c.stroke();
+    // drive direction indicator
+    const spd=S.flipped?-1:1;
+    c.strokeStyle=S.flipped?'#ff5d5d':'#5df2a0';c.lineWidth=3;
+    c.beginPath();c.moveTo(0,0);c.lineTo(spd*78,0);c.stroke();
+    arrowHead(c,spd*82,0,spd>0?0:Math.PI,9,S.flipped?'#ff5d5d':'#5df2a0');
+    c.restore();
+    // target
+    const tx=CX+Math.cos(S.target)*R,ty=CY+Math.sin(S.target)*R;
+    c.fillStyle='#ffb454';c.beginPath();c.arc(tx,ty,7,0,7);c.fill();
+    c.font='700 12px sans-serif';c.fillStyle='#9aa7c7';c.fillText('current wheel heading (cyan)',CX-R+8,CY+R+34);
+    c.fillStyle='#ffb454';c.fillText('● demanded direction — click anywhere!',CX-R+8,CY+R+52);
+    const deltaDeg=(norm(S.target-S.cur)*180/Math.PI);
+    $('#flipOut').innerHTML='direct turn: '+Math.abs(deltaDeg).toFixed(0)+'°  ·  '+(S.flipped
+      ? '<span style="color:#ff8a8a">FLIPPED → wheel rotates '+Math.abs(norm(S.target+Math.PI-S.cur)*180/Math.PI).toFixed(0)+'° and drives BACKWARDS (same result, shorter turn!)</span>'
+      : '<span style="color:#5df2a0">no flip needed — just turn and go</span>');
+  };
+})();
+
+/* ============================================================ SHOOTER: timeline */
+(()=>{
+  const btn=$('#fireBtn'); if(!btn)return;
+  const S={holding:false,t0:0};
+  btn.addEventListener('pointerdown',()=>{if(!S.holding){S.holding=true;S.t0=performance.now()/1000;}});
+  addEventListener('pointerup',()=>{S.holding=false;});
+  $('#fireNote').textContent='hold the button like the driver holds RT';
+  const pct=(e)=>Math.max(0,Math.min(1,e));
+  pageTicks.shooter=(ts)=>{
+    const t=S.holding?ts-S.t0:-1;
+    const fly= t<0?0:pct(t/0.925);
+    $('#tlFly').style.width=(fly*100)+'%';
+    $('#stFly').textContent=t<0?'idle':(fly>=1?'460 rps ✓':'spinning…');
+    const wt= t<0?0:pct((t-0)/0.925);
+    $('#tlWait').style.width=(wt*100)+'%';
+    $('#stWait').textContent=t<0?'—':(wt>=1?'done ✓':'0.'+Math.floor((0.925-Math.min(0.925,t))*1000).toString().padStart(3,'0')+'s');
+    const kt= t<0.925?0:pct((t-0.925)/2);
+    $('#tlKick').style.width=(kt*100)+'%';
+    $('#stKick').textContent=t<0?'idle':(t<0.925?'waiting…':'FEEDING 🟠');
+    if(!S.holding){$('#tlFly').style.width=$('#tlWait').style.width=$('#tlKick').style.width='0%';$('#stFly').textContent='idle';$('#stWait').textContent='—';$('#stKick').textContent='idle';}
+  };
+})();
+
+/* ============================================================ SHOOTER: projectile */
+(()=>{
+  const cv=$('#projCanvas'); if(!cv)return; const c=ctx2d(cv);
+  const Wd=W(cv),Ht=Hh(cv);
+  const g=9.8,V=9.5,Y=1.27;
+  let anim=0;
+  pageTicks.shooter2=null;
+  const base=pageTicks.shooter;
+  pageTicks.shooter=(ts)=>{base&&base(ts);anim=ts;
+    const d=parseFloat($('#projDist').value);
+    $('#projDistLbl').textContent=d.toFixed(2)+' m';
+    const v2=V*V;
+    const disc=v2*v2-g*(g*d*d+2*Y*v2);
+    c.clearRect(0,0,Wd,Ht);
+    const scale=(Wd-120)/7.8, gy=Ht-30;
+    const X=m=>70+m*scale, Yp=m=>gy-m*scale;
+    // ground + robot
+    c.strokeStyle='#22306a';c.beginPath();c.moveTo(0,gy);c.lineTo(Wd,gy);c.stroke();
+    rr(c,X(0)-26,gy-46,52,46,8);c.fillStyle='#1b2750';c.fill();c.strokeStyle='#43579f';c.stroke();
+    c.fillStyle='#ffb454';c.beginPath();c.arc(X(0),gy-30,9,0,7);c.fill();
+    const launchH=0.9;
+    // hub
+    const hubH=Y+launchH;
+    c.strokeStyle='#38e1ff';c.lineWidth=3;c.beginPath();c.arc(X(d),Yp(hubH),16,0,7);c.stroke();
+    c.fillStyle='#0e2740';c.beginPath();c.arc(X(d),Yp(hubH),13,0,7);c.fill();
+    c.font='700 11px sans-serif';c.fillStyle='#38e1ff';c.fillText('HUB RIM',X(d)-20,Yp(hubH)-22);
+    c.fillStyle='#9aa7c7';c.fillText('launch point 0.9 m',X(0)-34,gy-56);
+    if(disc<0){
+      c.font='800 20px sans-serif';c.fillStyle='#ff5d5d';
+      c.fillText('✖ NO SOLUTION — beyond max range',Wd/2-160,60);
+      c.font='12px sans-serif';c.fillStyle='#9aa7c7';
+      c.fillText('the discriminant v⁴ − g(gx² + 2yv²) went negative: no launch angle at 9.5 m/s can reach the hub.',Wd/2-215,84);
+      $('#projOut').innerHTML='distance '+d.toFixed(2)+' m → <span style="color:#ff5d5d">out of range (√ of negative = impossible shot)</span>';
+      return;
+    }
+    const r=Math.sqrt(disc);
+    const aLow=Math.atan((v2-r)/(g*d)), aHi=Math.atan((v2+r)/(g*d));
+    function drawArc(a,col,wid,dash,animate){
+      c.strokeStyle=col;c.lineWidth=wid;c.setLineDash(dash||[]);
+      c.beginPath();
+      const T=(V*Math.sin(a)+Math.sqrt((V*Math.sin(a))**2+2*g*launchH))/g;
+      let first=true, px=0,py=0;
+      for(let tt=0;tt<=T;tt+=T/90){
+        const mx=V*Math.cos(a)*tt, my=launchH+V*Math.sin(a)*tt-0.5*g*tt*tt;
+        if(first){c.moveTo(X(mx),Yp(my));first=false;}else c.lineTo(X(mx),Yp(my));
+        px=X(mx);py=Yp(my);
+      }
+      c.stroke();c.setLineDash([]);
+      if(animate){const ph=(anim%2)/2;const tt2=ph*T;
+        const mx=V*Math.cos(a)*tt2, my=launchH+V*Math.sin(a)*tt2-0.5*g*tt2*tt2;
+        c.fillStyle='#ffd479';c.beginPath();c.arc(X(mx),Yp(my),7,0,7);c.fill();
+        c.strokeStyle='#fff';c.lineWidth=1.5;c.stroke();}
+      return px;
+    }
+    drawArc(aLow,'#3a4c8f',2,[5,6],false);
+    drawArc(aHi,'#ffb454',3,[],true);
+    c.font='700 12px sans-serif';
+    c.fillStyle='#5d7396';c.fillText('low arc — rejected (bangs off the rim)',Wd/2-60,Ht-8);
+    c.fillStyle='#ffb454';c.fillText('HIGH ARC — the one the code picks (.getSecond())',Wd/2-90,30);
+    // barrel angle at robot
+    c.save();c.translate(X(0),gy-30);c.rotate(-aHi);
+    rr(c,0,-5,34,10,5);c.fillStyle='#ffb454';c.fill();c.restore();
+    $('#projOut').innerHTML='v = 9.5 m/s · height +1.27 m → low angle <span style="color:#5d7396">'+(aLow*180/Math.PI).toFixed(1)+'°</span> · <span style="color:#ffb454">high angle '+(aHi*180/Math.PI).toFixed(1)+'° (chosen hood angle)</span>';
+  };
+})();
+
+/* ============================================================ AUTOAIM: lead iterations */
+(()=>{
+  const cv=$('#leadCanvas'); if(!cv)return; const c=ctx2d(cv);
+  const Wd=W(cv),Ht=Hh(cv);
+  const S={iters:[],done:false,auto:false,lastAuto:0};
+  const scale=44;
+  const hub={x:3.1,y:-4.6};           // target relative to robot (meters)
+  const rv={x:2.6,y:-0.7};            // robot velocity (m/s)
+  const VF=9.5;
+  function iterate(){
+    if(S.done)return;
+    const n=S.iters.length;
+    let leaded = n===0? {x:hub.x,y:hub.y} : S.iters[n-1];
+    const dist=Math.hypot(leaded.x,leaded.y);
+    const t=dist/VF;                    // simplified flat-flight time
+    const next={x:hub.x-rv.x*t, y:hub.y-rv.y*t};
+    const err=Math.hypot(next.x-leaded.x,next.y-leaded.y);
+    S.iters.push({pt:next,err,t,dist});
+    if(err<=0.01||n>=9)S.done=true;
+  }
+  function reset(){S.iters=[];S.done=false;}
+  $('#leadStep').addEventListener('click',iterate);
+  $('#leadReset').addEventListener('click',reset);
+  $('#leadAuto').addEventListener('click',()=>{S.auto=true;S.lastAuto=performance.now()/1000;});
+  const cols=['#ff6b9d','#ffb454','#5df2a0','#38e1ff','#b48cff','#7ecbff','#f78fb3','#d6e64f','#ff9ecd','#8fe1ff'];
+  pageTicks.autoaim=(ts)=>{
+    if(S.auto&&!S.done&&ts-S.lastAuto>0.45){iterate();S.lastAuto=ts;}
+    c.clearRect(0,0,Wd,Ht);
+    const CX=Wd*0.30, CY=Ht*0.78;
+    const X=m=>CX+m*scale, Yp=m=>CY+m*scale; // note y negative is up
+    c.strokeStyle='#141d40';
+    for(let gx=0;gx<=14;gx++){c.beginPath();c.moveTo(CX+gx*scale-3*scale,20);c.lineTo(CX+gx*scale-3*scale,Ht-10);c.stroke();}
+    for(let gy=-9;gy<=3;gy++){c.beginPath();c.moveTo(20,CY+gy*scale);c.lineTo(Wd-20,CY+gy*scale);c.stroke();}
+    // hub
+    c.strokeStyle='#38e1ff';c.lineWidth=3;c.beginPath();c.arc(X(hub.x),Yp(hub.y),20,0,7);c.stroke();
+    c.font='700 12px sans-serif';c.fillStyle='#38e1ff';c.fillText('HUB (target)',X(hub.x)-28,Yp(hub.y)-28);
+    // robot
+    rr(c,X(0)-16,Yp(0)-13,32,26,6);c.fillStyle='#1b2750';c.fill();c.strokeStyle='#43579f';c.lineWidth=2;c.stroke();
+    c.fillStyle='#9aa7c7';c.fillText('robot (moving)',X(0)-26,Yp(0)+34);
+    const vx2=X(rv.x*22),vy2=Yp(rv.y*22);
+    c.strokeStyle='#5df2a0';c.lineWidth=2.5;c.beginPath();c.moveTo(X(0),Yp(0));c.lineTo(vx2,vy2);c.stroke();
+    arrowHead(c,vx2,vy2,Math.atan2(vy2-Yp(0),vx2-X(0)),8,'#5df2a0');
+    // true solution (final): iterate fully behind the scenes for the "truth"
+    // iterations
+    let prev={x:hub.x,y:hub.y};
+    S.iters.forEach((it,i)=>{
+      const col=cols[i%cols.length];
+      c.strokeStyle=col;c.lineWidth=i===S.iters.length-1?3:1.6;c.setLineDash(i===S.iters.length-1?[]:[4,5]);
+      c.beginPath();c.moveTo(X(0),Yp(0));c.lineTo(X(it.pt.x),Yp(it.pt.y));c.stroke();c.setLineDash([]);
+      c.fillStyle=col;c.beginPath();c.arc(X(it.pt.x),Yp(it.pt.y),5,0,7);c.fill();
+      c.font='700 10px monospace';c.fillText('#'+(i+1)+' t='+it.t.toFixed(2)+'s err='+(it.err*100).toFixed(0)+'cm',X(it.pt.x)+9,Yp(it.pt.y)+3+i*0);
+    });
+    if(S.done){
+      const last=S.iters[S.iters.length-1].pt;
+      c.strokeStyle='#5df2a0';c.setLineDash([2,4]);c.beginPath();c.arc(X(last.x),Yp(last.y),26,0,7);c.stroke();c.setLineDash([]);
+      c.font='800 14px sans-serif';c.fillStyle='#5df2a0';
+      c.fillText('✓ CONVERGED — aim the turret here',18,Ht-16);
+    } else {
+      c.font='700 12px sans-serif';c.fillStyle='#9aa7c7';
+      c.fillText(S.iters.length?'still improving… press Step':'iteration 0: aim straight at the hub (wrong — we move during flight!)',18,Ht-16);
+    }
+    $('#leadOut').textContent='iterations: '+S.iters.length+'/10 · '+(S.done?'error < 1 cm → done, turret + hood angles sent':'each pass recomputes lead from the new flight time');
+  };
+})();
+
+/* ============================================================ INTAKE: pneumatics */
+(()=>{
+  const cv=$('#pneuCanvas'); if(!cv)return; const c=ctx2d(cv);
+  const Wd=W(cv),Ht=Hh(cv);
+  const S={ext:false,run:false,roll:0,p:0};
+  $('#pneuToggle').addEventListener('click',()=>{S.ext=!S.ext;});
+  const lt=$('#pneuLT');
+  lt.addEventListener('pointerdown',()=>{S.ext=true;S.run=true;});
+  addEventListener('pointerup',()=>{S.run=false;});
+  pageTicks.intake=(ts)=>{
+    S.p+=((S.ext?1:0)-S.p)*0.09;
+    if(S.run)S.roll+=0.18;
+    c.clearRect(0,0,Wd,Ht);
+    // tank
+    c.strokeStyle='#3a4c8f';c.lineWidth=2;rr(c,30,80,54,110,20);c.fillStyle='#12193a';c.fill();c.stroke();
+    c.fillStyle='#5df2a0';rr(c,36,86+ (1-S.p)*0 ,42,(110-12)* (0.85),16);c.globalAlpha=.25;c.fill();c.globalAlpha=1;
+    c.font='700 11px sans-serif';c.fillStyle='#9aa7c7';c.fillText('AIR TANK',38,212);c.fillText('120 psi',42,226);
+    // solenoid
+    rr(c,130,110,64,48,8);c.fillStyle='#1b2750';c.fill();c.strokeStyle='#3a4c8f';c.lineWidth=2;c.stroke();
+    c.fillStyle=S.ext?'#38e1ff':'#ffb454';c.font='800 12px sans-serif';c.fillText(S.ext?'→→→':'←←←',146,140);
+    c.fillStyle='#9aa7c7';c.font='700 11px sans-serif';c.fillText('SOLENOID',128,176);
+    // air lines to piston (two ports)
+    const yTop=118,yBot=150;
+    c.strokeStyle=S.ext?'#38e1ff':'#22306a';c.lineWidth=4;c.beginPath();c.moveTo(194,yTop);c.lineTo(280,yTop);c.stroke();
+    c.strokeStyle=S.ext?'#22306a':'#ffb454';c.beginPath();c.moveTo(194,yBot);c.lineTo(280,yBot);c.stroke();
+    // air flow dots
+    const flowT=(ts*40)%22;
+    c.fillStyle=S.ext?'#38e1ff':'#ffb454';
+    for(let i=0;i<6;i++){const x=196+((i*22+flowT)%84);
+      c.beginPath();c.arc(x,S.ext?yTop:yBot,2.5,0,7);c.fill();}
+    // cylinder + piston
+    rr(c,280,104,240,60,10);c.fillStyle='#0d1530';c.fill();c.strokeStyle='#3a4c8f';c.lineWidth=2;c.stroke();
+    const rodX=280+30+S.p*170;
+    c.fillStyle='#43579f';c.fillRect(rodX,126,10,16);
+    c.strokeStyle='#9aa7c7';c.lineWidth=6;c.beginPath();c.moveTo(rodX+5,134);c.lineTo(560,134);c.stroke();
+    // intake roller assembly attached to rod
+    const gx=560, rollerR=26;
+    c.save();c.translate(gx,134);
+    c.rotate(S.roll);
+    c.strokeStyle=S.run?'#ff6b9d':'#5d7396';c.lineWidth=3;
+    c.beginPath();c.arc(0,0,rollerR,0,7);c.stroke();
+    for(let i=0;i<4;i++){const a=i*Math.PI/2;c.beginPath();c.moveTo(Math.cos(a)*8,Math.sin(a)*8);c.lineTo(Math.cos(a)*rollerR,Math.sin(a)*rollerR);c.stroke();}
+    c.restore();
+    c.fillStyle='#9aa7c7';c.font='700 11px sans-serif';c.fillText('intake roller',gx-28,190);
+    // fuel balls being sucked when extended+running
+    if(S.run&&S.p>0.6){
+      for(let i=0;i<3;i++){const ph=((ts*0.7+i*0.33)%1);
+        c.fillStyle='#ffb454';c.beginPath();c.arc(gx+40-ph*60,134+Math.sin(i*2+ts*3)*14*(1-ph),7,0,7);c.fill();}
+    }
+    $('#pneuOut').innerHTML='solenoid: '+(S.ext?'<span style="color:#38e1ff">EXTEND (air pushing piston out)</span>':'<span style="color:#ffb454">RETRACT (air reversed)</span>')+' · roller: '+(S.run?'<span style="color:#5df2a0">12.0 V ⭯</span>':'<span style="color:#5d7396">0 V</span>');
+  };
+})();
+
+/* ============================================================ INDEXER */
+(()=>{
+  const cv=$('#idxCanvas'); if(!cv)return; const c=ctx2d(cv);
+  const Wd=W(cv),Ht=Hh(cv);
+  let off=0;
+  pageTicks.indexer=(ts)=>{
+    const ang=parseFloat($('#idxAngle').value);
+    $('#idxAngleLbl').textContent='launch angle '+ang+'°';
+    const slow=ang>=75, V=slow?1.5:3.0;
+    off+=slow?0.55:1.4;
+    c.clearRect(0,0,Wd,Ht);
+    // tube
+    rr(c,40,60,Wd-230,60,14);c.fillStyle='#0d1530';c.fill();c.strokeStyle='#3a4c8f';c.lineWidth=2;c.stroke();
+    c.font='700 11px sans-serif';c.fillStyle='#9aa7c7';c.fillText('storage tube (fuel queued up)',60,50);
+    // fuel balls on belt
+    for(let i=0;i<7;i++){
+      let x=60+((i*90+off)%(Wd-250));
+      c.fillStyle='#ffb454';c.beginPath();c.arc(x,90,15,0,7);c.fill();
+      c.strokeStyle='#b97b1e';c.lineWidth=1.5;c.stroke();
+      c.beginPath();c.arc(x-4,86,4,0,7);c.strokeStyle='#e8b055';c.stroke();
+    }
+    // shooter side
+    const sx=Wd-150;
+    c.strokeStyle='#ffb454';c.lineWidth=4;c.beginPath();c.arc(sx,90,34,0,7);c.stroke();
+    c.save();c.translate(sx,90);c.rotate(ts*8);c.strokeStyle='#8f6a1e';c.beginPath();c.moveTo(-26,0);c.lineTo(26,0);c.stroke();c.restore();
+    c.fillStyle='#9aa7c7';c.fillText('to flywheel →',sx-30,150);
+    // exit chute tilted by angle
+    c.save();c.translate(sx+38,90);c.rotate(-ang*Math.PI/180);
+    c.strokeStyle='#5d7396';c.lineWidth=2;c.beginPath();c.moveTo(0,-12);c.lineTo(70,-12);c.moveTo(0,12);c.lineTo(70,12);c.stroke();
+    c.restore();
+    $('#idxOut').innerHTML='asked for: forward · override: '+(slow
+      ?'<span style="color:#38e1ff">slow = true (angle ≥ 75°)</span> → motor gets <b style="color:#38e1ff">1.5 V</b> (gentle — gravity does the work)'
+      :'<span style="color:#5df2a0">normal → 3.0 V</span>');
+  };
+})();
+
+/* ============================================================ VISION trust */
+(()=>{
+  const cv=$('#visCanvas'); if(!cv)return; const c=ctx2d(cv);
+  const Wd=W(cv),Ht=Hh(cv);
+  function upd(){
+    const tags=+$('#visTags').value, dist=parseFloat($('#visDist').value), area=parseFloat($('#visArea').value);
+    $('#visTagsLbl').textContent=tags; $('#visDistLbl').textContent=dist.toFixed(1)+' m'; $('#visAreaLbl').textContent=area.toFixed(2);
+    let verdict,col,bar;
+    if(tags===0){verdict='IGNORED — kIgnoredStdDevs. Zero tags = no camera fix.';col='#ff5d5d';bar=0;}
+    else if(tags===1&&dist>3.0){verdict='IGNORED — one lonely tag beyond 3 m is too fuzzy to trust.';col='#ff5d5d';bar=0;}
+    else if(tags===1){const trust=Math.min(1,area*8);verdict='LISTENED TO CAREFULLY — single near tag, weighted by size.';col='#ffb454';bar=0.35+trust*0.35;}
+    else{const trust=Math.min(1,(area*(1+Math.log2(tags)))*3);verdict='TRUSTED — multi-tag fix, area × log₂(count) bonus.';col='#5df2a0';bar=0.6+trust*0.4;}
+    c.clearRect(0,0,Wd,Ht);
+    // robot camera cone
+    const rx=Wd*0.22,ry=Ht*0.72;
+    rr(c,rx-34,ry-20,68,40,8);c.fillStyle='#1b2750';c.fill();c.strokeStyle='#43579f';c.lineWidth=2;c.stroke();
+    c.fillStyle='#9aa7c7';c.font='700 11px sans-serif';c.fillText('robot',rx-14,ry+38);
+    c.fillStyle=col;c.globalAlpha=0.13;c.beginPath();c.moveTo(rx+30,ry);c.lineTo(rx+330,ry-140);c.lineTo(rx+330,ry+60);c.closePath();c.fill();c.globalAlpha=1;
+    // tags in the cone
+    for(let i=0;i<tags;i++){
+      const tx=rx+90+i*80, ty=ry-40-i*28;
+      const s=14+area*90;
+      c.fillStyle='#e8ecf8';c.fillRect(tx-s/2,ty-s/2,s,s);
+      c.fillStyle='#0b1020';
+      c.fillRect(tx-s/2+2,ty-s/2+2,s*0.3,s*0.3);
+      c.fillRect(tx+s/2-2-s*0.35,ty-s/2+2,s*0.35,s*0.35);
+      c.fillRect(tx-s/2+2,ty+s/2-2-s*0.3,s*0.35,s*0.3);
+      c.fillStyle='#9aa7c7';c.font='10px monospace';c.fillText('tag '+(i+1)+(i===0?' @ '+dist.toFixed(1)+'m':''),tx-16,ty-s/2-6);
+    }
+    // trust meter
+    const mx=60,my=36,mw=Wd-120;
+    c.fillStyle='#0a0f24';rr(c,mx,my,mw,22,11);c.fill();c.strokeStyle='#22306a';c.stroke();
+    c.fillStyle=col;rr(c,mx,my,Math.max(6,mw*bar),22,11);c.fill();
+    c.font='800 13px sans-serif';c.fillStyle='#e8ecf8';c.fillText('how much the pose estimator believes this camera →',mx,my-8);
+    c.font='700 12px sans-serif';c.fillStyle=col;c.fillText(verdict,mx,my+58);
+    $('#visOut').innerHTML=verdict;
+  }
+  ['visTags','visDist','visArea'].forEach(id=>$('#'+id).addEventListener('input',upd));
+  upd();
+})();
+
+/* ============================================================ ARCHITECTURE */
+(()=>{
+  const d={
+    ioReal:{t:'FlywheelIOReal',s:'talks to physical TalonFX motors',txt:'🤖 <b>Real robot.</b> <code>FlywheelIOReal</code> sends CAN messages to the motor controllers and reads encoders off the wires. The brain code is identical to what ran on your laptop all season.'},
+    ioSim:{t:'FlywheelIOSim',s:'reads a physics engine instead',txt:'🎮 <b>Simulation.</b> The same brain drives a physics-modeled flywheel (and a whole game field with fuel, ramps, and a hub!) on a laptop. Bugs crash a video game, not a $6,000 robot.'},
+    ioLog:{t:'FlywheelIOLogged',s:'replays last week\'s match from disk',txt:'📼 <b>Log replay.</b> Feed last Saturday\'s sensor log back in and step through the robot\'s memories on your couch — exact voltage dips, exact RPM, exact bugs. Then fix them before practice.'}
+  };
+  function pick(k){const v=d[k];$('#ioBoxT').textContent=v.t;$('#ioBoxS').textContent=v.s;$('#ioDesc').innerHTML=v.txt;
+    $('#ioReal').style.borderColor='#34448a';$('#ioSim').style.borderColor='#34448a';$('#ioLog').style.borderColor='#34448a';
+    $('#'+k).style.borderColor='#38e1ff';}
+  $('#ioReal').addEventListener('click',()=>pick('ioReal'));
+  $('#ioSim').addEventListener('click',()=>pick('ioSim'));
+  $('#ioLog').addEventListener('click',()=>pick('ioLog'));
+  pick('ioReal');
+})();
+
+/* ============================================================ CONTROLS */
+(()=>{
+  const info=$('#ctrlInfo'); if(!info)return;
+  $$('.cbtn').forEach(b=>{
+    const show=()=>{info.innerHTML=b.dataset.info;$$('.cbtn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');};
+    b.addEventListener('mouseenter',show); b.addEventListener('click',show);
+  });
+})();
+
+route();
+</script>
+</body>
+</html>
