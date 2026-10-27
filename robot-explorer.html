@@ -94,6 +94,14 @@ pre{margin:0;padding:14px 8px;overflow-x:auto;font-family:var(--mono);font-size:
 .callout.pink{border-color:var(--pink);background:#241019;color:#f8cfdc}
 .callout.green{border-color:var(--green);background:#0e2018;color:#c6f2d9}
 
+.mini101{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:14px 0}
+.m1{background:var(--card);border:1px solid #24305f;border-radius:14px;padding:14px}
+.m1 b{color:var(--cyan);font-size:.92rem}
+.m1 p{margin:6px 0 0;font-size:.85rem;color:var(--dim)}
+.missions{margin:16px 0 4px;font-size:.9rem}
+.ms{margin:6px 0;color:var(--dim);transition:.2s}
+.ms.done{color:var(--green);font-weight:700}
+#swPad button{min-width:48px;padding:10px 12px;font-size:1rem}
 /* ---------- overview robot svg ---------- */
 .robotsvg,#journeySvg{background:#0a0f24;border:1px solid #22306a;border-radius:18px}
 .hot{cursor:pointer}
@@ -283,16 +291,34 @@ public final void robotPeriodic() {
     <div class="chip">modules <b>4× MK4i</b></div>
   </div>
 
+  <h3>Swerve 101: three ideas before you drive</h3>
+  <div class="mini101">
+    <div class="m1"><b>1 · Two motors per wheel</b><p>Each corner pod has a <em>drive motor</em> (spins the wheel) and a <em>steering motor</em> (rotates the whole pod), plus a CANcoder that reports the exact steer angle. One pod can point anywhere.</p></div>
+    <div class="m1"><b>2 · One wish → four orders</b><p>The code says "go forward 3 m/s while spinning." Kinematics math converts that single wish into four (angle, speed) pairs — one order per wheel, 50 times every second.</p></div>
+    <div class="m1"><b>3 · The wheels decide everything</b><p>Point all wheels forward → drive. Sideways → crab-walk. Fan them out → pirouette. Mix drive + spin → every wheel gets its own unique angle. Watch this happen live below.</p></div>
+  </div>
+
   <div class="demo">
-    <div class="dt">🕹️ Drive the swerve yourself <span class="badge">KEYBOARD</span></div>
-    <div class="hint">WASD or arrow keys = move · Q / E = rotate · hold SPACE = "X-brake" (locks wheels in an X so nobody pushes you around). Watch which way each wheel points while you drive — <b>sideways motion (A/D) is where swerve shows off.</b></div>
+    <div class="dt">🕹️ Drive the swerve yourself <span class="badge">KEYBOARD OR ON-SCREEN PAD</span></div>
+    <div class="hint"><b>WASD / arrows</b> drive · <b>Q / E</b> rotate · hold <b>SPACE</b> = X-brake. The <span style="color:#5df2a0">green arrow</span> shows how the robot is <em>really moving</em> across the field; the <span style="color:#ffb454">amber dashed arrow</span> shows where its <em>nose</em> (the pink intake) points. Swerve lets those two point in completely different directions — that is the whole superpower.</div>
     <canvas id="swerveCanvas" width="760" height="330"></canvas>
     <div class="btnrow">
-      <label class="tg"><input type="checkbox" id="fieldRel" checked> Field-relative (drive like the driver does)</label>
+      <label class="tg"><input type="checkbox" id="fieldRel" checked> Field-relative ON = "up" always means toward the far end of the field · OFF = "up" means wherever the nose points</label>
       <button class="alt" id="swerveReset">Reset</button>
     </div>
-    <div class="readout" id="swerveOut">vx: 0.00 m/s · vy: 0.00 m/s · ω: 0.00 rot/s</div>
-    <div class="hint" style="margin-top:8px">With field-relative ON, pressing "up" always drives toward the far end of the field, no matter which way the robot faces — just like the real driver's left stick.</div>
+    <div class="btnrow" id="swPad">
+      <button class="alt" data-k="w">▲</button><button class="alt" data-k="a">◀</button><button class="alt" data-k="s">▼</button><button class="alt" data-k="d">▶</button>
+      <button class="alt" data-k="q" title="Q rotates clockwise">spin ⟳</button><button class="alt" data-k="e" title="E rotates counter-clockwise">⟲ spin</button><button class="alt" data-k=" ">✋ X-brake</button>
+    </div>
+    <div class="missions">
+      <b>Driver missions</b> <span style="font-size:.75rem;color:var(--dim)">(earned automatically, like a game)</span>
+      <div class="ms" id="ms-drive" data-t="Take a drive — travel about one robot-length">⭕ Take a drive — travel about one robot-length</div>
+      <div class="ms" id="ms-strafe" data-t="Crab-walk — slide sideways relative to your own nose (rotate until the nose points right, then press ▲/▼)">⭕ Crab-walk — slide sideways relative to your own nose (rotate until the nose points right, then press ▲/▼)</div>
+      <div class="ms" id="ms-spin" data-t="Pirouette — spin in place with Q/E and watch the wheels tilt into circles">⭕ Pirouette — spin in place with Q/E and watch the wheels tilt into circles</div>
+      <div class="ms" id="ms-brake" data-t="Unmovable — hold SPACE for half a second and admire the X">⭕ Unmovable — hold SPACE for half a second and admire the X</div>
+    </div>
+    <div class="readout" id="swerveOut">speed: 0.00 m/s · heading: 0° · ω: 0.00 rot/s</div>
+    <div class="hint" id="swNote" style="margin-top:8px;min-height:1.4em">&nbsp;</div>
   </div>
 
   <h3>The command that makes it all happen</h3>
@@ -823,7 +849,8 @@ const pageTicks={};
 /* a single rAF loop asks the active page for its tick */
 function loop(ts){
   const id=(location.hash||'#/').replace(/^#\/?/,'')||'overview';
-  const t=pageTicks[id]; if(t)t(ts/1000);
+  const t=pageTicks[id];
+  if(t){ try{t(ts/1000);}catch(e){ if(!window.__tickErrLogged){window.__tickErrLogged=1;console.error('demo tick error:',e);} } }
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
@@ -870,76 +897,134 @@ $$('.hot').forEach(g=>g.addEventListener('click',()=>{location.hash=g.dataset.li
 (()=>{
   const cv=$('#swerveCanvas'); if(!cv)return; const c=ctx2d(cv);
   const Wd=W(cv),Ht=Hh(cv);
-  const S={x:Wd*0.5,y:Ht*0.55,th:0,wheels:[0,0,0,0]};
+  const S={x:Wd*0.5,y:Ht*0.55,th:0,last:0};
   const keys={};
-  addEventListener('keydown',e=>{if(document.hidden)return;const k=e.key.toLowerCase();
-    if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)&&$('#page-drivetrain').classList.contains('active'))e.preventDefault();keys[k]=1;});
+  const KLIST=['arrowup','arrowdown','arrowleft','arrowright',' ','w','a','s','d','q','e'];
+  addEventListener('keydown',e=>{const k=e.key.toLowerCase();
+    if(KLIST.includes(k)&&$('#page-drivetrain').classList.contains('active'))e.preventDefault();
+    keys[k]=1;});
   addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=0;});
+  addEventListener('blur',()=>{for(const k in keys)keys[k]=0;}); // released keys must not stay stuck
+  $$('#swPad button').forEach(b=>{
+    const k=b.dataset.k;
+    const on=e=>{e.preventDefault();keys[k]=1;};
+    const off=()=>{keys[k]=0;};
+    b.addEventListener('pointerdown',on);
+    b.addEventListener('pointerup',off);
+    b.addEventListener('pointerleave',off);
+    b.addEventListener('pointercancel',off);
+  });
   $('#swerveReset').addEventListener('click',()=>{S.x=Wd*0.5;S.y=Ht*0.55;S.th=0;});
-  const HALF_W=44, HALF_L=56; // robot px; forward = local +x
-  // module positions [forward, sideways], order FL, FR, RL, RR
-  const pts=[[46,-30],[46,30],[-46,-30],[-46,30]];
+  window.__sw=S; // exposed for testing/debugging
+  const HALF_W=40, HALF_L=52; // robot px; forward = local +x
+  const pts=[[42,-28],[42,28],[-42,-28],[-42,28]]; // FL, FR, RL, RR as [forward, sideways]
+  const names=['FL','FR','RL','RR'];
+  const VMAX=150, OMAX=1.6; // px/s and rad/s (visual scale)
+  // ---- driver missions, earned automatically ----
+  const done={drive:false,strafe:false,spin:false,brake:false};
+  const x0=S.x,y0=S.y; let spinAcc=0,brakeT=0;
+  function earn(k){ if(done[k])return; done[k]=true;
+    const el=$('#ms-'+k); if(el){el.classList.add('done'); el.textContent='\u2705 '+el.dataset.t;} }
   pageTicks.drivetrain=(ts)=>{
-    // input
+    const dt=Math.max(0.001,Math.min(0.05,S.last?ts-S.last:0.016)); S.last=ts;
+    // ---- input ----
     let fx=0,fy=0,om=0;
     if(keys['w']||keys['arrowup'])fx+=1; if(keys['s']||keys['arrowdown'])fx-=1;
     if(keys['a']||keys['arrowleft'])fy+=1; if(keys['d']||keys['arrowright'])fy-=1;
     if(keys['q'])om+=1; if(keys['e'])om-=1;
-    const brake=keys[' '];
-    const VMAX=150, OMAX=1.6; // px/s, rad/s (visual)
+    const brake=!!keys[' '];
     const mag=Math.hypot(fx,fy);
-    const vx = mag? fy/mag*Math.min(1,mag)*VMAX : 0;
-    const vxff = mag? fx/mag*Math.min(1,mag)*VMAX : 0;
+    let vx = mag? fy/mag*Math.min(1,mag)*VMAX : 0;
+    let vxff = mag? fx/mag*Math.min(1,mag)*VMAX : 0;
     om=Math.min(1,Math.abs(om))*Math.sign(om)*OMAX;
+    if(brake){ vx=0; vxff=0; om=0; brakeT+=dt; if(brakeT>0.4)earn('brake'); } else brakeT=0;
     const fieldRel=$('#fieldRel').checked;
-    // world velocity (screen coords: +x right, +y down; heading 0 = facing right, clockwise+)
+    // world velocity (screen coords: +x right, +y down; heading 0 = facing right, clockwise +)
+    // vxff = "forward" wish (W), vx = "left" wish (A). Robot frame: forward=(cos,sin), left=(sin,-cos).
+    const cs=Math.cos(S.th),sn=Math.sin(S.th);
     let wvx,wvy;
-    if(fieldRel){ wvx=vx; wvy=-vxff; }
+    if(fieldRel){ wvx=-vx; wvy=-vxff; }
     else {
-      wvx=vxff*Math.cos(S.th)-vx*Math.sin(S.th);
-      wvy=vxff*Math.sin(S.th)+vx*Math.cos(S.th);
+      wvx=vxff*cs+vx*sn;
+      wvy=vxff*sn-vx*cs;
     }
-    const omStep=om*0.016;
-    S.x+=wvx*0.016; S.y+=wvy*0.016; S.th+=omStep;
-    S.x=Math.max(70,Math.min(Wd-70,S.x)); S.y=Math.max(70,Math.min(Ht-60,S.y));
-    // wheel angles: v_module = V + omega x r
-    const angles=[];
-    for(const[px,py]of pts){
-      const cs=Math.cos(S.th),sn=Math.sin(S.th);
+    S.x+=wvx*dt; S.y+=wvy*dt;
+    const omStep=om*dt; S.th+=omStep; spinAcc+=Math.abs(omStep);
+    S.x=Math.max(75,Math.min(Wd-75,S.x)); S.y=Math.max(75,Math.min(Ht-65,S.y));
+    if(Math.hypot(S.x-x0,S.y-y0)>95)earn('drive');
+    if(spinAcc>1.3)earn('spin');
+    // per-module velocity: v_module = V + omega x r  (this is the kinematics!)
+    const mods=pts.map(([px,py])=>{
       const rx=px*cs-py*sn, ry=px*sn+py*cs; // module's world offset from center
-      const mvx=wvx-omStep*ry, mvy=wvy+omStep*rx;
-      const fwd = mvx*cs+mvy*sn;  // component along robot forward
-      const rgt = -mvx*sn+mvy*cs; // component along robot right
-      angles.push(Math.atan2(rgt,fwd));
-    }
-    // draw
+      const mvx=wvx-om*ry, mvy=wvy+om*rx;   // module velocity in world
+      const fwd = mvx*cs+mvy*sn;             // component along robot forward
+      const rgt = -mvx*sn+mvy*cs;            // component along robot right
+      return {a:Math.atan2(rgt,fwd), spd:Math.hypot(mvx,mvy), fwd, rgt};
+    });
+    const spd0=Math.hypot(wvx,wvy);
+    const crabbing=spd0>30 && mods.every(m=>Math.abs(m.rgt)>Math.abs(m.fwd)*2);
+    if(crabbing)earn('strafe');
+    // ================= draw =================
     c.clearRect(0,0,Wd,Ht);
+    c.fillStyle='#101736'; c.fillRect(0,0,Wd,34); c.fillRect(0,Ht-28,Wd,28);
+    c.font='700 11px sans-serif'; c.fillStyle='#5d7396';
+    c.fillText('\u2190 FAR END OF FIELD \u2192',(Wd-110)/2,21);
+    c.fillText('DRIVER STATION',(Wd-78)/2,Ht-10);
     c.strokeStyle='#141d40';c.lineWidth=1;
-    for(let x=20;x<Wd;x+=38){c.beginPath();c.moveTo(x,0);c.lineTo(x,Ht);c.stroke();}
-    for(let y=20;y<Ht;y+=38){c.beginPath();c.moveTo(0,y);c.lineTo(Wd,y);c.stroke();}
-    c.fillStyle='#3a4c8f';c.fillRect(Wd-90,14,76,10);c.font='700 11px sans-serif';c.fillText('far end of field',Wd-158,23);
+    for(let x=20;x<Wd;x+=38){c.beginPath();c.moveTo(x,34);c.lineTo(x,Ht-28);c.stroke();}
+    for(let y=54;y<Ht-28;y+=38){c.beginPath();c.moveTo(0,y);c.lineTo(Wd,y);c.stroke();}
+    // nose arrow (amber dashed)
+    {
+      const hx=S.x+cs*82, hy=S.y+sn*82;
+      c.strokeStyle='#ffb45455';c.setLineDash([4,5]);c.beginPath();c.moveTo(S.x,S.y);c.lineTo(hx,hy);c.stroke();c.setLineDash([]);
+      arrowHead(c,hx,hy,Math.atan2(sn,cs),8,'#ffb454');
+      c.fillStyle='#ffb454';c.font='700 10px sans-serif';
+      c.fillText('nose',hx+cs*10-11,hy+sn*10+4);
+    }
+    // real-motion arrow (green)
+    if(spd0>8){
+      const mx=S.x+wvx/spd0*70, my=S.y+wvy/spd0*70;
+      c.strokeStyle='#5df2a0';c.lineWidth=3;c.beginPath();c.moveTo(S.x,S.y);c.lineTo(mx,my);c.stroke();
+      arrowHead(c,mx,my,Math.atan2(wvy,wvx),9,'#5df2a0');
+      c.fillStyle='#5df2a0';c.font='700 10px sans-serif';c.fillText('real motion',mx+8,my);
+    }
+    // robot body (rotated)
     c.save();c.translate(S.x,S.y);c.rotate(S.th);
     rr(c,-HALF_L,-HALF_W,HALF_L*2,HALF_W*2,10); c.fillStyle='#1b2750';c.fill();c.strokeStyle='#43579f';c.lineWidth=2;c.stroke();
-    // intake (front = local +x)
     rr(c,HALF_L-8,-HALF_W*0.6,14,HALF_W*1.2,5);c.fillStyle=brake?'#39507f':'#ff6b9d';c.fill();
-    // turret circle at rear
-    c.beginPath();c.arc(-HALF_L+22,0,15,0,7);c.fillStyle='#ffb454';c.fill();
-    // wheels (local positions: +x = robot forward)
+    c.beginPath();c.arc(-HALF_L+20,0,14,0,7);c.fillStyle='#ffb454';c.fill();
+    // wheels — brightness = how fast that wheel is rolling
     pts.forEach((p,i)=>{
-      const a=brake?[-Math.PI/4,Math.PI/4,Math.PI/4,-Math.PI/4][i]:angles[i];
+      const m=mods[i];
+      const a=brake?[-Math.PI/4,Math.PI/4,Math.PI/4,-Math.PI/4][i]:m.a;
+      const roll=brake?0:Math.min(1,m.spd/(VMAX*1.4));
+      const col='rgba(56,225,255,'+(0.25+roll*0.75).toFixed(2)+')';
       c.save();c.translate(p[0],p[1]);c.rotate(a);
-      rr(c,-16,-8,32,16,7);c.fillStyle='#0d1530';c.fill();c.strokeStyle='#38e1ff';c.lineWidth=2;c.stroke();
-      c.beginPath();c.moveTo(10,0);c.lineTo(17,0);c.strokeStyle='#38e1ff';c.stroke();
-      arrowHead(c,19,0,0,5,'#38e1ff');
+      rr(c,-16,-8,32,16,7);c.fillStyle='#0d1530';c.fill();c.strokeStyle=col;c.lineWidth=2;c.stroke();
+      c.beginPath();c.moveTo(10,0);c.lineTo(17,0);c.strokeStyle=col;c.stroke();
+      arrowHead(c,19,0,0,5,col);
       c.restore();
     });
     c.restore();
-    // heading arrow
-    const hx=S.x+Math.cos(S.th)*80, hy=S.y+Math.sin(S.th)*80;
-    c.strokeStyle='#ffb45466';c.setLineDash([4,5]);c.beginPath();c.moveTo(S.x,S.y);c.lineTo(hx,hy);c.stroke();c.setLineDash([]);
-    arrowHead(c,hx,hy,Math.atan2(hy-S.y,hx-S.x),8,'#ffb454');
-    if(fieldRel){c.strokeStyle='#5df2a055';c.setLineDash([3,6]);c.beginPath();c.moveTo(S.x,S.y);c.lineTo(S.x,10);c.stroke();c.setLineDash([]);}
-    $('#swerveOut').textContent='vx: '+(vxff/VMAX*4).toFixed(2)+' m/s · vy: '+(vx/VMAX*4).toFixed(2)+' m/s · ω: '+(om/6.283).toFixed(2)+' rot/s · heading: '+(S.th*180/Math.PI).toFixed(0)+'°';
+    // module labels (upright, at world positions)
+    c.font='800 10px sans-serif';c.fillStyle='#5d7396';
+    pts.forEach((p,i)=>{
+      const wx=S.x+p[0]*cs-p[1]*sn, wy=S.y+p[0]*sn+p[1]*cs;
+      c.fillText(names[i],wx-6,wy+(p[1]<0?-16:24));
+    });
+    // field-relative cue: dashed line toward far end
+    if(fieldRel){c.strokeStyle='#5df2a033';c.setLineDash([3,6]);c.beginPath();c.moveTo(S.x,S.y);c.lineTo(S.x,34);c.stroke();c.setLineDash([]);}
+    // ---- live narration: explain what the wheels are doing RIGHT NOW ----
+    const fwdV=wvx*cs+wvy*sn;
+    let note='';
+    if(brake)note='\u270B X-BRAKE: all four wheels locked in an X, bracing against each other. Commanded speed is zero and the geometry refuses to unfold — nobody pushes you around.';
+    else if(spd0>20 && fwdV<-15 && fieldRel)note='\u26A0\uFE0F Fun fact in motion: you pushed "forward on the field", but your nose points elsewhere, so the robot slides sideways/backwards across its own floor — the wheels steer mid-drive. A car driver would panic; a swerve driver shrugs.';
+    else if(crabbing)note='\uD83E\uE800 Crab walk! All four wheels point sideways relative to the body, so the robot slides like a crab. No car, truck, or normal robot can do this.';
+    else if(om!==0 && spd0<15)note='\uD83C\uDF00 Pirouette: each wheel rolls in a tiny circle around the robot center — every wheel is tilted tangentially, and the FL/FR/RL/RR arrows trace the spin.';
+    else if(spd0>20)note='Green arrow = real motion. Amber nose arrow = robot orientation. The wheels point wherever kinematics says they must to make both true at once.';
+    $('#swNote').innerHTML=note||'&nbsp;';
+    const deg=((S.th*180/Math.PI)%360+360)%360;
+    $('#swerveOut').textContent='speed: '+(spd0/VMAX*4).toFixed(2)+' m/s · heading: '+deg.toFixed(0)+'\u00B0 · \u03C9: '+(om/6.283).toFixed(2)+' rot/s · '+(fieldRel?'FIELD-relative':'ROBOT-relative');
   };
 })();
 
@@ -1132,7 +1217,7 @@ $$('.hot').forEach(g=>g.addEventListener('click',()=>{location.hash=g.dataset.li
       c.strokeStyle=col;c.lineWidth=i===S.iters.length-1?3:1.6;c.setLineDash(i===S.iters.length-1?[]:[4,5]);
       c.beginPath();c.moveTo(X(0),Yp(0));c.lineTo(X(it.pt.x),Yp(it.pt.y));c.stroke();c.setLineDash([]);
       c.fillStyle=col;c.beginPath();c.arc(X(it.pt.x),Yp(it.pt.y),5,0,7);c.fill();
-      c.font='700 10px monospace';c.fillText('#'+(i+1)+' t='+it.t.toFixed(2)+'s err='+(it.err*100).toFixed(0)+'cm',X(it.pt.x)+9,Yp(it.pt.y)+3+i*0);
+      c.font='700 10px monospace';c.fillStyle=col;c.fillText('#'+(i+1)+' \u00b7 flight '+it.t.toFixed(2)+'s \u00b7 off by '+(it.err*100).toFixed(0)+' cm',X(it.pt.x)+10,Yp(it.pt.y)-8-i*14);
     });
     if(S.done){
       const last=S.iters[S.iters.length-1].pt;
